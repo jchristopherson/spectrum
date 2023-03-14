@@ -1,0 +1,10 @@
+prefix = @CMAKE_INSTALL_PREFIX@
+libdir = ${prefix}/@CMAKE_INSTALL_FULL_LIBDIR@
+includedir = ${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: @PROJECT_NAME@
+Description: SPECTRUM is a modern Fortran library for spectral analysis.
+Version: @PROJECT_VERSION@
+URL: https://github.com/jchristopherson/spectrum
+Libs: -L${libdir} -l@PROJECT_NAME@
+Cflags: -I${includedir}
