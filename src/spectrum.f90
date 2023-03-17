@@ -393,6 +393,7 @@ module spectrum
     !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
+    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
     interface psd
         module procedure :: psd_welch
     end interface
@@ -459,6 +460,7 @@ module spectrum
     !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
+    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
     interface csd
         module procedure :: csd_welch
     end interface
