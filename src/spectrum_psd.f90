@@ -199,13 +199,13 @@ subroutine buffer_segment(win, xnew, buffer, counter, work)
         scale = 2.0d0 / (n - 1.0d0) ! scale the transform by it's length
         nend = m
     end if
-    buffer(1) = fac * abs(scale * xfrm(1))**2
+    buffer(1) = fac * abs(scale * xfrm(1))**2 + buffer(1)
     do i = 2, nend
         cx = scale * cmplx(xfrm(2 * i - 2), xfrm(2 * i - 1), real64)
-        buffer(i) = fac * abs(cx)**2
+        buffer(i) = fac * abs(cx)**2 + buffer(i)
     end do
     if (nend /= m) then
-        buffer(nend) = fac * abs(scale * xfrm(n))**2
+        buffer(nend) = fac * abs(scale * xfrm(n))**2 + buffer(nend)
     end if
 
     ! Increment the counter
