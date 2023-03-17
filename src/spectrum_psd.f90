@@ -4,6 +4,75 @@ contains
 ! ------------------------------------------------------------------------------
 module function psd_welch(win, x, fs, err) result(rst)
     ! Arguments
+    class(window), intent(in) :: win
+    real(real64), intent(in) :: x(:)
+    real(real64), intent(in), optional :: fs
+    class(errors), intent(inout), optional, target :: err
+    real(real64), allocatable :: rst(:)
+
+    ! Local Variables
+    integer(int32) :: nx, nxfrm, noverlaps, lwork, flag
+    real(real64) :: fres, fac
+    real(real64), allocatable :: work(:)
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    character(len = :), allocatable :: errmsg
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    nx = win%size
+    nxfrm = compute_transform_length(nx)
+    lwork = 4 * nx + 15
+    fres = 1.0d0
+    if (present(fs)) then
+        fres = frequency_bin_width(fs, nx)
+    end if
+
+    ! Input Check
+    if (nx < 2) go to 20
+
+    ! Memory Allocation
+    allocate(rst(nxfrm), stat = flag)
+    if (flag == 0) allocate(work(lwork), stat = flag)
+    if (flag /= 0) go to 10
+
+    ! Overlap and compute the transform
+    noverlaps = 0
+    call overlap_segments(win, x, rst, noverlaps, work)
+
+    ! Normalize
+    fac = 1.0d0 / (fres * noverlaps)
+    rst = fac * rst
+
+    ! Account for the symmetry of the transform
+    rst(2:nxfrm - 1) = 2.0d0 * rst(2:nxfrm - 1)
+
+    ! End
+    return
+
+    ! Memory Error Handling
+10  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "Memory allocation error flag ", flag, "."
+    call errmgr%report_error("psd_welch", trim(errmsg), SPCTRM_MEMORY_ERROR)
+    return
+
+    ! Window Size Error
+20  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) &
+        "The window must have at least 2 points, but was found to have ", &
+        nx, "."
+    call errmgr%report_error("psd_welch", trim(errmsg), &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+
+    ! Formatting
+100 format(A, I0, A)
 end function
 
 ! ------------------------------------------------------------------------------
@@ -56,7 +125,7 @@ subroutine overlap_segments(win, x, xfrms, noverlaps, work)
         z(nx+1:n) = 0.0d0
 
         ! Add to the buffer
-        call add_segment(win, z, xfrms, noverlaps, w)
+        call buffer_segment(win, z, xfrms, noverlaps, w)
     else
         ! Overlap
         do k = 0, nk - 1
@@ -64,7 +133,7 @@ subroutine overlap_segments(win, x, xfrms, noverlaps, work)
             do i = 1, n
                 z(i) = x(noff + i)
             end do
-            call add_segment(win, z, xfrms, noverlaps, w)
+            call buffer_segment(win, z, xfrms, noverlaps, w)
         end do
     end if
 end subroutine
