@@ -13,6 +13,9 @@ program test
     local = test_psd()
     if (.not.local) flag = 1
 
+    local = test_csd()
+    if (.not.local) flag = 2
+
     ! Output
     stop flag
 end program
