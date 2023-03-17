@@ -1,3 +1,8 @@
+! TO DO:
+! - windowed FFT (https://en.wikipedia.org/wiki/Short-time_Fourier_transform)
+! - wavelet transforms???
+! - a routine for creating a frequency vector
+
 !> @brief
 module spectrum
     use iso_fortran_env

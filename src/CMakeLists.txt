@@ -8,5 +8,6 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_routines.f90
     ${dir}/spectrum_psd.f90
     ${dir}/spectrum_csd.f90
+    ${dir}/spectrum_fft.f90
 )
 set(SPECTRUM_SOURCES ${SPECTRUM_SOURCES} PARENT_SCOPE)
