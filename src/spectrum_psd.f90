@@ -41,7 +41,6 @@ module function psd_welch(win, x, fs, err) result(rst)
     if (flag /= 0) go to 10
 
     ! Overlap and compute the transform
-    noverlaps = 0
     call overlap_segments(win, x, rst, noverlaps, work)
 
     ! Normalize
