@@ -22,9 +22,12 @@ module spectrum
     public :: next_power_of_two
     public :: psd
     public :: csd
+    public :: convolve
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
+    public :: SPCTRM_FULL_CONVOLUTION
+    public :: SPCTRM_CENTRAL_CONVOLUTION
 
 ! ******************************************************************************
 ! CONSTANTS
@@ -32,6 +35,12 @@ module spectrum
     integer(int32), parameter :: SPCTRM_MEMORY_ERROR = 10000
     integer(int32), parameter :: SPCTRM_INVALID_INPUT_ERROR = 10001
     integer(int32), parameter :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR = 10002
+
+    !> A flag for requesting a full convolution.
+    integer(int32), parameter :: SPCTRM_FULL_CONVOLUTION = 50000
+    !> A flag for requesting the central portion of the convolution that is the
+    !! same length as the input signal.
+    integer(int32), parameter :: SPCTRM_CENTRAL_CONVOLUTION = 50001
 
 ! ******************************************************************************
 ! SPECTRUM_WINDOWS.F90
@@ -475,6 +484,49 @@ module spectrum
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:), y(:)
             real(real64), intent(in), optional :: fs
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+    end interface
+
+! ******************************************************************************
+! SPECTRUM_CONVOLVE.F90
+! ------------------------------------------------------------------------------
+    !> @brief Computes the convolution of a signal and kernel.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !!
+    !! @endcode
+        !!
+    !! @param[in] x The N-element signal.
+    !! @param[in] y The M-element kernel.
+    !! @param[in] method An optional input that dictates the expected
+    !!  convolution result.  The following options are available.
+    !!  - SPCTRM_FULL_CONVOLUTION: The full convolution results are provided, 
+    !!      including the portions polluted courtesy of the zero-padding and
+    !!      the corresponding wrap-around effects.  The length of this output
+    !!      is N + M - 1.
+    !!  - SPCTRM_CENTRAL_CONVOLUTION: The N-element result containing the 
+    !!      convolved signal not poluted by the zero-padding and corresponding
+    !!      wrap-around effects.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!
+    !! @return The convolved result.
+    interface convolve
+        module procedure :: convolve_1
+    end interface
+
+    interface
+        module function convolve_1(x, y, method, err) result(rst)
+            real(real64), intent(in) :: x(:), y(:)
+            integer(int32), intent(in), optional :: method
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function
