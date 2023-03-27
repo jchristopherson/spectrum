@@ -550,9 +550,14 @@ module spectrum
     !!
     !! @par Syntax
     !! @code{.f90}
-    !!
+    !! allocatable real(real64)(:) convolve( &
+    !!  real(real64) x(:), &
+    !!  real(real64) y(:), &
+    !!  optional integer(int32) method, &
+    !!  optional class(errors) err &
+    !! )
     !! @endcode
-        !!
+    !!
     !! @param[in] x The N-element signal.
     !! @param[in] y The M-element kernel.
     !! @param[in] method An optional input that dictates the expected
