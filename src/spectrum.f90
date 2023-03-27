@@ -22,6 +22,7 @@ module spectrum
     public :: next_power_of_two
     public :: psd
     public :: csd
+    public :: spectrogram
     public :: convolve
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
@@ -486,6 +487,59 @@ module spectrum
             real(real64), intent(in), optional :: fs
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
+        end function
+    end interface
+
+! ******************************************************************************
+! SPECTRUM_FFT.F90
+! ------------------------------------------------------------------------------
+    !> @brief Computes the spectrogram of a signal.  Only the positive half of
+    !! the transform is returned.  The symmetry of the transform may be 
+    !! exploited if the both the negative and positive frequency components
+    !! are desired.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable complex(real64) rst(:,:) function spectrogram( &
+    !!  class(window) win, &
+    !!  real(real64) x(:), &
+    !!  integer(int32) noverlap(:), &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] win The window to apply.
+    !! @param[in] x The signal to analyze.  The signal must be longer than the
+    !!  size of the window @p win.
+    !! @param[in] noverlap The number of points to overlap.  This value must be
+    !!  less than the size of the window @p win.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in @p x is too short
+    !!      relative to the window size in @p win, or if @p noverlap is larger
+    !!      than the window size in @p win.
+    !!
+    !! @return An M-by-N matrix containing the M-element complex-valued 
+    !!  transforms for each of the N time points studied.  M is the size of the
+    !!  positive half of the transform, and N can be determined as 
+    !!  N = P / (K - NOVERLAP), where P is the size of the signal @p x and 
+    !!  K is the size of the window @p win.
+    interface spectrogram
+        module procedure :: stft
+    end interface
+
+    interface
+        module function stft(win, x, noverlap, err) result(rst)
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:)
+            integer(int32), intent(in) :: noverlap
+            class(errors), intent(inout), optional, target :: err
+            complex(real64), allocatable :: rst(:,:)
         end function
     end interface
 
