@@ -48,9 +48,9 @@ if (BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
-# # Examples
-# option(BUILD_SPECTRUM_EXAMPLES "Build SPECTRUM examples")
-# message(STATUS "Build SPECTRUM examples: ${BUILD_SPECTRUM_EXAMPLES}")
-# if (BUILD_SPECTRUM_EXAMPLES)
-#     add_subdirectory(examples)
-# endif()
+# Examples
+option(BUILD_SPECTRUM_EXAMPLES "Build SPECTRUM examples")
+message(STATUS "Build SPECTRUM examples: ${BUILD_SPECTRUM_EXAMPLES}")
+if (BUILD_SPECTRUM_EXAMPLES)
+    add_subdirectory(examples)
+endif()
