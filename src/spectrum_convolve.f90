@@ -154,12 +154,12 @@ subroutine convolve_driver(x, y, method, rst, err)
     call zfftf(n, y, work)
 
     ! Compute the scaling factor
-    fac = 2.0d0 / real(n, real64)
+    fac = 1.0d0 / real(n, real64)
 
     ! Perform the convolution operation
     if (method == 1) then
         ! Multiply the FFT's to convolve
-        cxy = fac**2 * x * y
+        cxy = x * y
     else
         ! Divide the FFT's to deconvolve
         cxy = x / y
@@ -167,7 +167,7 @@ subroutine convolve_driver(x, y, method, rst, err)
 
     ! Compute the inverse transform
     call zfftb(n, cxy, work)
-    rst = real(cxy)
+    rst = real(fac * cxy)
 
     ! Formatting
 100 format(A, I0, A)

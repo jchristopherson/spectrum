@@ -1,5 +1,6 @@
 program test
     use spectrum_psd_tests
+    use spectrum_convolution_tests
     implicit none
 
     ! Local Variables
@@ -15,6 +16,9 @@ program test
 
     local = test_csd()
     if (.not.local) flag = 2
+
+    local = test_convolution()
+    if (.not.local) flag = 3
 
     ! Output
     stop flag
