@@ -167,7 +167,11 @@ subroutine convolve_driver(x, y, method, rst, err)
 
     ! Compute the inverse transform
     call zfftb(n, cxy, work)
-    rst = real(fac * cxy)
+    if (method == 1) then
+        rst = real(fac * cxy)
+    else
+        rst = real(cxy)
+    end if
 
     ! Formatting
 100 format(A, I0, A)
