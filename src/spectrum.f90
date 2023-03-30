@@ -511,8 +511,6 @@ module spectrum
     !! @param[in] win The window to apply.
     !! @param[in] x The signal to analyze.  The signal must be longer than the
     !!  size of the window @p win.
-    !! @param[in] noverlap The number of points to overlap.  This value must be
-    !!  less than the size of the window @p win.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
     !!  during execution.  If not provided, a default implementation of the 
@@ -534,10 +532,10 @@ module spectrum
     end interface
 
     interface
-        module function stft(win, x, noverlap, err) result(rst)
+        module function stft(win, x, offsets, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
-            integer(int32), intent(in) :: noverlap
+            integer(int32), intent(out), optional, allocatable :: offsets(:)
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:,:)
         end function
