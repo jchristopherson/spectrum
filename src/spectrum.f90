@@ -615,7 +615,9 @@ module spectrum
     !!     call plt%draw()
     !! end program
     !! @endcode
-    !! @image html spectrogram_example_1
+    !! The above program produces the following plot using the 
+    !! [FPLOT](https://github.com/jchristopherson/fplot) library.
+    !! @image html spectrogram_example_1.png
     interface spectrogram
         module procedure :: stft
     end interface
@@ -747,7 +749,7 @@ module spectrum
     !! @endcode
     !! The above program produces the following plot using the 
     !! [FPLOT](https://github.com/jchristopherson/fplot) library.
-    !! @image html gaussian_filter_example.png
+    !! @image html gaussian_filter_example_1.png
     interface convolve
         module procedure :: convolve_1
     end interface
