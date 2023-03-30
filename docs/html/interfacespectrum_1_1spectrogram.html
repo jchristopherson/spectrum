@@ -110,7 +110,8 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1spectrogram.html'
 <dl class="section user"><dt>Syntax</dt><dd><div class="fragment"><div class="line"><span class="keywordtype">allocatable</span> <span class="keywordtype">complex(real64)</span> rst(:,:) function spectrogram( &amp;</div>
 <div class="line"> <span class="keywordtype">class</span>(window) win, &amp;</div>
 <div class="line"> <span class="keywordtype">real(real64)</span> x(:), &amp;</div>
-<div class="line"> <span class="keywordtype">integer(int32)</span> noverlap(:), &amp;</div>
+<div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">allocatable</span> <span class="keywordtype">integer(int32)</span> offsets(:), &amp;</div>
+<div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">logical</span> par, &amp;</div>
 <div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">class</span>(errors) err &amp;</div>
 <div class="line">)</div>
 </div><!-- fragment --></dd></dl>
@@ -118,18 +119,102 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1spectrogram.html'
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">win</td><td>The window to apply. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The signal to analyze. The signal must be longer than the size of the window <code>win</code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">noverlap</td><td>The number of points to overlap. This value must be less than the size of the window <code>win</code>. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">offsets</td><td>An optional allocatable array that, if supplied, will be filled with the starting indices of each window segment. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">par</td><td>An optional input that will utilize OpenMP to parallelize the transform operations if set to true. If set to false, each transform will be computed in a serial manner. The default is false unless the number of transforms exceeds 50. </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">err</td><td>An optional errors-based object that if provided can be used to retrieve information relating to any errors encountered during execution. If not provided, a default implementation of the errors class is used internally to provide error handling. Possible errors and warning messages that may be encountered are as follows.<ul>
 <li>SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory available.</li>
-<li>SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in <code>x</code> is too short relative to the window size in <code>win</code>, or if <code>noverlap</code> is larger than the window size in <code>win</code>.</li>
+<li>SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in <code>x</code> is too short relative to the window size in <code>win</code>.</li>
 </ul>
 </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>An M-by-N matrix containing the M-element complex-valued transforms for each of the N time points studied. M is the size of the positive half of the transform, and N can be determined as N = P / (K - NOVERLAP), where P is the size of the signal <code>x</code> and K is the size of the window <code>win</code>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>An M-by-N matrix containing the M-element complex-valued transforms for each of the N time points studied. M is the size of the positive half of the transform, and N is the total number of transformed segments.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following example illustrates how to compute the spectrogram of an exponential chirp signal. <div class="fragment"><div class="line"><span class="keyword">program</span> example</div>
+<div class="line">    <span class="keywordtype">use </span>iso_fortran_env</div>
+<div class="line">    <span class="keywordtype">use </span>spectrum</div>
+<div class="line">    <span class="keywordtype">use </span>fplot_core</div>
+<div class="line">    <span class="keywordtype">implicit none</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Parameters</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: window_size = 512</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: fs = 2048.0d0</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: f0 = 1.0d2</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: f1 = 1.0d3</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: duration = 50.0d0</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: pi = 2.0d0 * acos(0.0d0)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Local Variables</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span> :: i, npts</div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:)</span> :: offsets</div>
+<div class="line"><span class="keywordtype">    real</span>(real64) :: k, df</div>
+<div class="line">    <span class="keywordtype">complex(real64)</span>, <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:,:)</span> :: rst</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:)</span> :: t, x, f, s</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:,:)</span> :: mag</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:,:,:)</span> :: xy</div>
+<div class="line">    <span class="keywordtype">type</span>(hann_window) :: win</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot Variables</span></div>
+<div class="line">    <span class="keywordtype">type</span>(surface_plot) :: plt</div>
+<div class="line">    <span class="keywordtype">type</span>(surface_plot_data) :: pd</div>
+<div class="line">    <span class="keywordtype">class</span>(plot_axis), <span class="keywordtype">pointer</span> :: xAxis, yAxis</div>
+<div class="line">    <span class="keywordtype">type</span>(rainbow_colormap) :: map</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Create the exponential chirp signal</span></div>
+<div class="line">    npts = floor(duration * fs) + 1</div>
+<div class="line">    t = linspace(0.0d0, duration, npts)</div>
+<div class="line">    k = (f1 / f0)**(1.0 / duration)</div>
+<div class="line">    x = sin(2.0d0 * pi * f0 * (k**t - 1.0d0) / log(k))</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Determine sampling frequency parameters</span></div>
+<div class="line">    df = <a class="code hl_interface" href="interfacespectrum_1_1frequency__bin__width.html">frequency_bin_width</a>(fs, window_size)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Define the window</span></div>
+<div class="line">    win%size = window_size</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Compute the spectrogram of x</span></div>
+<div class="line">    rst = <a class="code hl_interface" href="interfacespectrum_1_1spectrogram.html">spectrogram</a>(win, x, offsets)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Compute the magnitude, along with each frequency and time point</span></div>
+<div class="line">    mag = abs(rst)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">allocate</span>(f(<span class="keyword">size</span>(mag, 1)))</div>
+<div class="line">    f = (/ (df * i, i = 0, <span class="keyword">size</span>(f) - 1) /)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">allocate</span>(s(<span class="keyword">size</span>(mag, 2)))</div>
+<div class="line">    <span class="keywordflow">do</span> i = 1, <span class="keyword">size</span>(s)</div>
+<div class="line">        <span class="keywordflow">if</span> (i == 1) <span class="keywordflow">then</span></div>
+<div class="line">            s(i) = offsets(i) / fs</div>
+<div class="line">        <span class="keywordflow">else</span></div>
+<div class="line">            s(i) = i * (offsets(i) - offsets(i-1)) / fs</div>
+<div class="line"><span class="keywordflow">        end if</span></div>
+<div class="line"><span class="keywordflow">    end do</span></div>
+<div class="line">    xy = meshgrid(s, f)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot the results</span></div>
+<div class="line">    <span class="keyword">call </span>plt%initialize()</div>
+<div class="line">    <span class="keyword">call </span>plt%set_colormap(map)</div>
+<div class="line">    <span class="keyword">call </span>plt%set_use_map_view(.true.)</div>
+<div class="line">    xaxis =&gt; plt%get_x_axis()</div>
+<div class="line">    yaxis =&gt; plt%get_y_axis()</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_title(<span class="stringliteral">&quot;Time [s]&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_title(<span class="stringliteral">&quot;Frequency [Hz]&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_autoscale(.false.)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_limits(0.0d0, f(<span class="keyword">size</span>(mag, 1)))</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>pd%define_data(xy(:,:,1), xy(:,:,2), mag)</div>
+<div class="line">    <span class="keyword">call </span>plt%push(pd)</div>
+<div class="line">    <span class="keyword">call </span>plt%draw()</div>
+<div class="line"><span class="keyword">end program</span></div>
+<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00304">spectrum.f90:304</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1spectrogram_html"><div class="ttname"><a href="interfacespectrum_1_1spectrogram.html">spectrum::spectrogram</a></div><div class="ttdoc">Computes the spectrogram of a signal. Only the positive half of the transform is returned....</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00621">spectrum.f90:621</a></div></div>
+</div><!-- fragment --> The above program produces the following plot using the <a href="https://github.com/jchristopherson/fplot">FPLOT</a> library. <div class="image">
+<img src="spectrogram_example_1.png" alt=""/>
+</div>
+ </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00532">532</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00621">621</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><hr/>The documentation for this interface was generated from the following file:<ul>
 <li>D:/Code/spectrum/src/<a class="el" href="spectrum_8f90_source.html">spectrum.f90</a></li>
 </ul>
