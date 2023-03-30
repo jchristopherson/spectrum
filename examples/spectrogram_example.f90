@@ -5,19 +5,19 @@ program example
     implicit none
 
     ! Parameters
-    integer(int32), parameter :: npts = 10000
-    integer(int32), parameter :: window_size = 256
+    integer(int32), parameter :: window_size = 512
+    real(real64), parameter :: fs = 2048.0d0
     real(real64), parameter :: f0 = 1.0d2
     real(real64), parameter :: f1 = 1.0d3
-    real(real64), parameter :: duration = 5.0d0
+    real(real64), parameter :: duration = 50.0d0
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
 
     ! Local Variables
-    integer(int32) :: i
+    integer(int32) :: i, npts
     integer(int32), allocatable, dimension(:) :: offsets
-    real(real64) :: t(npts), x(npts), k, df, fs
+    real(real64) :: k, df
     complex(real64), allocatable, dimension(:,:) :: rst
-    real(real64), allocatable, dimension(:) :: f, s
+    real(real64), allocatable, dimension(:) :: t, x, f, s
     real(real64), allocatable, dimension(:,:) :: mag
     real(real64), allocatable, dimension(:,:,:) :: xy
     type(hamming_window) :: win
@@ -29,12 +29,12 @@ program example
     type(rainbow_colormap) :: map
 
     ! Create the exponential chirp signal
+    npts = floor(duration * fs) + 1
     t = linspace(0.0d0, duration, npts)
     k = (f1 / f0)**(1.0 / duration)
     x = sin(2.0d0 * pi * f0 * (k**t - 1.0d0) / log(k))
 
     ! Determine sampling frequency parameters
-    fs = 1.0d0 / (t(2) - t(1))
     df = frequency_bin_width(fs, window_size)
 
     ! Define the window
