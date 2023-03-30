@@ -503,7 +503,8 @@ module spectrum
     !! allocatable complex(real64) rst(:,:) function spectrogram( &
     !!  class(window) win, &
     !!  real(real64) x(:), &
-    !!  integer(int32) noverlap(:), &
+    !!  optional allocatable integer(int32) offsets(:), &
+    !!  optional logical par, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -511,6 +512,12 @@ module spectrum
     !! @param[in] win The window to apply.
     !! @param[in] x The signal to analyze.  The signal must be longer than the
     !!  size of the window @p win.
+    !! @param[out] offsets An optional allocatable array that, if supplied, will
+    !!  be filled with the starting indices of each window segment.
+    !! @param[in] par An optional input that will utilize OpenMP to parallelize
+    !!  the transform operations if set to true.  If set to false, each 
+    !!  transform will be computed in a serial manner.  The default is false 
+    !!  unless the number of transforms exceeds 50.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
     !!  during execution.  If not provided, a default implementation of the 
@@ -519,23 +526,106 @@ module spectrum
     !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
     !!      available.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in @p x is too short
-    !!      relative to the window size in @p win, or if @p noverlap is larger
-    !!      than the window size in @p win.
+    !!      relative to the window size in @p win.
     !!
     !! @return An M-by-N matrix containing the M-element complex-valued 
     !!  transforms for each of the N time points studied.  M is the size of the
-    !!  positive half of the transform, and N can be determined as 
-    !!  N = P / (K - NOVERLAP), where P is the size of the signal @p x and 
-    !!  K is the size of the window @p win.
+    !!  positive half of the transform, and N is the total number of transformed
+    !!  segments.
+    !!
+    !! @par Example
+    !! The following example illustrates how to compute the spectrogram of an
+    !! exponential chirp signal.
+    !! @code{.f90}
+    !! program example
+    !!     use iso_fortran_env
+    !!     use spectrum
+    !!     use fplot_core
+    !!     implicit none
+    !!
+    !!     ! Parameters
+    !!     integer(int32), parameter :: window_size = 512
+    !!     real(real64), parameter :: fs = 2048.0d0
+    !!     real(real64), parameter :: f0 = 1.0d2
+    !!     real(real64), parameter :: f1 = 1.0d3
+    !!     real(real64), parameter :: duration = 50.0d0
+    !!     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    !!
+    !!     ! Local Variables
+    !!     integer(int32) :: i, npts
+    !!     integer(int32), allocatable, dimension(:) :: offsets
+    !!     real(real64) :: k, df
+    !!     complex(real64), allocatable, dimension(:,:) :: rst
+    !!     real(real64), allocatable, dimension(:) :: t, x, f, s
+    !!     real(real64), allocatable, dimension(:,:) :: mag
+    !!     real(real64), allocatable, dimension(:,:,:) :: xy
+    !!     type(hann_window) :: win
+    !!
+    !!     ! Plot Variables
+    !!     type(surface_plot) :: plt
+    !!     type(surface_plot_data) :: pd
+    !!     class(plot_axis), pointer :: xAxis, yAxis
+    !!     type(rainbow_colormap) :: map
+    !!
+    !!     ! Create the exponential chirp signal
+    !!     npts = floor(duration * fs) + 1
+    !!     t = linspace(0.0d0, duration, npts)
+    !!     k = (f1 / f0)**(1.0 / duration)
+    !!     x = sin(2.0d0 * pi * f0 * (k**t - 1.0d0) / log(k))
+    !!
+    !!     ! Determine sampling frequency parameters
+    !!     df = frequency_bin_width(fs, window_size)
+    !!
+    !!     ! Define the window
+    !!     win%size = window_size
+    !!
+    !!     ! Compute the spectrogram of x
+    !!     rst = spectrogram(win, x, offsets)
+    !!
+    !!     ! Compute the magnitude, along with each frequency and time point
+    !!     mag = abs(rst)
+    !!
+    !!     allocate(f(size(mag, 1)))
+    !!     f = (/ (df * i, i = 0, size(f) - 1) /)
+    !!
+    !!     allocate(s(size(mag, 2)))
+    !!     do i = 1, size(s)
+    !!         if (i == 1) then
+    !!             s(i) = offsets(i) / fs
+    !!         else
+    !!             s(i) = i * (offsets(i) - offsets(i-1)) / fs
+    !!         end if
+    !!     end do
+    !!     xy = meshgrid(s, f)
+    !!
+    !!     ! Plot the results
+    !!     call plt%initialize()
+    !!     call plt%set_colormap(map)
+    !!     call plt%set_use_map_view(.true.)
+    !!     xAxis => plt%get_x_axis()
+    !!     yAxis => plt%get_y_axis()
+    !!
+    !!     call xAxis%set_title("Time [s]")
+    !!     call yAxis%set_title("Frequency [Hz]")
+    !!     call yAxis%set_autoscale(.false.)
+    !!     call yAxis%set_limits(0.0d0, f(size(mag, 1)))
+    !!
+    !!     call pd%define_data(xy(:,:,1), xy(:,:,2), mag)
+    !!     call plt%push(pd)
+    !!     call plt%draw()
+    !! end program
+    !! @endcode
+    !! @image html spectrogram_example_1
     interface spectrogram
         module procedure :: stft
     end interface
 
     interface
-        module function stft(win, x, offsets, err) result(rst)
+        module function stft(win, x, offsets, par, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             integer(int32), intent(out), optional, allocatable :: offsets(:)
+            logical, intent(in), optional :: par
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:,:)
         end function

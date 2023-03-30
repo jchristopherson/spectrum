@@ -15,15 +15,17 @@ contains
 !   - https://www.embedded.com/dsp-tricks-frequency-domain-windowing/
 
 
-module function stft(win, x, offsets, err) result(rst)
+module function stft(win, x, offsets, par, err) result(rst)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:)
     integer(int32), intent(out), optional, allocatable :: offsets(:)
+    logical, intent(in), optional :: par
     class(errors), intent(inout), optional, target :: err
     complex(real64), allocatable :: rst(:,:)
 
     ! Local Variables
+    logical :: p
     integer(int32) :: i, j, k, m, nx, nxfrm, nend, nk, lwork, flag, i1
     real(real64) :: fac, w, sumw, del, scale
     real(real64), allocatable :: work(:), buffer(:,:)
@@ -54,6 +56,15 @@ module function stft(win, x, offsets, err) result(rst)
     else
         del = 0.0d0
     end if
+    if (present(par)) then
+        p = par
+    else
+        if (nk > 50) then
+            p = .true.
+        else
+            p = .false.
+        end if
+    end if
 
     ! Input Checking
     if (m > nx) go to 20
@@ -72,38 +83,69 @@ module function stft(win, x, offsets, err) result(rst)
     call dffti(m, work)
 
     ! Compute each transform
+    if (p) then
 !$OMP PARALLEL PRIVATE(i1, j, k, w, sumw, fac)
 !$OMP DO
-    do i = 1, nk
-        ! Locate the portion of the signal on which to operate
-        i1 = int((i - 1) * del + 0.5d0, int32)
-        if (present(offsets)) offsets(i) = i1
+        do i = 1, nk
+            ! Locate the portion of the signal on which to operate
+            i1 = int((i - 1) * del + 0.5d0, int32)
+            if (present(offsets)) offsets(i) = i1 + 1
 
-        ! Apply the window
-        j = 0
-        sumw = 0.0d0
-        do k = 1, m
-            w = win%evaluate(j)
-            j = j + 1
-            sumw = sumw + w
-            buffer(k,i) = w * x(i1+k)
+            ! Apply the window
+            j = 0
+            sumw = 0.0d0
+            do k = 1, m
+                w = win%evaluate(j)
+                j = j + 1
+                sumw = sumw + w
+                buffer(k,i) = w * x(i1+k)
+            end do
+            fac = m / sumw
+
+            ! Compute the transform
+            call dfftf(m, buffer(:,i), work)
+
+            ! Scale the transform
+            rst(1,i) = fac * scale * cmplx(buffer(1,i), 0.0d0, real64)
+            do k = 2, nend
+                rst(k,i) = fac * scale * cmplx(buffer(2*k-1,i), &
+                    buffer(2*k,i), real64)
+            end do
+            if (nend /= nxfrm) rst(nxfrm,i) = fac * scale * &
+                cmplx(buffer(m,i), 0.0d0, real64)
         end do
-        fac = m / sumw
-
-        ! Compute the transform
-        call dfftf(m, buffer(:,i), work)
-
-        ! Scale the transform
-        rst(1,i) = fac * scale * cmplx(buffer(1,i), 0.0d0, real64)
-        do k = 2, nend
-            rst(k,i) = fac * scale * cmplx(buffer(2*k-1,i), &
-                buffer(2*k,i), real64)
-        end do
-        if (nend /= nxfrm) rst(nxfrm,i) = fac * scale * &
-            cmplx(buffer(m,i), 0.0d0, real64)
-    end do
 !$OMP END DO
 !$OMP END PARALLEL
+    else
+        do i = 1, nk
+            ! Locate the portion of the signal on which to operate
+            i1 = int((i - 1) * del + 0.5d0, int32)
+            if (present(offsets)) offsets(i) = i1 + 1
+
+            ! Apply the window
+            j = 0
+            sumw = 0.0d0
+            do k = 1, m
+                w = win%evaluate(j)
+                j = j + 1
+                sumw = sumw + w
+                buffer(k,i) = w * x(i1+k)
+            end do
+            fac = m / sumw
+
+            ! Compute the transform
+            call dfftf(m, buffer(:,i), work)
+
+            ! Scale the transform
+            rst(1,i) = fac * scale * cmplx(buffer(1,i), 0.0d0, real64)
+            do k = 2, nend
+                rst(k,i) = fac * scale * cmplx(buffer(2*k-1,i), &
+                    buffer(2*k,i), real64)
+            end do
+            if (nend /= nxfrm) rst(nxfrm,i) = fac * scale * &
+                cmplx(buffer(m,i), 0.0d0, real64)
+        end do
+    end if
 
     ! End
     return
