@@ -20,7 +20,7 @@ program example
     real(real64), allocatable, dimension(:) :: t, x, f, s
     real(real64), allocatable, dimension(:,:) :: mag
     real(real64), allocatable, dimension(:,:,:) :: xy
-    type(hamming_window) :: win
+    type(hann_window) :: win
 
     ! Plot Variables
     type(surface_plot) :: plt
@@ -52,7 +52,7 @@ program example
     allocate(s(size(mag, 2)))
     do i = 1, size(s)
         if (i == 1) then
-            s(i) = 0.5d0 * window_size / fs
+            s(i) = offsets(i) / fs
         else
             s(i) = i * (offsets(i) - offsets(i-1)) / fs
         end if
