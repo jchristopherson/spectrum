@@ -20,6 +20,9 @@ program test
     local = test_convolution()
     if (.not.local) flag = 3
 
+    local = test_spectrogram()
+    if (.not.local) flag = 4
+
     ! Output
     stop flag
 end program

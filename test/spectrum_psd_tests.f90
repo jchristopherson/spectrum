@@ -101,4 +101,56 @@ function test_csd() result(rst)
     end if
 end function
 
+
+
+
+function test_spectrogram() result(rst)
+    ! Arguments
+    logical :: rst
+
+    ! Parameters
+    integer(int32), parameter :: window_size = 512
+    real(real64), parameter :: fs = 2048.0d0
+    real(real64), parameter :: f0 = 1.0d2
+    real(real64), parameter :: f1 = 1.0d3
+    real(real64), parameter :: duration = 50.0d0
+    real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+
+    ! Local Variables
+    integer(int32) :: i, npts
+    real(real64) :: k, check, dt
+    complex(real64), allocatable, dimension(:,:) :: r
+    real(real64), allocatable, dimension(:) :: t, x
+    real(real64), allocatable, dimension(:,:) :: mag, magp
+    type(hann_window) :: win
+
+    ! Create the exponential chirp signal
+    npts = floor(duration * fs) + 1
+    allocate(t(npts))
+    dt = duration / (npts - 1.0d0)
+    t = (/ (dt * i, i = 0, npts - 1) /)
+    k = (f1 / f0)**(1.0 / duration)
+    x = sin(2.0d0 * pi * f0 * (k**t - 1.0d0) / log(k))
+
+    ! Define the window
+    win%size = window_size
+
+    ! Compute the spectrogram of x - ensure it's done in a serial manner
+    r = spectrogram(win, x, par = .false.)
+
+    ! Compute the magnitude
+    mag = abs(r)
+
+    ! Repeat the computation, but perform in a parallel manner
+    r = spectrogram(win, x, par = .true.)
+    magp = abs(r)
+    
+    ! Ensure the matrices return the same output
+    rst = .true.
+    if (.not.assert(mag, magp)) then
+        rst = .false.
+        print '(A)', "TEST FAILED: test_spectrogram 1-1"
+    end if
+end function
+
 end module
