@@ -115,6 +115,7 @@ function test_spectrogram() result(rst)
     real(real64), parameter :: f1 = 1.0d3
     real(real64), parameter :: duration = 50.0d0
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    real(real64), parameter :: tol = 1.0d-1
 
     ! Local Variables
     integer(int32) :: i, npts
@@ -122,7 +123,7 @@ function test_spectrogram() result(rst)
     complex(real64), allocatable, dimension(:,:) :: r
     real(real64), allocatable, dimension(:) :: t, x
     real(real64), allocatable, dimension(:,:) :: mag, magp
-    type(hann_window) :: win
+    type(flat_top_window) :: win
 
     ! Create the exponential chirp signal
     npts = floor(duration * fs) + 1
@@ -151,6 +152,15 @@ function test_spectrogram() result(rst)
         rst = .false.
         print '(A)', "TEST FAILED: test_spectrogram 1-1"
     end if
+
+    ! Ensure the magnitude of the largest component of each transform is one
+    do i = 1, size(mag, 2)
+        check = maxval(mag(:,i))
+        if (.not.assert(check, 1.0d0, tol)) then
+            rst = .false.
+            print '(A)', "TEST FAILED: test_spectrogram 1-2"
+        end if
+    end do
 end function
 
 end module
