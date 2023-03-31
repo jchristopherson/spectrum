@@ -10,5 +10,6 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_csd.f90
     ${dir}/spectrum_fft.f90
     ${dir}/spectrum_convolve.f90
+    ${dir}/spectrum_filter.f90
 )
 set(SPECTRUM_SOURCES ${SPECTRUM_SOURCES} PARENT_SCOPE)

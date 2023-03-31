@@ -804,5 +804,43 @@ module spectrum
         end function
     end interface
 
+! ******************************************************************************
+! SPECTRUM_FILTER.F90
+! ------------------------------------------------------------------------------
+    !> @brief Applies a Gaussian filter to a signal.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function gaussian_filter( &
+    !!  real(real64) x(:), &
+    !!  real(real64) alpha, &
+    !!  integer(int32) k, &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x An N-element array containing the signal to filter.
+    !! @param[in] alpha A parameter that specifies the number of standard
+    !!  deviations \f$ \sigma \f$ desired in the kernel.  This parameter is
+    !!  related to the standard deviation by \f$ \sigma = \frac{k - 1}{2 \alpha}
+    !!  \f$.
+    !! @param[in] k The kernel size.  This value must be a positive, non-zero
+    !!  integer value less than N.
+    !! @param[in,out] err
+    !!
+    !! @return An N-element array containing the filtered signal.
+    interface gaussian_filter
+        module procedure :: gaussian_filter_1
+    end interface
+
+    interface
+        module function gaussian_filter_1(x, alpha, k, err) result(rst)
+            real(real64), intent(in) :: x(:), alpha
+            integer(int32), intent(in) :: k
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+    end interface
+
 ! ------------------------------------------------------------------------------
 end module
