@@ -16,6 +16,7 @@ module spectrum
     public :: hamming_window
     public :: welch_window
     public :: blackman_harris_window
+    public :: flat_top_window
     public :: compute_transform_length
     public :: frequency_bin_width
     public :: is_power_of_two
@@ -219,6 +220,40 @@ module spectrum
         procedure, public :: evaluate => bhw_eval
     end type
 
+    !> @brief Defines a flat top window.
+    !!
+    !! @par
+    !! A flat top window is defined as follows.
+    !!
+    !! @par
+    !! \f$ w(j) = 0.21557895 - 
+    !! 0.41663158 \cos \left( \frac{2 \pi j}{N} \right) +
+    !! 0.277263158 \cos \left( \frac{4 \pi j}{N} \right) -
+    !! 0.083578947 \cos \left( \frac{6 \pi j}{N} \right)  +
+    !! 0.006947368 \cos \left( \frac{8 \pi j}{N} \right) \f$
+    !!
+    !! @par See Also
+    !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+    type, extends(window) :: flat_top_window
+    contains
+        !> @brief Evaluates the window function.
+        !!
+        !! @par Syntax
+        !! @code{.f90}
+        !! real(real64) pure function evaluate( &
+        !!  class(flat_top_window) this, &
+        !!  integer(int32) bin &
+        !! )
+        !! @endcode
+        !!
+        !! @param[in] this The @ref flat_top_window object.
+        !! @param[in] bin The index or bin number (0 <= @p bin <= n) where n
+        !!  is the size of the window.
+        !!
+        !! @return The window function value.
+        procedure, public :: evaluate => ftw_eval
+    end type
+
     interface
         pure module function rw_eval(this, bin) result(rst)
             class(rectangular_window), intent(in) :: this
@@ -246,6 +281,12 @@ module spectrum
 
         pure module function bhw_eval(this, bin) result(rst)
             class(blackman_harris_window), intent(in) :: this
+            integer(int32), intent(in) :: bin
+            real(real64) :: rst
+        end function
+
+        pure module function ftw_eval(this, bin) result(rst)
+            class(flat_top_window), intent(in) :: this
             integer(int32), intent(in) :: bin
             real(real64) :: rst
         end function

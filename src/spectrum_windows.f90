@@ -46,4 +46,23 @@ pure module function bhw_eval(this, bin) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+pure module function ftw_eval(this, bin) result(rst)
+    class(flat_top_window), intent(in) :: this
+    integer(int32), intent(in) :: bin
+    real(real64) :: rst
+    
+    real(real64), parameter :: a0 = 0.21557895d0
+    real(real64), parameter :: a1 = 0.41663158d0
+    real(real64), parameter :: a2 = 0.277263158d0
+    real(real64), parameter :: a3 = 8.3578947d-2
+    real(real64), parameter :: a4 = 6.947368d-3
+
+    real(real64) :: arg
+    arg = pi * bin / this%size
+
+    rst = a0 - a1 * cos(2.0d0 * arg) + a2 * cos(4.0d0 * arg) - &
+        a3 * cos(6.0d0 * arg) + a4 * cos(8.0d0 * arg)
+end function
+
+! ------------------------------------------------------------------------------
 end submodule
