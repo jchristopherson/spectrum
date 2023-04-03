@@ -82,13 +82,114 @@ module function gaussian_filter_1(x, alpha, k, err) result(rst)
 101 format(A)
 end function
 
+! ******************************************************************************
+! TOTAL VARIATION FILTERING
 ! ------------------------------------------------------------------------------
+! REF:
+! https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf
+module function filter_tv_1(x, lambda, niter, err) result(rst)
+    ! Arguments
+    real(real64), intent(in) :: x(:), lambda
+    integer(int32), intent(in), optional :: niter
+    class(errors), intent(inout), optional, target :: err
+    real(real64), allocatable :: rst(:)
+
+    ! Parameters
+    real(real64), parameter :: alpha = 4.0d0
+
+    ! Local Variables
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    character(len = :), allocatable :: errmsg
+    integer(int32) :: i, k, nit, n, flag
+    real(real64) :: t
+    real(real64), allocatable :: z(:), work(:), dx(:)
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    if (present(niter)) then
+        nit = niter
+    else
+        nit = 10
+    end if
+    n = size(x)
+
+    ! Input Checking
+    if (nit < 1) go to 20
+
+    ! Memory Allocations
+    allocate(rst(n), stat = flag)
+    if (flag == 0) allocate(z(n - 1), stat = flag, source = 0.0d0)
+    if (flag == 0) allocate(dx(n - 1), stat = flag)
+    if (flag == 0) allocate(work(n), stat = flag)
+    if (flag /= 0) go to 10
+
+    ! Process
+    t = 0.5d0 * lambda
+    do i = 1, nit
+        call difference(z, work(2:n-1))
+        work(1) = z(1)
+        work(n) = -z(n - 1)
+        rst = x + work
+
+        call difference(rst, dx)
+        do k = 1, n - 1
+            z(k) = z(k) + dx(k) / alpha
+            z(k) = max(min(z(k), t), -t)
+        end do
+    end do
+
+    ! End
+    return
+
+    ! Memory Error
+10  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "Memory allocation error flag ", flag, "."
+    call errmgr%report_error("filter_tv_1", trim(errmsg), &
+        SPCTRM_MEMORY_ERROR)
+    return
+
+    ! Invalid Input Error
+20  continue
+    call errmgr%report_error("filter_tv_1", "The number of input " // &
+        "iterations must be at least 1.", SPCTRM_INVALID_INPUT_ERROR)
+    return
+
+    ! Formatting
+    100 format(A, I0, A)
+    101 format(A)
+end function
 
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
 
+! ******************************************************************************
+! HELPER ROUTINES
 ! ------------------------------------------------------------------------------
+! Computes the difference between elements in an array.
+!
+! - x: An N-element array.
+! - dx: The N-1 element results array.
+subroutine difference(x, dx)
+    ! Arguments
+    real(real64), intent(in) :: x(:)
+    real(real64), intent(out) :: dx(:)
+
+    ! Local Variables
+    integer(int32) :: i, n
+
+    ! Process
+    n = size(x)
+    do i = 1, n - 1
+        dx(i) = x(i+1) - x(i)
+    end do
+end subroutine
 
 ! ------------------------------------------------------------------------------
 end submodule

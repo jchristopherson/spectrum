@@ -25,6 +25,8 @@ module spectrum
     public :: csd
     public :: spectrogram
     public :: convolve
+    public :: gaussian_filter
+    public :: tv_filter
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
@@ -826,17 +828,65 @@ module spectrum
     !!  \f$.
     !! @param[in] k The kernel size.  This value must be a positive, non-zero
     !!  integer value less than N.
-    !! @param[in,out] err
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p k is not within the proper
+    !!      bounds.
     !!
     !! @return An N-element array containing the filtered signal.
     interface gaussian_filter
         module procedure :: gaussian_filter_1
     end interface
 
+    !> @brief Applies a total-variation filter to a signal.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function tv_filter( &
+    !!  real(real64) x(:),
+    !!  real(real64) lambda,
+    !!  optional integer(int32) niter,
+    !!  optional class(errors), intent(inout) err
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x An N-element array containing the signal to filter.
+    !! @param[in] lambda The regularization parameter.  The actual value to use
+    !!  is problem dependent, but the noisier the data, the larger this value
+    !!  should be.  A good starting point is typically 0.3 - 0.5; however, the
+    !!  actual value is problem dependent.
+    !! @param[in] niter An optional parameter controlling the number of 
+    !!  iterations performed.  The default limit is 10 iterations.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p niter is less than one.
+    !!
+    !! @return An N-element array containing the filtered signal.
+    interface tv_filter
+        module procedure :: filter_tv_1
+    end interface
+
     interface
         module function gaussian_filter_1(x, alpha, k, err) result(rst)
             real(real64), intent(in) :: x(:), alpha
             integer(int32), intent(in) :: k
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+
+        module function filter_tv_1(x, lambda, niter, err) result(rst)
+            real(real64), intent(in) :: x(:), lambda
+            integer(int32), intent(in), optional :: niter
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function
