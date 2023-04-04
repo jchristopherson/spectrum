@@ -110,7 +110,7 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
     real(real64), intent(out), target :: work(:)
 
     ! Local Variables
-    integer(int32) :: i, k, nk, nx, m, n, noff, lw, lwork
+    integer(int32) :: k, nx, n, lw, lwork, nk
     real(real64) :: del
     real(real64), pointer :: zx(:), zy(:), w(:)
 
@@ -118,13 +118,7 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
     xfrms = 0.0d0
     nx = size(x)
     n = win%size
-    m = compute_transform_length(n)
-    nk = (nx - 1) / m
-    if (nk > 1) then
-        del = (nx - n) / (nk - 1.0d0)
-    else
-        del = 0.0d0
-    end if
+    nk = compute_overlap_segment_count(nx, n)
     noverlaps = 0
     lw = 4 * n + 15
     lwork = lw + 2 * n
@@ -135,30 +129,11 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
     w(1:lw) => work(2 * n + 1:lwork)
 
     ! Process
-    if (nx < n) then
-        ! Pad with zeros
-        do i = 1, nx
-            zx(i) = x(i)
-            zy(i) = y(i)
-        end do
-        do i = nx + 1, n
-            zx(i) = 0.0d0
-            zy(i) = 0.0d0
-        end do
-
-        ! Add to the buffer
+    do k = 1, nk
+        call overlap(x, k, n, zx)
+        call overlap(y, k, n, zy)
         call buffer_segment(win, zx, zy, xfrms, noverlaps, w)
-    else
-        ! Overlap
-        do k = 0, nk - 1
-            noff = int(k * del + 0.5d0, int32)
-            do i = 1, n
-                zx(i) = x(noff + i)
-                zy(i) = y(noff + i)
-            end do
-            call buffer_segment(win, zx, zy, xfrms, noverlaps, w)
-        end do
-    end if
+    end do
 end subroutine
 
 ! ------------------------------------------------------------------------------

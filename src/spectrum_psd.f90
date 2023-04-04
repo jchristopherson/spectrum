@@ -94,7 +94,7 @@ subroutine overlap_segments(win, x, xfrms, noverlaps, work)
     real(real64), intent(out), target :: work(:)
 
     ! Local Variables
-    integer(int32) :: n, lw, lwork, nk
+    integer(int32) :: k, n, lw, lwork, nk
     real(real64), pointer :: z(:), w(:)
 
     ! Assign Pointers
