@@ -23,3 +23,8 @@ link_library(${PROJECT_NAME} ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
 add_executable(psd_example psd_example.f90)
 link_library(psd_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(psd_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# CSD Example
+add_executable(csd_example csd_example.f90)
+link_library(csd_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(csd_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
