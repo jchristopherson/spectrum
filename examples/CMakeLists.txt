@@ -17,7 +17,7 @@ link_library(gaussian_filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(overlap_example overlap_example.f90)
 link_library(overlap_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(overlap_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
-link_library(${PROJECT_NAME} ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+link_library(overlap_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
 
 # PSD Example
 add_executable(psd_example psd_example.f90)
@@ -28,3 +28,45 @@ link_library(psd_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(csd_example csd_example.f90)
 link_library(csd_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(csd_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Window Example
+add_executable(window_example window_example.f90)
+link_library(window_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(window_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(window_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Hann Window Example
+add_executable(hann_example hann_example.f90)
+link_library(hann_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(hann_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(hann_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Hamming Window Example
+add_executable(hamming_example hamming_example.f90)
+link_library(hamming_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(hamming_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(hamming_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Welch Window Example
+add_executable(welch_example welch_example.f90)
+link_library(welch_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(welch_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(welch_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Blackman-Harris Window Example
+add_executable(blackman_example blackman_example.f90)
+link_library(blackman_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(blackman_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(blackman_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Flat-Top Window Example
+add_executable(flat_top_example flat_top_example.f90)
+link_library(flat_top_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(flat_top_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(flat_top_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Rectangular Window Example
+add_executable(rectangular_example rectangular_example.f90)
+link_library(rectangular_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(rectangular_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(rectangular_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
