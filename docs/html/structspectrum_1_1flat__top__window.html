@@ -141,11 +141,93 @@ Additional Inherited Members</h2></td></tr>
  0.083578947 \cos \left( \frac{6 \pi j}{N} \right)  +
  0.006947368 \cos \left( \frac{8 \pi j}{N} \right) \)</dd></dl>
 <dl class="section user"><dt>See Also</dt><dd><ul>
-<li><a href="https://en.wikipedia.org/wiki/Window_function">Wikipedia</a> </li>
+<li><a href="https://en.wikipedia.org/wiki/Window_function">Wikipedia</a></li>
 </ul>
 </dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following example illustrates the shape of the window and its FFT. <div class="fragment"><div class="line"><span class="keyword">program</span> example</div>
+<div class="line">    <span class="keywordtype">use </span>iso_fortran_env</div>
+<div class="line">    <span class="keywordtype">use </span>ieee_arithmetic</div>
+<div class="line">    <span class="keywordtype">use </span>spectrum</div>
+<div class="line">    <span class="keywordtype">use </span>fftpack</div>
+<div class="line">    <span class="keywordtype">use </span>fplot_core</div>
+<div class="line">    <span class="keywordtype">implicit none</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Parameters</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: winsize = 64</div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: fftsize = 1024</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Local Variables</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span> :: i, j</div>
+<div class="line"><span class="keywordtype">    real</span>(real64) :: freq(fftsize), samples(winsize), w(winsize)</div>
+<div class="line">    <span class="keywordtype">complex(real64)</span> :: wfft(fftsize)</div>
+<div class="line">    <span class="keywordtype">type</span>(flat_top_window) :: win</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot Variables</span></div>
+<div class="line">    <span class="keywordtype">type</span>(plot_2d) :: plt</div>
+<div class="line">    <span class="keywordtype">type</span>(plot_data_2d) :: pd</div>
+<div class="line">    <span class="keywordtype">class</span>(plot_axis), <span class="keywordtype">pointer</span> :: xAxis, yAxis</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Build the window</span></div>
+<div class="line">    win%size = winsize</div>
+<div class="line">    <span class="keywordflow">do</span> i = 1, winsize</div>
+<div class="line">        j = i - 1</div>
+<div class="line">        samples(i) = real(j, real64)</div>
+<div class="line">        w(i) = win%evaluate(j)</div>
+<div class="line"><span class="keywordflow">    end do</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Compute the FFT</span></div>
+<div class="line">    wfft = fftshift( fft(cmplx(w, 0.0d0, real64), fftsize) ) / (0.5d0 * winsize)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot the window</span></div>
+<div class="line">    <span class="keyword">call </span>plt%initialize()</div>
+<div class="line">    xaxis =&gt; plt%get_x_axis()</div>
+<div class="line">    yaxis =&gt; plt%get_y_axis()</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_title(<span class="stringliteral">&quot;Sample&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_title(<span class="stringliteral">&quot;Amplitude&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_autoscale(.false.)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_limits(0.0d0, real(winsize, real64))</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>pd%define_data(samples, w)</div>
+<div class="line">    <span class="keyword">call </span>pd%set_line_width(2.0)</div>
+<div class="line">    <span class="keyword">call </span>plt%push(pd)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>plt%draw()</div>
+<div class="line">    <span class="keyword">call </span>plt%clear_all()</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot the FFT</span></div>
+<div class="line">    freq = linspace(-0.5d0, 0.5d0, fftsize)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_title(<span class="stringliteral">&quot;Normalized Frequency&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_limits(-0.5d0, 0.5d0)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_title(<span class="stringliteral">&quot;Magnitude [dB]&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_autoscale(.false.)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_limits(-1.2d2, 0.0d0)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>pd%define_data(freq, to_db(wfft))</div>
+<div class="line">    <span class="keyword">call </span>plt%push(pd)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>plt%draw()</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">contains</span></div>
+<div class="line">    <span class="keywordtype">pure</span> <span class="keyword">function </span>to_db(x) <span class="keyword">result</span>(rst)</div>
+<div class="line">        <span class="keywordtype">complex(real64)</span>, <span class="keywordtype">intent(in)</span> :: x(:)</div>
+<div class="line"><span class="keywordtype">        real</span>(real64) :: rst(size(x))</div>
+<div class="line"><span class="keywordtype">        real</span>(real64) :: absx(size(x)), mx</div>
+<div class="line">        absx = abs(x)</div>
+<div class="line">        mx = maxval(absx)</div>
+<div class="line">        rst = 2.0d1 * log10(absx / mx)</div>
+<div class="line">        <span class="keywordflow">where</span> (.not.ieee_is_finite(rst)) rst = ieee_value(mx, ieee_quiet_nan)</div>
+<div class="line">    <span class="keyword">end function</span></div>
+<div class="line"><span class="keyword">end program</span></div>
+</div><!-- fragment --> The above program produces the following plots using the <a href="https://github.com/jchristopherson/fplot">FPLOT</a> library. <div class="image">
+<img src="flat_top_example_1a.png" alt=""/>
+</div>
+ <div class="image">
+<img src="flat_top_example_1b.png" alt=""/>
+</div>
+ </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00241">241</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00887">887</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><h2 class="groupheader">Member Function/Subroutine Documentation</h2>
 <a id="a0854b503ecc81ebd68e68e314dbd5b8e" name="a0854b503ecc81ebd68e68e314dbd5b8e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0854b503ecc81ebd68e68e314dbd5b8e">&#9670;&#160;</a></span>evaluate()</h2>
@@ -174,7 +256,7 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The window function value. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00258">258</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00904">904</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 
 </div>
 </div>
