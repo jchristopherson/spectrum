@@ -37,7 +37,7 @@ module function stft(win, x, offsets, par, err) result(rst)
         scale = 2.0d0 / (m - 1.0d0)
     end if
     lwork = 2 * m + 15
-    nk = (nx - 1) / nxfrm
+    nk = compute_overlap_segment_count(nx, m)
     if (nk > 1) then
         del = (nx - m) / (nk - 1.0d0)
     else

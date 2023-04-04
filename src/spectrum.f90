@@ -27,6 +27,8 @@ module spectrum
     public :: convolve
     public :: gaussian_filter
     public :: tv_filter
+    public :: compute_overlap_segment_count
+    public :: overlap
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
@@ -890,6 +892,69 @@ module spectrum
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function
+    end interface
+
+! ******************************************************************************
+! SPECTRUM_OVERLAP.F90
+! ------------------------------------------------------------------------------
+    !> @brief Computes the number of overlapped signals using a nominal 50% 
+    !! overlap.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! integer(int32) pure function compute_overlap_segment_count( &
+    !!  integer(int32) n, &
+    !!  integer(int32) winsize &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] n The total length of the signal being overlapped.
+    !! @param[in] winsize The window size.
+    !! @return The number of segments.
+    interface compute_overlap_segment_count
+        module procedure :: overlap_segment_count_1
+    end interface
+
+    !> @brief Extracts a segment from a signal allowing for a nominally 50% 
+    !! overlap.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! subroutine overlap( &
+    !!  real(real64) x(:), &
+    !!  integer(int32) seg, &
+    !!  integer(int32) winsize, &
+    !!  real(real64) buffer(:), &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x An N-element array containing the entire signal.
+    !! @param[in] seg The one-based index of the segment to extract.
+    !! @param[in] winsize The size of the window (segment).  If this value is
+    !!  less than N, the end of the segment will be padded with zeros.
+    !! @param[out] buffer A @p winsize array where the segment will be written.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p winsize is less than one.
+    interface overlap
+        module procedure :: fill_overlap_buffer_1
+    end interface
+
+    interface
+        pure module function overlap_segment_count_1(n, winsize) result(rst)
+            integer(int32), intent(in) :: n, winsize
+            integer(int32) :: rst
+        end function
+        module subroutine fill_overlap_buffer_1(x, seg, winsize, buffer, err)
+            real(real64), intent(in) :: x(:)
+            integer(int32), intent(in) :: seg, winsize
+            real(real64), intent(out) :: buffer(:)
+            class(errors), intent(inout), optional, target :: err
+        end subroutine
     end interface
 
 ! ------------------------------------------------------------------------------

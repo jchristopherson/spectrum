@@ -6,6 +6,7 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum.f90
     ${dir}/spectrum_windows.f90
     ${dir}/spectrum_routines.f90
+    ${dir}/spectrum_overlap.f90
     ${dir}/spectrum_psd.f90
     ${dir}/spectrum_csd.f90
     ${dir}/spectrum_fft.f90
