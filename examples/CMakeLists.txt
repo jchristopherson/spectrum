@@ -12,3 +12,9 @@ link_library(spectrogram_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(gaussian_filter_example gaussian_filter_example.f90)
 link_library(gaussian_filter_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(gaussian_filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Overlap Example
+add_executable(overlap_example overlap_example.f90)
+link_library(overlap_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(overlap_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+link_library(${PROJECT_NAME} ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})

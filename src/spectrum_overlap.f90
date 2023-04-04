@@ -36,7 +36,7 @@ module subroutine fill_overlap_buffer_1(x, seg, winsize, buffer, err)
     end if
     nx = size(x)
     nxfrm = compute_transform_length(winsize)
-    nk = (nx - 1) / m
+    nk = (nx - 1) / nxfrm
     if (nk > 1) then
         del = (nx - winsize) / (nk - 1.0d0)
     else
