@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['spectrogram_0',['spectrogram',['../interfacespectrum_1_1spectrogram.html',1,'spectrum']]]
+  ['psd_0',['psd',['../interfacespectrum_1_1psd.html',1,'spectrum']]]
 ];

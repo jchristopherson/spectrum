@@ -134,11 +134,80 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1psd.html',''); in
 <li>Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
   Power Spectra: A Method Based on Time Averaging Over Short, Modified 
   Periodograms." IEEE Transactions on Audio and Electroacoustics, AU-15 (2): 70-73, 1967.</li>
-<li><a href="https://en.wikipedia.org/wiki/Welch%27s_method">Wikipedia - Welch's Method</a> </li>
+<li><a href="https://en.wikipedia.org/wiki/Welch%27s_method">Wikipedia - Welch's Method</a></li>
 </ul>
 </dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following example illustrates the use of the PSD routine. <div class="fragment"><div class="line"><span class="keyword">program</span> example</div>
+<div class="line">    <span class="keywordtype">use </span>iso_fortran_env</div>
+<div class="line">    <span class="keywordtype">use </span>spectrum</div>
+<div class="line">    <span class="keywordtype">use </span>fplot_core</div>
+<div class="line">    <span class="keywordtype">implicit none</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Parameters</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: npts = 20000</div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: winsize = 1024</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: sample_rate = 2.048d3</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: freq1 = 5.0d1</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: freq2 = 2.5d2</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: phase1 = 0.0d0</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: phase2 = 4.5d1</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: pi = 2.0d0 * acos(0.0d0)</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: amp1 = 1.5d0</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: amp2 = 7.5d-1</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Local Variables</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span> :: i, nxfrm</div>
+<div class="line"><span class="keywordtype">    real</span>(real64) :: df, dt, t(npts), x(npts)</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">allocatable</span>, <span class="keywordtype">dimension(:)</span> :: pwr, freq</div>
+<div class="line">    <span class="keywordtype">type</span>(hann_window) :: win</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot Variables</span></div>
+<div class="line">    <span class="keywordtype">type</span>(plot_2d) :: plt</div>
+<div class="line">    <span class="keywordtype">type</span>(plot_data_2d) :: pd</div>
+<div class="line">    <span class="keywordtype">class</span>(plot_axis), <span class="keywordtype">pointer</span> :: xAxis, yAxis</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Build the signal - assume units of V</span></div>
+<div class="line">    dt = 1.0d0 / sample_rate</div>
+<div class="line">    t = (/ (dt * i, i = 0, npts - 1) /)</div>
+<div class="line">    x = amp1 * sin(2.0d0 * pi * freq1 * t - pi * phase1 / 1.8d2) + &amp;</div>
+<div class="line">        amp2 * sin(2.0d0 * pi * freq2 * t - pi * phase2 / 1.8d2)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Define the window</span></div>
+<div class="line">    win%size = winsize</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Compute the PSD</span></div>
+<div class="line">    pwr = <a class="code hl_interface" href="interfacespectrum_1_1psd.html">psd</a>(win, x)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Build a corresponding array of frequency values</span></div>
+<div class="line">    df = <a class="code hl_interface" href="interfacespectrum_1_1frequency__bin__width.html">frequency_bin_width</a>(sample_rate, winsize)</div>
+<div class="line">    <span class="keyword">allocate</span>(freq(<span class="keyword">size</span>(pwr)))</div>
+<div class="line">    freq = (/ (df * i, i = 0, <span class="keyword">size</span>(pwr) - 1) /)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot the spectrum</span></div>
+<div class="line">    <span class="keyword">call </span>plt%initialize()</div>
+<div class="line">    xaxis =&gt; plt%get_x_axis()</div>
+<div class="line">    yaxis =&gt; plt%get_y_axis()</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_title(<span class="stringliteral">&quot;f [Hz]&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_title(<span class="stringliteral">&quot;P [V^{2}]&quot;</span>)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_is_log_scaled(.true.)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_use_default_tic_label_format(.false.)</div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_tic_label_format(<span class="stringliteral">&quot;%0.0e&quot;</span>)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>pd%define_data(freq, pwr)</div>
+<div class="line">    <span class="keyword">call </span>pd%set_line_width(2.0)</div>
+<div class="line">    <span class="keyword">call </span>plt%push(pd)</div>
+<div class="line">    <span class="keyword">call </span>plt%draw()</div>
+<div class="line"><span class="keyword">end program</span></div>
+<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00349">spectrum.f90:349</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1psd_html"><div class="ttname"><a href="interfacespectrum_1_1psd.html">spectrum::psd</a></div><div class="ttdoc">Computes the power spectral density (PSD) of a signal via Welch's averaged method.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00528">spectrum.f90:528</a></div></div>
+</div><!-- fragment --> The above program produces the following plot using the <a href="https://github.com/jchristopherson/fplot">FPLOT</a> library. <div class="image">
+<img src="psd_example_1.png" alt=""/>
+</div>
+ </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00412">412</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l00528">528</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><hr/>The documentation for this interface was generated from the following file:<ul>
 <li>D:/Code/spectrum/src/<a class="el" href="spectrum_8f90_source.html">spectrum.f90</a></li>
 </ul>
