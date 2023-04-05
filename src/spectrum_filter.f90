@@ -166,6 +166,86 @@ module function filter_tv_1(x, lambda, niter, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+module function filter_1(b, a, x, delays, err) result(rst)
+    ! Arguments
+    real(real64), intent(in) :: b(:), a(:), x(:)
+    real(real64), intent(out), allocatable, optional, target :: delays(:)
+    class(errors), intent(inout), optional, target :: err
+    real(real64), allocatable :: rst(:)
+
+    ! Parameters
+    real(real64), parameter :: tol = 2.0d0 * epsilon(2.0d0)
+
+    ! Local Variables
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    character(len = :), allocatable :: errmsg
+    integer(int32) :: i, m, na, nb, n, nx, nz, flag
+    real(real64), allocatable :: aa(:), bb(:)
+    real(real64), allocatable, target :: zdef(:)
+    real(real64), pointer :: zptr(:)
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    nx = size(x)
+    na = size(a)
+    nb = size(b)
+    if (na > nb) then
+        n = na
+    else
+        n = nb
+    end if
+
+    ! Input Checking
+
+    ! Memory Allocations
+    if (present(delays)) then
+        nz = size(delays)
+        if (nz /= n - 1) go to 40
+        zptr(1:nz) => delays
+    else
+        allocate(zdef(n - 1), stat = flag, source = 0.0d0)
+        if (flag /= 0) go to 10
+        zptr(1:n-1) => zdef
+    end if
+    allocate(aa(n), stat = flag, source = 0.0d0)
+    if (flag == 0) allocate(bb(n), stat = flag, source = 0.0d0)
+    if (flag == 0) allocate(rst(nx), stat = flag, source = 0.0d0)
+    if (flag /= 0) go to 10
+
+    ! Copy over A & B and scale such that A(1) = 1
+    if (abs(a(1) - 1.0d0) > tol) then
+        bb(1:nb) = b / a(1)
+        aa(1:na) = a / a(1)
+    else
+        bb(1:nb) = b
+        aa(1:na) = a
+    end if
+
+    ! Process
+
+    ! End
+    return
+
+    ! Memory Error Handling
+10  continue
+    return
+
+    ! Filter Coefficient Array A Size Error Handler
+20  continue
+    return
+
+    ! Filter Coefficient Array Value Error Handler
+30  continue
+    return
+
+    ! Delays Size Error
+40  continue
+end function
 
 ! ------------------------------------------------------------------------------
 
