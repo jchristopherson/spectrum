@@ -13,6 +13,10 @@ add_executable(gaussian_filter_example gaussian_filter_example.f90)
 link_library(gaussian_filter_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(gaussian_filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 
+add_executable(gaussian_filter_example_2 gaussian_filter_example_2.f90)
+link_library(gaussian_filter_example_2 ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(gaussian_filter_example_2 ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
 # Overlap Example
 add_executable(overlap_example overlap_example.f90)
 link_library(overlap_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
@@ -70,3 +74,13 @@ add_executable(rectangular_example rectangular_example.f90)
 link_library(rectangular_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(rectangular_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 link_library(rectangular_example ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
+
+# Filter Example
+add_executable(filter_example filter_example.f90)
+link_library(filter_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Total Variation Filter Example
+add_executable(tv_filter_example tv_filter_example.f90)
+link_library(tv_filter_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(tv_filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})

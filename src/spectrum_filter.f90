@@ -277,7 +277,7 @@ module function filter_1(b, a, x, delays, err) result(rst)
 40  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 101) "The filter delay array was expected to be of size ", &
-        n - 1, "; however, was found to be of size ", size(delta), "."
+        n - 1, "; however, was found to be of size ", size(delays), "."
     call errmgr%report_error("filter_1", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
     return
 
@@ -312,7 +312,7 @@ module function avg_filter_1(navg, x, err) result(rst)
     ! Process
     a = 1.0d0
     b = 1.0d0 / navg
-    call filter(b, a, x, err = errmgr)
+    rst = filter(b, a, x, err = errmgr)
 
     ! End
     return
