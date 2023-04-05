@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['rectangular_5fwindow_0',['rectangular_window',['../structspectrum_1_1rectangular__window.html',1,'spectrum']]]
+  ['psd_0',['psd',['../interfacespectrum_1_1psd.html',1,'spectrum']]]
 ];

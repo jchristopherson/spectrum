@@ -128,295 +128,323 @@ $(document).ready(function(){initNavTree('spectrum_8f90_source.html',''); initRe
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1convolve.html">convolve</a></div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1gaussian__filter.html">gaussian_filter</a></div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1tv__filter.html">tv_filter</a></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1compute__overlap__segment__count.html">compute_overlap_segment_count</a></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1overlap.html">overlap</a></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">public</span> :: spctrm_memory_error</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">public</span> :: spctrm_invalid_input_error</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">public</span> :: spctrm_array_size_mismatch_error</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keywordtype">public</span> :: spctrm_full_convolution</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordtype">public</span> :: spctrm_central_convolution</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment">! CONSTANTS</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_MEMORY_ERROR = 10000</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_INVALID_INPUT_ERROR = 10001</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR = 10002</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_FULL_CONVOLUTION = 50000</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_CENTRAL_CONVOLUTION = 50001</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment">! SPECTRUM_WINDOWS.F90</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno"><a class="line" href="structspectrum_1_1window.html">  197</a></span>    <span class="keyword">type</span>, <span class="keyword">abstract</span> :: <a class="code hl_struct" href="structspectrum_1_1window.html">window</a></div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="comment">! Window size.</span></div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">public</span> :: size = 0</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno"><a class="line" href="structspectrum_1_1window.html#acfb9204d6a7ce03545a163f78cb1fb87">  213</a></span>        <span class="keywordtype">procedure</span>(<a class="code hl_interface" href="interfacespectrum_1_1window__function.html">window_function</a>), <span class="keywordtype">public</span>, <span class="keywordtype">deferred</span>, pass :: evaluate</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span> </div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1window__function.html">  217</a></span>        <span class="keywordtype">pure</span> <span class="keyword">function </span><a class="code hl_interface" href="interfacespectrum_1_1window__function.html">window_function</a>(this, bin) <span class="keyword">result</span>(rst)</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            <span class="keywordtype">use </span>iso_fortran_env, <span class="keywordtype">only</span> : real64, int32</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            <span class="keywordtype">import </span><a class="code hl_struct" href="structspectrum_1_1window.html">window</a></div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span> </div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno"><a class="line" href="structspectrum_1_1rectangular__window.html">  311</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1rectangular__window.html">rectangular_window</a></div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno"><a class="line" href="structspectrum_1_1rectangular__window.html#a1f8a355dbbba28927ef466a51774cc17">  328</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; rw_eval</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
-<div class="line"><a id="l00425" name="l00425"></a><span class="lineno"><a class="line" href="structspectrum_1_1hann__window.html">  425</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1hann__window.html">hann_window</a></div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00442" name="l00442"></a><span class="lineno"><a class="line" href="structspectrum_1_1hann__window.html#a374ca3f4cab9b3ee4e390132089f43b7">  442</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; hann_eval</div>
-<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span> </div>
-<div class="line"><a id="l00539" name="l00539"></a><span class="lineno"><a class="line" href="structspectrum_1_1hamming__window.html">  539</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1hamming__window.html">hamming_window</a></div>
-<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00556" name="l00556"></a><span class="lineno"><a class="line" href="structspectrum_1_1hamming__window.html#ac69da98d2b61568ac4cff0aaceb6741a">  556</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; hamming_eval</div>
-<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span> </div>
-<div class="line"><a id="l00653" name="l00653"></a><span class="lineno"><a class="line" href="structspectrum_1_1welch__window.html">  653</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1welch__window.html">welch_window</a></div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00670" name="l00670"></a><span class="lineno"><a class="line" href="structspectrum_1_1welch__window.html#a62ac5ae1595f59d6394a0849a51dbf50">  670</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; welch_eval</div>
-<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span> </div>
-<div class="line"><a id="l00769" name="l00769"></a><span class="lineno"><a class="line" href="structspectrum_1_1blackman__harris__window.html">  769</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1blackman__harris__window.html">blackman_harris_window</a></div>
-<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00786" name="l00786"></a><span class="lineno"><a class="line" href="structspectrum_1_1blackman__harris__window.html#a7bceb285cd86f6d60bf2b83cfb7db287">  786</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; bhw_eval</div>
-<div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span> </div>
-<div class="line"><a id="l00887" name="l00887"></a><span class="lineno"><a class="line" href="structspectrum_1_1flat__top__window.html">  887</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1flat__top__window.html">flat_top_window</a></div>
-<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>    <span class="keyword">contains</span></div>
-<div class="line"><a id="l00904" name="l00904"></a><span class="lineno"><a class="line" href="structspectrum_1_1flat__top__window.html#a0854b503ecc81ebd68e68e314dbd5b8e">  904</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; ftw_eval</div>
-<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span>    <span class="keyword">end type</span></div>
-<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span> </div>
-<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function rw_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>            <span class="keywordtype">class</span>(rectangular_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span> </div>
-<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function hann_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>            <span class="keywordtype">class</span>(hann_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span> </div>
-<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function hamming_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>            <span class="keywordtype">class</span>(hamming_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span> </div>
-<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function welch_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>            <span class="keywordtype">class</span>(welch_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span> </div>
-<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function bhw_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>            <span class="keywordtype">class</span>(blackman_harris_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span> </div>
-<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function ftw_eval(this, bin) result(rst)</div>
-<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>            <span class="keywordtype">class</span>(flat_top_window), <span class="keywordtype">intent(in)</span> :: this</div>
-<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
-<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span> </div>
-<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span><span class="comment">! SPECTRUM_ROUTINES.F90</span></div>
-<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00966" name="l00966"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1compute__transform__length.html">  966</a></span>    <span class="keyword">interface</span> compute_transform_length</div>
-<div class="line"><a id="l00967" name="l00967"></a><span class="lineno">  967</span>        <span class="keyword">module procedure</span> :: compute_xfrm_length_1</div>
-<div class="line"><a id="l00968" name="l00968"></a><span class="lineno">  968</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l00969" name="l00969"></a><span class="lineno">  969</span> </div>
-<div class="line"><a id="l00995" name="l00995"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1frequency__bin__width.html">  995</a></span>    <span class="keyword">interface</span> frequency_bin_width</div>
-<div class="line"><a id="l00996" name="l00996"></a><span class="lineno">  996</span>        <span class="keyword">module procedure</span> :: frequency_bin_width_1</div>
-<div class="line"><a id="l00997" name="l00997"></a><span class="lineno">  997</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l00998" name="l00998"></a><span class="lineno">  998</span> </div>
-<div class="line"><a id="l01009" name="l01009"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1is__power__of__two.html"> 1009</a></span>    <span class="keyword">interface</span> is_power_of_two</div>
-<div class="line"><a id="l01010" name="l01010"></a><span class="lineno"> 1010</span>        <span class="keyword">module procedure</span> :: is_power_of_two_1</div>
-<div class="line"><a id="l01011" name="l01011"></a><span class="lineno"> 1011</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01012" name="l01012"></a><span class="lineno"> 1012</span> </div>
-<div class="line"><a id="l01025" name="l01025"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1next__power__of__two.html"> 1025</a></span>    <span class="keyword">interface</span> next_power_of_two</div>
-<div class="line"><a id="l01026" name="l01026"></a><span class="lineno"> 1026</span>        <span class="keyword">module procedure</span> :: next_power_of_two_1</div>
-<div class="line"><a id="l01027" name="l01027"></a><span class="lineno"> 1027</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01028" name="l01028"></a><span class="lineno"> 1028</span> </div>
-<div class="line"><a id="l01029" name="l01029"></a><span class="lineno"> 1029</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01030" name="l01030"></a><span class="lineno"> 1030</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function compute_xfrm_length_1(n) result(rst)</div>
-<div class="line"><a id="l01031" name="l01031"></a><span class="lineno"> 1031</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
-<div class="line"><a id="l01032" name="l01032"></a><span class="lineno"> 1032</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
-<div class="line"><a id="l01033" name="l01033"></a><span class="lineno"> 1033</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01034" name="l01034"></a><span class="lineno"> 1034</span> </div>
-<div class="line"><a id="l01035" name="l01035"></a><span class="lineno"> 1035</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>frequency_bin_width_1(fs, n) <span class="keyword">result</span>(rst)</div>
-<div class="line"><a id="l01036" name="l01036"></a><span class="lineno"> 1036</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: fs</div>
-<div class="line"><a id="l01037" name="l01037"></a><span class="lineno"> 1037</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
-<div class="line"><a id="l01038" name="l01038"></a><span class="lineno"> 1038</span><span class="keywordtype">            real</span>(real64) :: rst</div>
-<div class="line"><a id="l01039" name="l01039"></a><span class="lineno"> 1039</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01040" name="l01040"></a><span class="lineno"> 1040</span> </div>
-<div class="line"><a id="l01041" name="l01041"></a><span class="lineno"> 1041</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>is_power_of_two_1(n) <span class="keyword">result</span>(rst)</div>
-<div class="line"><a id="l01042" name="l01042"></a><span class="lineno"> 1042</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
-<div class="line"><a id="l01043" name="l01043"></a><span class="lineno"> 1043</span>            <span class="keywordtype">logical</span> :: rst</div>
-<div class="line"><a id="l01044" name="l01044"></a><span class="lineno"> 1044</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01045" name="l01045"></a><span class="lineno"> 1045</span> </div>
-<div class="line"><a id="l01046" name="l01046"></a><span class="lineno"> 1046</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>next_power_of_two_1(n) <span class="keyword">result</span>(rst)</div>
-<div class="line"><a id="l01047" name="l01047"></a><span class="lineno"> 1047</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
-<div class="line"><a id="l01048" name="l01048"></a><span class="lineno"> 1048</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
-<div class="line"><a id="l01049" name="l01049"></a><span class="lineno"> 1049</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01050" name="l01050"></a><span class="lineno"> 1050</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01051" name="l01051"></a><span class="lineno"> 1051</span> </div>
-<div class="line"><a id="l01052" name="l01052"></a><span class="lineno"> 1052</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01053" name="l01053"></a><span class="lineno"> 1053</span><span class="comment">! SPECTRUM_PSD.F90</span></div>
-<div class="line"><a id="l01054" name="l01054"></a><span class="lineno"> 1054</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01174" name="l01174"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1psd.html"> 1174</a></span>    <span class="keyword">interface</span> psd</div>
-<div class="line"><a id="l01175" name="l01175"></a><span class="lineno"> 1175</span>        <span class="keyword">module procedure</span> :: psd_welch</div>
-<div class="line"><a id="l01176" name="l01176"></a><span class="lineno"> 1176</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01177" name="l01177"></a><span class="lineno"> 1177</span> </div>
-<div class="line"><a id="l01178" name="l01178"></a><span class="lineno"> 1178</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01179" name="l01179"></a><span class="lineno"> 1179</span>        <span class="keyword">module</span> function psd_welch(win, x, fs, err) result(rst)</div>
-<div class="line"><a id="l01180" name="l01180"></a><span class="lineno"> 1180</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
-<div class="line"><a id="l01181" name="l01181"></a><span class="lineno"> 1181</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
-<div class="line"><a id="l01182" name="l01182"></a><span class="lineno"> 1182</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: fs</div>
-<div class="line"><a id="l01183" name="l01183"></a><span class="lineno"> 1183</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01184" name="l01184"></a><span class="lineno"> 1184</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
-<div class="line"><a id="l01185" name="l01185"></a><span class="lineno"> 1185</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01186" name="l01186"></a><span class="lineno"> 1186</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01187" name="l01187"></a><span class="lineno"> 1187</span> </div>
-<div class="line"><a id="l01188" name="l01188"></a><span class="lineno"> 1188</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01189" name="l01189"></a><span class="lineno"> 1189</span><span class="comment">! SPECTRUM_CSD.F90</span></div>
-<div class="line"><a id="l01190" name="l01190"></a><span class="lineno"> 1190</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01316" name="l01316"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1csd.html"> 1316</a></span>    <span class="keyword">interface</span> csd</div>
-<div class="line"><a id="l01317" name="l01317"></a><span class="lineno"> 1317</span>        <span class="keyword">module procedure</span> :: csd_welch</div>
-<div class="line"><a id="l01318" name="l01318"></a><span class="lineno"> 1318</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01319" name="l01319"></a><span class="lineno"> 1319</span> </div>
-<div class="line"><a id="l01320" name="l01320"></a><span class="lineno"> 1320</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01321" name="l01321"></a><span class="lineno"> 1321</span>        <span class="keyword">module</span> function csd_welch(win, x, y, fs, err) result(rst)</div>
-<div class="line"><a id="l01322" name="l01322"></a><span class="lineno"> 1322</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
-<div class="line"><a id="l01323" name="l01323"></a><span class="lineno"> 1323</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), y(:)</div>
-<div class="line"><a id="l01324" name="l01324"></a><span class="lineno"> 1324</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: fs</div>
-<div class="line"><a id="l01325" name="l01325"></a><span class="lineno"> 1325</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01326" name="l01326"></a><span class="lineno"> 1326</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
-<div class="line"><a id="l01327" name="l01327"></a><span class="lineno"> 1327</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01328" name="l01328"></a><span class="lineno"> 1328</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01329" name="l01329"></a><span class="lineno"> 1329</span> </div>
-<div class="line"><a id="l01330" name="l01330"></a><span class="lineno"> 1330</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01331" name="l01331"></a><span class="lineno"> 1331</span><span class="comment">! SPECTRUM_FFT.F90</span></div>
-<div class="line"><a id="l01332" name="l01332"></a><span class="lineno"> 1332</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01458" name="l01458"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1spectrogram.html"> 1458</a></span>    <span class="keyword">interface</span> spectrogram</div>
-<div class="line"><a id="l01459" name="l01459"></a><span class="lineno"> 1459</span>        <span class="keyword">module procedure</span> :: stft</div>
-<div class="line"><a id="l01460" name="l01460"></a><span class="lineno"> 1460</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01461" name="l01461"></a><span class="lineno"> 1461</span> </div>
-<div class="line"><a id="l01462" name="l01462"></a><span class="lineno"> 1462</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01463" name="l01463"></a><span class="lineno"> 1463</span>        <span class="keyword">module</span> function stft(win, x, offsets, par, err) result(rst)</div>
-<div class="line"><a id="l01464" name="l01464"></a><span class="lineno"> 1464</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
-<div class="line"><a id="l01465" name="l01465"></a><span class="lineno"> 1465</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
-<div class="line"><a id="l01466" name="l01466"></a><span class="lineno"> 1466</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(out)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">allocatable</span> :: offsets(:)</div>
-<div class="line"><a id="l01467" name="l01467"></a><span class="lineno"> 1467</span>            <span class="keywordtype">logical</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: par</div>
-<div class="line"><a id="l01468" name="l01468"></a><span class="lineno"> 1468</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01469" name="l01469"></a><span class="lineno"> 1469</span>            <span class="keywordtype">complex(real64)</span>, <span class="keywordtype">allocatable</span> :: rst(:,:)</div>
-<div class="line"><a id="l01470" name="l01470"></a><span class="lineno"> 1470</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01471" name="l01471"></a><span class="lineno"> 1471</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01472" name="l01472"></a><span class="lineno"> 1472</span> </div>
-<div class="line"><a id="l01473" name="l01473"></a><span class="lineno"> 1473</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01474" name="l01474"></a><span class="lineno"> 1474</span><span class="comment">! SPECTRUM_CONVOLVE.F90</span></div>
-<div class="line"><a id="l01475" name="l01475"></a><span class="lineno"> 1475</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01590" name="l01590"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1convolve.html"> 1590</a></span>    <span class="keyword">interface</span> convolve</div>
-<div class="line"><a id="l01591" name="l01591"></a><span class="lineno"> 1591</span>        <span class="keyword">module procedure</span> :: convolve_1</div>
-<div class="line"><a id="l01592" name="l01592"></a><span class="lineno"> 1592</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01593" name="l01593"></a><span class="lineno"> 1593</span> </div>
-<div class="line"><a id="l01594" name="l01594"></a><span class="lineno"> 1594</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01595" name="l01595"></a><span class="lineno"> 1595</span>        <span class="keyword">module</span> function convolve_1(x, y, method, err) result(rst)</div>
-<div class="line"><a id="l01596" name="l01596"></a><span class="lineno"> 1596</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), y(:)</div>
-<div class="line"><a id="l01597" name="l01597"></a><span class="lineno"> 1597</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: method</div>
-<div class="line"><a id="l01598" name="l01598"></a><span class="lineno"> 1598</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01599" name="l01599"></a><span class="lineno"> 1599</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
-<div class="line"><a id="l01600" name="l01600"></a><span class="lineno"> 1600</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01601" name="l01601"></a><span class="lineno"> 1601</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01602" name="l01602"></a><span class="lineno"> 1602</span> </div>
-<div class="line"><a id="l01603" name="l01603"></a><span class="lineno"> 1603</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01604" name="l01604"></a><span class="lineno"> 1604</span><span class="comment">! SPECTRUM_FILTER.F90</span></div>
-<div class="line"><a id="l01605" name="l01605"></a><span class="lineno"> 1605</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01636" name="l01636"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1gaussian__filter.html"> 1636</a></span>    <span class="keyword">interface</span> gaussian_filter</div>
-<div class="line"><a id="l01637" name="l01637"></a><span class="lineno"> 1637</span>        <span class="keyword">module procedure</span> :: gaussian_filter_1</div>
-<div class="line"><a id="l01638" name="l01638"></a><span class="lineno"> 1638</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01639" name="l01639"></a><span class="lineno"> 1639</span> </div>
-<div class="line"><a id="l01669" name="l01669"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1tv__filter.html"> 1669</a></span>    <span class="keyword">interface</span> tv_filter</div>
-<div class="line"><a id="l01670" name="l01670"></a><span class="lineno"> 1670</span>        <span class="keyword">module procedure</span> :: filter_tv_1</div>
-<div class="line"><a id="l01671" name="l01671"></a><span class="lineno"> 1671</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01672" name="l01672"></a><span class="lineno"> 1672</span> </div>
-<div class="line"><a id="l01673" name="l01673"></a><span class="lineno"> 1673</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01674" name="l01674"></a><span class="lineno"> 1674</span>        <span class="keyword">module</span> function gaussian_filter_1(x, alpha, k, err) result(rst)</div>
-<div class="line"><a id="l01675" name="l01675"></a><span class="lineno"> 1675</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), alpha</div>
-<div class="line"><a id="l01676" name="l01676"></a><span class="lineno"> 1676</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: k</div>
-<div class="line"><a id="l01677" name="l01677"></a><span class="lineno"> 1677</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01678" name="l01678"></a><span class="lineno"> 1678</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
-<div class="line"><a id="l01679" name="l01679"></a><span class="lineno"> 1679</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01680" name="l01680"></a><span class="lineno"> 1680</span> </div>
-<div class="line"><a id="l01681" name="l01681"></a><span class="lineno"> 1681</span>        <span class="keyword">module</span> function filter_tv_1(x, lambda, niter, err) result(rst)</div>
-<div class="line"><a id="l01682" name="l01682"></a><span class="lineno"> 1682</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), lambda</div>
-<div class="line"><a id="l01683" name="l01683"></a><span class="lineno"> 1683</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: niter</div>
-<div class="line"><a id="l01684" name="l01684"></a><span class="lineno"> 1684</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01685" name="l01685"></a><span class="lineno"> 1685</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
-<div class="line"><a id="l01686" name="l01686"></a><span class="lineno"> 1686</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01687" name="l01687"></a><span class="lineno"> 1687</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01688" name="l01688"></a><span class="lineno"> 1688</span> </div>
-<div class="line"><a id="l01689" name="l01689"></a><span class="lineno"> 1689</span><span class="comment">! ******************************************************************************</span></div>
-<div class="line"><a id="l01690" name="l01690"></a><span class="lineno"> 1690</span><span class="comment">! SPECTRUM_OVERLAP.F90</span></div>
-<div class="line"><a id="l01691" name="l01691"></a><span class="lineno"> 1691</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01706" name="l01706"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1compute__overlap__segment__count.html"> 1706</a></span>    <span class="keyword">interface</span> compute_overlap_segment_count</div>
-<div class="line"><a id="l01707" name="l01707"></a><span class="lineno"> 1707</span>        <span class="keyword">module procedure</span> :: overlap_segment_count_1</div>
-<div class="line"><a id="l01708" name="l01708"></a><span class="lineno"> 1708</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01709" name="l01709"></a><span class="lineno"> 1709</span> </div>
-<div class="line"><a id="l01833" name="l01833"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1overlap.html"> 1833</a></span>    <span class="keyword">interface</span> overlap</div>
-<div class="line"><a id="l01834" name="l01834"></a><span class="lineno"> 1834</span>        <span class="keyword">module procedure</span> :: fill_overlap_buffer_1</div>
-<div class="line"><a id="l01835" name="l01835"></a><span class="lineno"> 1835</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01836" name="l01836"></a><span class="lineno"> 1836</span> </div>
-<div class="line"><a id="l01837" name="l01837"></a><span class="lineno"> 1837</span>    <span class="keyword">interface</span></div>
-<div class="line"><a id="l01838" name="l01838"></a><span class="lineno"> 1838</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function overlap_segment_count_1(n, winsize) result(rst)</div>
-<div class="line"><a id="l01839" name="l01839"></a><span class="lineno"> 1839</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n, winsize</div>
-<div class="line"><a id="l01840" name="l01840"></a><span class="lineno"> 1840</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
-<div class="line"><a id="l01841" name="l01841"></a><span class="lineno"> 1841</span>        <span class="keyword">end function</span></div>
-<div class="line"><a id="l01842" name="l01842"></a><span class="lineno"> 1842</span>        <span class="keyword">module</span> subroutine fill_overlap_buffer_1(x, seg, winsize, buffer, err)</div>
-<div class="line"><a id="l01843" name="l01843"></a><span class="lineno"> 1843</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
-<div class="line"><a id="l01844" name="l01844"></a><span class="lineno"> 1844</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: seg, winsize</div>
-<div class="line"><a id="l01845" name="l01845"></a><span class="lineno"> 1845</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(out)</span> :: buffer(:)</div>
-<div class="line"><a id="l01846" name="l01846"></a><span class="lineno"> 1846</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
-<div class="line"><a id="l01847" name="l01847"></a><span class="lineno"> 1847</span>        <span class="keyword">end subroutine</span></div>
-<div class="line"><a id="l01848" name="l01848"></a><span class="lineno"> 1848</span>    <span class="keyword">end interface</span></div>
-<div class="line"><a id="l01849" name="l01849"></a><span class="lineno"> 1849</span> </div>
-<div class="line"><a id="l01850" name="l01850"></a><span class="lineno"> 1850</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l01851" name="l01851"></a><span class="lineno"> 1851</span><span class="keyword">end module</span></div>
-<div class="ttc" id="ainterfacespectrum_1_1compute__overlap__segment__count_html"><div class="ttname"><a href="interfacespectrum_1_1compute__overlap__segment__count.html">spectrum::compute_overlap_segment_count</a></div><div class="ttdoc">Computes the number of overlapped signals using a nominal 50% overlap.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01706">spectrum.f90:1706</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1compute__transform__length_html"><div class="ttname"><a href="interfacespectrum_1_1compute__transform__length.html">spectrum::compute_transform_length</a></div><div class="ttdoc">Computes the length of the positive half of a discrete Fourier transform for a specific signal length...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00966">spectrum.f90:966</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1convolve_html"><div class="ttname"><a href="interfacespectrum_1_1convolve.html">spectrum::convolve</a></div><div class="ttdoc">Computes the convolution of a signal and kernel.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01590">spectrum.f90:1590</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1csd_html"><div class="ttname"><a href="interfacespectrum_1_1csd.html">spectrum::csd</a></div><div class="ttdoc">Computes the cross spectral density (CSD) of a signal via Welch's averaged method (sometimes referred...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01316">spectrum.f90:1316</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00995">spectrum.f90:995</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1gaussian__filter_html"><div class="ttname"><a href="interfacespectrum_1_1gaussian__filter.html">spectrum::gaussian_filter</a></div><div class="ttdoc">Applies a Gaussian filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01636">spectrum.f90:1636</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1is__power__of__two_html"><div class="ttname"><a href="interfacespectrum_1_1is__power__of__two.html">spectrum::is_power_of_two</a></div><div class="ttdoc">Tests to see if a value is an integer power of two.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01009">spectrum.f90:1009</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1next__power__of__two_html"><div class="ttname"><a href="interfacespectrum_1_1next__power__of__two.html">spectrum::next_power_of_two</a></div><div class="ttdoc">Provides the next higher integer power of two.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01025">spectrum.f90:1025</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1overlap_html"><div class="ttname"><a href="interfacespectrum_1_1overlap.html">spectrum::overlap</a></div><div class="ttdoc">Extracts a segment from a signal allowing for a nominally 50% overlap.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01833">spectrum.f90:1833</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1psd_html"><div class="ttname"><a href="interfacespectrum_1_1psd.html">spectrum::psd</a></div><div class="ttdoc">Computes the power spectral density (PSD) of a signal via Welch's averaged method.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01174">spectrum.f90:1174</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1spectrogram_html"><div class="ttname"><a href="interfacespectrum_1_1spectrogram.html">spectrum::spectrogram</a></div><div class="ttdoc">Computes the spectrogram of a signal. Only the positive half of the transform is returned....</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01458">spectrum.f90:1458</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1tv__filter_html"><div class="ttname"><a href="interfacespectrum_1_1tv__filter.html">spectrum::tv_filter</a></div><div class="ttdoc">Applies a total-variation filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01669">spectrum.f90:1669</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1window__function_html"><div class="ttname"><a href="interfacespectrum_1_1window__function.html">spectrum::window_function</a></div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00217">spectrum.f90:217</a></div></div>
-<div class="ttc" id="astructspectrum_1_1blackman__harris__window_html"><div class="ttname"><a href="structspectrum_1_1blackman__harris__window.html">spectrum::blackman_harris_window</a></div><div class="ttdoc">Defines a Blackman-Harris window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00769">spectrum.f90:769</a></div></div>
-<div class="ttc" id="astructspectrum_1_1flat__top__window_html"><div class="ttname"><a href="structspectrum_1_1flat__top__window.html">spectrum::flat_top_window</a></div><div class="ttdoc">Defines a flat top window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00887">spectrum.f90:887</a></div></div>
-<div class="ttc" id="astructspectrum_1_1hamming__window_html"><div class="ttname"><a href="structspectrum_1_1hamming__window.html">spectrum::hamming_window</a></div><div class="ttdoc">Defines a Hamming window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00539">spectrum.f90:539</a></div></div>
-<div class="ttc" id="astructspectrum_1_1hann__window_html"><div class="ttname"><a href="structspectrum_1_1hann__window.html">spectrum::hann_window</a></div><div class="ttdoc">Defines a Hann window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00425">spectrum.f90:425</a></div></div>
-<div class="ttc" id="astructspectrum_1_1rectangular__window_html"><div class="ttname"><a href="structspectrum_1_1rectangular__window.html">spectrum::rectangular_window</a></div><div class="ttdoc">Defines a rectangular window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00311">spectrum.f90:311</a></div></div>
-<div class="ttc" id="astructspectrum_1_1welch__window_html"><div class="ttname"><a href="structspectrum_1_1welch__window.html">spectrum::welch_window</a></div><div class="ttdoc">Defines a Welch window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00653">spectrum.f90:653</a></div></div>
-<div class="ttc" id="astructspectrum_1_1window_html"><div class="ttname"><a href="structspectrum_1_1window.html">spectrum::window</a></div><div class="ttdoc">Defines a window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00197">spectrum.f90:197</a></div></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1filter.html">filter</a></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1moving__average__filter.html">moving_average_filter</a></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1compute__overlap__segment__count.html">compute_overlap_segment_count</a></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">public</span> :: <a class="code hl_interface" href="interfacespectrum_1_1overlap.html">overlap</a></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">public</span> :: spctrm_memory_error</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keywordtype">public</span> :: spctrm_invalid_input_error</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordtype">public</span> :: spctrm_array_size_mismatch_error</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="keywordtype">public</span> :: spctrm_array_size_error</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordtype">public</span> :: spctrm_full_convolution</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordtype">public</span> :: spctrm_central_convolution</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">! CONSTANTS</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_MEMORY_ERROR = 10000</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_INVALID_INPUT_ERROR = 10001</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR = 10002</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_ARRAY_SIZE_ERROR = 10003</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_FULL_CONVOLUTION = 50000</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: SPCTRM_CENTRAL_CONVOLUTION = 50001</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment">! SPECTRUM_WINDOWS.F90</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno"><a class="line" href="structspectrum_1_1window.html">  201</a></span>    <span class="keyword">type</span>, <span class="keyword">abstract</span> :: <a class="code hl_struct" href="structspectrum_1_1window.html">window</a></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="comment">! Window size.</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">public</span> :: size = 0</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno"><a class="line" href="structspectrum_1_1window.html#acfb9204d6a7ce03545a163f78cb1fb87">  217</a></span>        <span class="keywordtype">procedure</span>(<a class="code hl_interface" href="interfacespectrum_1_1window__function.html">window_function</a>), <span class="keywordtype">public</span>, <span class="keywordtype">deferred</span>, pass :: evaluate</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span> </div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1window__function.html">  221</a></span>        <span class="keywordtype">pure</span> <span class="keyword">function </span><a class="code hl_interface" href="interfacespectrum_1_1window__function.html">window_function</a>(this, bin) <span class="keyword">result</span>(rst)</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            <span class="keywordtype">use </span>iso_fortran_env, <span class="keywordtype">only</span> : real64, int32</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>            <span class="keywordtype">import </span><a class="code hl_struct" href="structspectrum_1_1window.html">window</a></div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno"><a class="line" href="structspectrum_1_1rectangular__window.html">  315</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1rectangular__window.html">rectangular_window</a></div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno"><a class="line" href="structspectrum_1_1rectangular__window.html#a1f8a355dbbba28927ef466a51774cc17">  332</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; rw_eval</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span> </div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno"><a class="line" href="structspectrum_1_1hann__window.html">  429</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1hann__window.html">hann_window</a></div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno"><a class="line" href="structspectrum_1_1hann__window.html#a374ca3f4cab9b3ee4e390132089f43b7">  446</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; hann_eval</div>
+<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span> </div>
+<div class="line"><a id="l00543" name="l00543"></a><span class="lineno"><a class="line" href="structspectrum_1_1hamming__window.html">  543</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1hamming__window.html">hamming_window</a></div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno"><a class="line" href="structspectrum_1_1hamming__window.html#ac69da98d2b61568ac4cff0aaceb6741a">  560</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; hamming_eval</div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span> </div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno"><a class="line" href="structspectrum_1_1welch__window.html">  657</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1welch__window.html">welch_window</a></div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00674" name="l00674"></a><span class="lineno"><a class="line" href="structspectrum_1_1welch__window.html#a62ac5ae1595f59d6394a0849a51dbf50">  674</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; welch_eval</div>
+<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span> </div>
+<div class="line"><a id="l00773" name="l00773"></a><span class="lineno"><a class="line" href="structspectrum_1_1blackman__harris__window.html">  773</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1blackman__harris__window.html">blackman_harris_window</a></div>
+<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00790" name="l00790"></a><span class="lineno"><a class="line" href="structspectrum_1_1blackman__harris__window.html#a7bceb285cd86f6d60bf2b83cfb7db287">  790</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; bhw_eval</div>
+<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span> </div>
+<div class="line"><a id="l00891" name="l00891"></a><span class="lineno"><a class="line" href="structspectrum_1_1flat__top__window.html">  891</a></span>    <span class="keyword">type</span>, <span class="keyword">extends</span>(<a class="code hl_struct" href="structspectrum_1_1window.html">window</a>) :: <a class="code hl_struct" href="structspectrum_1_1flat__top__window.html">flat_top_window</a></div>
+<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span>    <span class="keyword">contains</span></div>
+<div class="line"><a id="l00908" name="l00908"></a><span class="lineno"><a class="line" href="structspectrum_1_1flat__top__window.html#a0854b503ecc81ebd68e68e314dbd5b8e">  908</a></span>        <span class="keywordtype">procedure</span>, <span class="keywordtype">public</span> :: evaluate =&gt; ftw_eval</div>
+<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>    <span class="keyword">end type</span></div>
+<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span> </div>
+<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function rw_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>            <span class="keywordtype">class</span>(rectangular_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span> </div>
+<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function hann_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span>            <span class="keywordtype">class</span>(hann_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span> </div>
+<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function hamming_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span>            <span class="keywordtype">class</span>(hamming_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span> </div>
+<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function welch_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>            <span class="keywordtype">class</span>(welch_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span> </div>
+<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function bhw_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>            <span class="keywordtype">class</span>(blackman_harris_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span> </div>
+<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function ftw_eval(this, bin) result(rst)</div>
+<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>            <span class="keywordtype">class</span>(flat_top_window), <span class="keywordtype">intent(in)</span> :: this</div>
+<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: bin</div>
+<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span> </div>
+<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span><span class="comment">! SPECTRUM_ROUTINES.F90</span></div>
+<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00970" name="l00970"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1compute__transform__length.html">  970</a></span>    <span class="keyword">interface</span> compute_transform_length</div>
+<div class="line"><a id="l00971" name="l00971"></a><span class="lineno">  971</span>        <span class="keyword">module procedure</span> :: compute_xfrm_length_1</div>
+<div class="line"><a id="l00972" name="l00972"></a><span class="lineno">  972</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l00973" name="l00973"></a><span class="lineno">  973</span> </div>
+<div class="line"><a id="l00999" name="l00999"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1frequency__bin__width.html">  999</a></span>    <span class="keyword">interface</span> frequency_bin_width</div>
+<div class="line"><a id="l01000" name="l01000"></a><span class="lineno"> 1000</span>        <span class="keyword">module procedure</span> :: frequency_bin_width_1</div>
+<div class="line"><a id="l01001" name="l01001"></a><span class="lineno"> 1001</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01002" name="l01002"></a><span class="lineno"> 1002</span> </div>
+<div class="line"><a id="l01013" name="l01013"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1is__power__of__two.html"> 1013</a></span>    <span class="keyword">interface</span> is_power_of_two</div>
+<div class="line"><a id="l01014" name="l01014"></a><span class="lineno"> 1014</span>        <span class="keyword">module procedure</span> :: is_power_of_two_1</div>
+<div class="line"><a id="l01015" name="l01015"></a><span class="lineno"> 1015</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01016" name="l01016"></a><span class="lineno"> 1016</span> </div>
+<div class="line"><a id="l01029" name="l01029"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1next__power__of__two.html"> 1029</a></span>    <span class="keyword">interface</span> next_power_of_two</div>
+<div class="line"><a id="l01030" name="l01030"></a><span class="lineno"> 1030</span>        <span class="keyword">module procedure</span> :: next_power_of_two_1</div>
+<div class="line"><a id="l01031" name="l01031"></a><span class="lineno"> 1031</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01032" name="l01032"></a><span class="lineno"> 1032</span> </div>
+<div class="line"><a id="l01033" name="l01033"></a><span class="lineno"> 1033</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01034" name="l01034"></a><span class="lineno"> 1034</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function compute_xfrm_length_1(n) result(rst)</div>
+<div class="line"><a id="l01035" name="l01035"></a><span class="lineno"> 1035</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
+<div class="line"><a id="l01036" name="l01036"></a><span class="lineno"> 1036</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
+<div class="line"><a id="l01037" name="l01037"></a><span class="lineno"> 1037</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01038" name="l01038"></a><span class="lineno"> 1038</span> </div>
+<div class="line"><a id="l01039" name="l01039"></a><span class="lineno"> 1039</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>frequency_bin_width_1(fs, n) <span class="keyword">result</span>(rst)</div>
+<div class="line"><a id="l01040" name="l01040"></a><span class="lineno"> 1040</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: fs</div>
+<div class="line"><a id="l01041" name="l01041"></a><span class="lineno"> 1041</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
+<div class="line"><a id="l01042" name="l01042"></a><span class="lineno"> 1042</span><span class="keywordtype">            real</span>(real64) :: rst</div>
+<div class="line"><a id="l01043" name="l01043"></a><span class="lineno"> 1043</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01044" name="l01044"></a><span class="lineno"> 1044</span> </div>
+<div class="line"><a id="l01045" name="l01045"></a><span class="lineno"> 1045</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>is_power_of_two_1(n) <span class="keyword">result</span>(rst)</div>
+<div class="line"><a id="l01046" name="l01046"></a><span class="lineno"> 1046</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
+<div class="line"><a id="l01047" name="l01047"></a><span class="lineno"> 1047</span>            <span class="keywordtype">logical</span> :: rst</div>
+<div class="line"><a id="l01048" name="l01048"></a><span class="lineno"> 1048</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01049" name="l01049"></a><span class="lineno"> 1049</span> </div>
+<div class="line"><a id="l01050" name="l01050"></a><span class="lineno"> 1050</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> elemental <span class="keyword">function </span>next_power_of_two_1(n) <span class="keyword">result</span>(rst)</div>
+<div class="line"><a id="l01051" name="l01051"></a><span class="lineno"> 1051</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n</div>
+<div class="line"><a id="l01052" name="l01052"></a><span class="lineno"> 1052</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
+<div class="line"><a id="l01053" name="l01053"></a><span class="lineno"> 1053</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01054" name="l01054"></a><span class="lineno"> 1054</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01055" name="l01055"></a><span class="lineno"> 1055</span> </div>
+<div class="line"><a id="l01056" name="l01056"></a><span class="lineno"> 1056</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01057" name="l01057"></a><span class="lineno"> 1057</span><span class="comment">! SPECTRUM_PSD.F90</span></div>
+<div class="line"><a id="l01058" name="l01058"></a><span class="lineno"> 1058</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01178" name="l01178"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1psd.html"> 1178</a></span>    <span class="keyword">interface</span> psd</div>
+<div class="line"><a id="l01179" name="l01179"></a><span class="lineno"> 1179</span>        <span class="keyword">module procedure</span> :: psd_welch</div>
+<div class="line"><a id="l01180" name="l01180"></a><span class="lineno"> 1180</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01181" name="l01181"></a><span class="lineno"> 1181</span> </div>
+<div class="line"><a id="l01182" name="l01182"></a><span class="lineno"> 1182</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01183" name="l01183"></a><span class="lineno"> 1183</span>        <span class="keyword">module</span> function psd_welch(win, x, fs, err) result(rst)</div>
+<div class="line"><a id="l01184" name="l01184"></a><span class="lineno"> 1184</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
+<div class="line"><a id="l01185" name="l01185"></a><span class="lineno"> 1185</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
+<div class="line"><a id="l01186" name="l01186"></a><span class="lineno"> 1186</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: fs</div>
+<div class="line"><a id="l01187" name="l01187"></a><span class="lineno"> 1187</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01188" name="l01188"></a><span class="lineno"> 1188</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01189" name="l01189"></a><span class="lineno"> 1189</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01190" name="l01190"></a><span class="lineno"> 1190</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01191" name="l01191"></a><span class="lineno"> 1191</span> </div>
+<div class="line"><a id="l01192" name="l01192"></a><span class="lineno"> 1192</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01193" name="l01193"></a><span class="lineno"> 1193</span><span class="comment">! SPECTRUM_CSD.F90</span></div>
+<div class="line"><a id="l01194" name="l01194"></a><span class="lineno"> 1194</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01320" name="l01320"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1csd.html"> 1320</a></span>    <span class="keyword">interface</span> csd</div>
+<div class="line"><a id="l01321" name="l01321"></a><span class="lineno"> 1321</span>        <span class="keyword">module procedure</span> :: csd_welch</div>
+<div class="line"><a id="l01322" name="l01322"></a><span class="lineno"> 1322</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01323" name="l01323"></a><span class="lineno"> 1323</span> </div>
+<div class="line"><a id="l01324" name="l01324"></a><span class="lineno"> 1324</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01325" name="l01325"></a><span class="lineno"> 1325</span>        <span class="keyword">module</span> function csd_welch(win, x, y, fs, err) result(rst)</div>
+<div class="line"><a id="l01326" name="l01326"></a><span class="lineno"> 1326</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
+<div class="line"><a id="l01327" name="l01327"></a><span class="lineno"> 1327</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), y(:)</div>
+<div class="line"><a id="l01328" name="l01328"></a><span class="lineno"> 1328</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: fs</div>
+<div class="line"><a id="l01329" name="l01329"></a><span class="lineno"> 1329</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01330" name="l01330"></a><span class="lineno"> 1330</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01331" name="l01331"></a><span class="lineno"> 1331</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01332" name="l01332"></a><span class="lineno"> 1332</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01333" name="l01333"></a><span class="lineno"> 1333</span> </div>
+<div class="line"><a id="l01334" name="l01334"></a><span class="lineno"> 1334</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01335" name="l01335"></a><span class="lineno"> 1335</span><span class="comment">! SPECTRUM_FFT.F90</span></div>
+<div class="line"><a id="l01336" name="l01336"></a><span class="lineno"> 1336</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01462" name="l01462"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1spectrogram.html"> 1462</a></span>    <span class="keyword">interface</span> spectrogram</div>
+<div class="line"><a id="l01463" name="l01463"></a><span class="lineno"> 1463</span>        <span class="keyword">module procedure</span> :: stft</div>
+<div class="line"><a id="l01464" name="l01464"></a><span class="lineno"> 1464</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01465" name="l01465"></a><span class="lineno"> 1465</span> </div>
+<div class="line"><a id="l01466" name="l01466"></a><span class="lineno"> 1466</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01467" name="l01467"></a><span class="lineno"> 1467</span>        <span class="keyword">module</span> function stft(win, x, offsets, par, err) result(rst)</div>
+<div class="line"><a id="l01468" name="l01468"></a><span class="lineno"> 1468</span>            <span class="keywordtype">class</span>(window), <span class="keywordtype">intent(in)</span> :: win</div>
+<div class="line"><a id="l01469" name="l01469"></a><span class="lineno"> 1469</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
+<div class="line"><a id="l01470" name="l01470"></a><span class="lineno"> 1470</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(out)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">allocatable</span> :: offsets(:)</div>
+<div class="line"><a id="l01471" name="l01471"></a><span class="lineno"> 1471</span>            <span class="keywordtype">logical</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: par</div>
+<div class="line"><a id="l01472" name="l01472"></a><span class="lineno"> 1472</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01473" name="l01473"></a><span class="lineno"> 1473</span>            <span class="keywordtype">complex(real64)</span>, <span class="keywordtype">allocatable</span> :: rst(:,:)</div>
+<div class="line"><a id="l01474" name="l01474"></a><span class="lineno"> 1474</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01475" name="l01475"></a><span class="lineno"> 1475</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01476" name="l01476"></a><span class="lineno"> 1476</span> </div>
+<div class="line"><a id="l01477" name="l01477"></a><span class="lineno"> 1477</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01478" name="l01478"></a><span class="lineno"> 1478</span><span class="comment">! SPECTRUM_CONVOLVE.F90</span></div>
+<div class="line"><a id="l01479" name="l01479"></a><span class="lineno"> 1479</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01594" name="l01594"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1convolve.html"> 1594</a></span>    <span class="keyword">interface</span> convolve</div>
+<div class="line"><a id="l01595" name="l01595"></a><span class="lineno"> 1595</span>        <span class="keyword">module procedure</span> :: convolve_1</div>
+<div class="line"><a id="l01596" name="l01596"></a><span class="lineno"> 1596</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01597" name="l01597"></a><span class="lineno"> 1597</span> </div>
+<div class="line"><a id="l01598" name="l01598"></a><span class="lineno"> 1598</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01599" name="l01599"></a><span class="lineno"> 1599</span>        <span class="keyword">module</span> function convolve_1(x, y, method, err) result(rst)</div>
+<div class="line"><a id="l01600" name="l01600"></a><span class="lineno"> 1600</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), y(:)</div>
+<div class="line"><a id="l01601" name="l01601"></a><span class="lineno"> 1601</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: method</div>
+<div class="line"><a id="l01602" name="l01602"></a><span class="lineno"> 1602</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01603" name="l01603"></a><span class="lineno"> 1603</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01604" name="l01604"></a><span class="lineno"> 1604</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01605" name="l01605"></a><span class="lineno"> 1605</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01606" name="l01606"></a><span class="lineno"> 1606</span> </div>
+<div class="line"><a id="l01607" name="l01607"></a><span class="lineno"> 1607</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01608" name="l01608"></a><span class="lineno"> 1608</span><span class="comment">! SPECTRUM_FILTER.F90</span></div>
+<div class="line"><a id="l01609" name="l01609"></a><span class="lineno"> 1609</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01703" name="l01703"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1gaussian__filter.html"> 1703</a></span>    <span class="keyword">interface</span> gaussian_filter</div>
+<div class="line"><a id="l01704" name="l01704"></a><span class="lineno"> 1704</span>        <span class="keyword">module procedure</span> :: gaussian_filter_1</div>
+<div class="line"><a id="l01705" name="l01705"></a><span class="lineno"> 1705</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01706" name="l01706"></a><span class="lineno"> 1706</span> </div>
+<div class="line"><a id="l01802" name="l01802"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1tv__filter.html"> 1802</a></span>    <span class="keyword">interface</span> tv_filter</div>
+<div class="line"><a id="l01803" name="l01803"></a><span class="lineno"> 1803</span>        <span class="keyword">module procedure</span> :: filter_tv_1</div>
+<div class="line"><a id="l01804" name="l01804"></a><span class="lineno"> 1804</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01805" name="l01805"></a><span class="lineno"> 1805</span> </div>
+<div class="line"><a id="l01919" name="l01919"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1filter.html"> 1919</a></span>    <span class="keyword">interface</span> filter</div>
+<div class="line"><a id="l01920" name="l01920"></a><span class="lineno"> 1920</span>        <span class="keyword">module procedure</span> :: filter_1</div>
+<div class="line"><a id="l01921" name="l01921"></a><span class="lineno"> 1921</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01922" name="l01922"></a><span class="lineno"> 1922</span> </div>
+<div class="line"><a id="l01945" name="l01945"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1moving__average__filter.html"> 1945</a></span>    <span class="keyword">interface</span> moving_average_filter</div>
+<div class="line"><a id="l01946" name="l01946"></a><span class="lineno"> 1946</span>        <span class="keyword">module procedure</span> :: avg_filter_1</div>
+<div class="line"><a id="l01947" name="l01947"></a><span class="lineno"> 1947</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01948" name="l01948"></a><span class="lineno"> 1948</span> </div>
+<div class="line"><a id="l01949" name="l01949"></a><span class="lineno"> 1949</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l01950" name="l01950"></a><span class="lineno"> 1950</span>        <span class="keyword">module</span> function gaussian_filter_1(x, alpha, k, err) result(rst)</div>
+<div class="line"><a id="l01951" name="l01951"></a><span class="lineno"> 1951</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), alpha</div>
+<div class="line"><a id="l01952" name="l01952"></a><span class="lineno"> 1952</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: k</div>
+<div class="line"><a id="l01953" name="l01953"></a><span class="lineno"> 1953</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01954" name="l01954"></a><span class="lineno"> 1954</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01955" name="l01955"></a><span class="lineno"> 1955</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01956" name="l01956"></a><span class="lineno"> 1956</span> </div>
+<div class="line"><a id="l01957" name="l01957"></a><span class="lineno"> 1957</span>        <span class="keyword">module</span> function filter_tv_1(x, lambda, niter, err) result(rst)</div>
+<div class="line"><a id="l01958" name="l01958"></a><span class="lineno"> 1958</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:), lambda</div>
+<div class="line"><a id="l01959" name="l01959"></a><span class="lineno"> 1959</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span>, <span class="keywordtype">optional</span> :: niter</div>
+<div class="line"><a id="l01960" name="l01960"></a><span class="lineno"> 1960</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01961" name="l01961"></a><span class="lineno"> 1961</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01962" name="l01962"></a><span class="lineno"> 1962</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01963" name="l01963"></a><span class="lineno"> 1963</span> </div>
+<div class="line"><a id="l01964" name="l01964"></a><span class="lineno"> 1964</span>        <span class="keyword">module</span> function filter_1(b, a, x, delays, err) result(rst)</div>
+<div class="line"><a id="l01965" name="l01965"></a><span class="lineno"> 1965</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: b(:), a(:), x(:)</div>
+<div class="line"><a id="l01966" name="l01966"></a><span class="lineno"> 1966</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: delays(:)</div>
+<div class="line"><a id="l01967" name="l01967"></a><span class="lineno"> 1967</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01968" name="l01968"></a><span class="lineno"> 1968</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01969" name="l01969"></a><span class="lineno"> 1969</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01970" name="l01970"></a><span class="lineno"> 1970</span> </div>
+<div class="line"><a id="l01971" name="l01971"></a><span class="lineno"> 1971</span>        <span class="keyword">module</span> function avg_filter_1(navg, x, err) result(rst)</div>
+<div class="line"><a id="l01972" name="l01972"></a><span class="lineno"> 1972</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: navg</div>
+<div class="line"><a id="l01973" name="l01973"></a><span class="lineno"> 1973</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
+<div class="line"><a id="l01974" name="l01974"></a><span class="lineno"> 1974</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l01975" name="l01975"></a><span class="lineno"> 1975</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">allocatable</span> :: rst(:)</div>
+<div class="line"><a id="l01976" name="l01976"></a><span class="lineno"> 1976</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l01977" name="l01977"></a><span class="lineno"> 1977</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01978" name="l01978"></a><span class="lineno"> 1978</span> </div>
+<div class="line"><a id="l01979" name="l01979"></a><span class="lineno"> 1979</span><span class="comment">! ******************************************************************************</span></div>
+<div class="line"><a id="l01980" name="l01980"></a><span class="lineno"> 1980</span><span class="comment">! SPECTRUM_OVERLAP.F90</span></div>
+<div class="line"><a id="l01981" name="l01981"></a><span class="lineno"> 1981</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l01996" name="l01996"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1compute__overlap__segment__count.html"> 1996</a></span>    <span class="keyword">interface</span> compute_overlap_segment_count</div>
+<div class="line"><a id="l01997" name="l01997"></a><span class="lineno"> 1997</span>        <span class="keyword">module procedure</span> :: overlap_segment_count_1</div>
+<div class="line"><a id="l01998" name="l01998"></a><span class="lineno"> 1998</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l01999" name="l01999"></a><span class="lineno"> 1999</span> </div>
+<div class="line"><a id="l02123" name="l02123"></a><span class="lineno"><a class="line" href="interfacespectrum_1_1overlap.html"> 2123</a></span>    <span class="keyword">interface</span> overlap</div>
+<div class="line"><a id="l02124" name="l02124"></a><span class="lineno"> 2124</span>        <span class="keyword">module procedure</span> :: fill_overlap_buffer_1</div>
+<div class="line"><a id="l02125" name="l02125"></a><span class="lineno"> 2125</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l02126" name="l02126"></a><span class="lineno"> 2126</span> </div>
+<div class="line"><a id="l02127" name="l02127"></a><span class="lineno"> 2127</span>    <span class="keyword">interface</span></div>
+<div class="line"><a id="l02128" name="l02128"></a><span class="lineno"> 2128</span>        <span class="keywordtype">pure</span> <span class="keyword">module</span> function overlap_segment_count_1(n, winsize) result(rst)</div>
+<div class="line"><a id="l02129" name="l02129"></a><span class="lineno"> 2129</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: n, winsize</div>
+<div class="line"><a id="l02130" name="l02130"></a><span class="lineno"> 2130</span>            <span class="keywordtype">integer(int32)</span> :: rst</div>
+<div class="line"><a id="l02131" name="l02131"></a><span class="lineno"> 2131</span>        <span class="keyword">end function</span></div>
+<div class="line"><a id="l02132" name="l02132"></a><span class="lineno"> 2132</span>        <span class="keyword">module</span> subroutine fill_overlap_buffer_1(x, seg, winsize, buffer, err)</div>
+<div class="line"><a id="l02133" name="l02133"></a><span class="lineno"> 2133</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(in)</span> :: x(:)</div>
+<div class="line"><a id="l02134" name="l02134"></a><span class="lineno"> 2134</span>            <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">intent(in)</span> :: seg, winsize</div>
+<div class="line"><a id="l02135" name="l02135"></a><span class="lineno"> 2135</span><span class="keywordtype">            real</span>(real64), <span class="keywordtype">intent(out)</span> :: buffer(:)</div>
+<div class="line"><a id="l02136" name="l02136"></a><span class="lineno"> 2136</span>            <span class="keywordtype">class</span>(errors), <span class="keywordtype">intent(inout)</span>, <span class="keywordtype">optional</span>, <span class="keywordtype">target</span> :: err</div>
+<div class="line"><a id="l02137" name="l02137"></a><span class="lineno"> 2137</span>        <span class="keyword">end subroutine</span></div>
+<div class="line"><a id="l02138" name="l02138"></a><span class="lineno"> 2138</span>    <span class="keyword">end interface</span></div>
+<div class="line"><a id="l02139" name="l02139"></a><span class="lineno"> 2139</span> </div>
+<div class="line"><a id="l02140" name="l02140"></a><span class="lineno"> 2140</span><span class="comment">! ------------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l02141" name="l02141"></a><span class="lineno"> 2141</span><span class="keyword">end module</span></div>
+<div class="ttc" id="ainterfacespectrum_1_1compute__overlap__segment__count_html"><div class="ttname"><a href="interfacespectrum_1_1compute__overlap__segment__count.html">spectrum::compute_overlap_segment_count</a></div><div class="ttdoc">Computes the number of overlapped signals using a nominal 50% overlap.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01996">spectrum.f90:1996</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1compute__transform__length_html"><div class="ttname"><a href="interfacespectrum_1_1compute__transform__length.html">spectrum::compute_transform_length</a></div><div class="ttdoc">Computes the length of the positive half of a discrete Fourier transform for a specific signal length...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00970">spectrum.f90:970</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1convolve_html"><div class="ttname"><a href="interfacespectrum_1_1convolve.html">spectrum::convolve</a></div><div class="ttdoc">Computes the convolution of a signal and kernel.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01594">spectrum.f90:1594</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1csd_html"><div class="ttname"><a href="interfacespectrum_1_1csd.html">spectrum::csd</a></div><div class="ttdoc">Computes the cross spectral density (CSD) of a signal via Welch's averaged method (sometimes referred...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01320">spectrum.f90:1320</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1filter_html"><div class="ttname"><a href="interfacespectrum_1_1filter.html">spectrum::filter</a></div><div class="ttdoc">Applies the specified filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01919">spectrum.f90:1919</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00999">spectrum.f90:999</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1gaussian__filter_html"><div class="ttname"><a href="interfacespectrum_1_1gaussian__filter.html">spectrum::gaussian_filter</a></div><div class="ttdoc">Applies a Gaussian filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01703">spectrum.f90:1703</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1is__power__of__two_html"><div class="ttname"><a href="interfacespectrum_1_1is__power__of__two.html">spectrum::is_power_of_two</a></div><div class="ttdoc">Tests to see if a value is an integer power of two.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01013">spectrum.f90:1013</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1moving__average__filter_html"><div class="ttname"><a href="interfacespectrum_1_1moving__average__filter.html">spectrum::moving_average_filter</a></div><div class="ttdoc">Applies a moving average filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01945">spectrum.f90:1945</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1next__power__of__two_html"><div class="ttname"><a href="interfacespectrum_1_1next__power__of__two.html">spectrum::next_power_of_two</a></div><div class="ttdoc">Provides the next higher integer power of two.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01029">spectrum.f90:1029</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1overlap_html"><div class="ttname"><a href="interfacespectrum_1_1overlap.html">spectrum::overlap</a></div><div class="ttdoc">Extracts a segment from a signal allowing for a nominally 50% overlap.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l02123">spectrum.f90:2123</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1psd_html"><div class="ttname"><a href="interfacespectrum_1_1psd.html">spectrum::psd</a></div><div class="ttdoc">Computes the power spectral density (PSD) of a signal via Welch's averaged method.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01178">spectrum.f90:1178</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1spectrogram_html"><div class="ttname"><a href="interfacespectrum_1_1spectrogram.html">spectrum::spectrogram</a></div><div class="ttdoc">Computes the spectrogram of a signal. Only the positive half of the transform is returned....</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01462">spectrum.f90:1462</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1tv__filter_html"><div class="ttname"><a href="interfacespectrum_1_1tv__filter.html">spectrum::tv_filter</a></div><div class="ttdoc">Applies a total-variation filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01802">spectrum.f90:1802</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1window__function_html"><div class="ttname"><a href="interfacespectrum_1_1window__function.html">spectrum::window_function</a></div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00221">spectrum.f90:221</a></div></div>
+<div class="ttc" id="astructspectrum_1_1blackman__harris__window_html"><div class="ttname"><a href="structspectrum_1_1blackman__harris__window.html">spectrum::blackman_harris_window</a></div><div class="ttdoc">Defines a Blackman-Harris window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00773">spectrum.f90:773</a></div></div>
+<div class="ttc" id="astructspectrum_1_1flat__top__window_html"><div class="ttname"><a href="structspectrum_1_1flat__top__window.html">spectrum::flat_top_window</a></div><div class="ttdoc">Defines a flat top window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00891">spectrum.f90:891</a></div></div>
+<div class="ttc" id="astructspectrum_1_1hamming__window_html"><div class="ttname"><a href="structspectrum_1_1hamming__window.html">spectrum::hamming_window</a></div><div class="ttdoc">Defines a Hamming window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00543">spectrum.f90:543</a></div></div>
+<div class="ttc" id="astructspectrum_1_1hann__window_html"><div class="ttname"><a href="structspectrum_1_1hann__window.html">spectrum::hann_window</a></div><div class="ttdoc">Defines a Hann window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00429">spectrum.f90:429</a></div></div>
+<div class="ttc" id="astructspectrum_1_1rectangular__window_html"><div class="ttname"><a href="structspectrum_1_1rectangular__window.html">spectrum::rectangular_window</a></div><div class="ttdoc">Defines a rectangular window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00315">spectrum.f90:315</a></div></div>
+<div class="ttc" id="astructspectrum_1_1welch__window_html"><div class="ttname"><a href="structspectrum_1_1welch__window.html">spectrum::welch_window</a></div><div class="ttdoc">Defines a Welch window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00657">spectrum.f90:657</a></div></div>
+<div class="ttc" id="astructspectrum_1_1window_html"><div class="ttname"><a href="structspectrum_1_1window.html">spectrum::window</a></div><div class="ttdoc">Defines a window.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00201">spectrum.f90:201</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

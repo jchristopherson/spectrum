@@ -127,9 +127,67 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1tv__filter.html',
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>An N-element array containing the filtered signal. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>An N-element array containing the filtered signal.</dd></dl>
+<dl class="section user"><dt>Remarks</dt><dd>The algorithm used by this routine is based upon the algorithm presented by [Selesnick and Bayram] (<a href="https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf">https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf</a>).</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following example illustrates the use of a total-variation filter to filter a noisy signal. <div class="fragment"><div class="line"><span class="keyword">program</span> example</div>
+<div class="line">    <span class="keywordtype">use </span>iso_fortran_env</div>
+<div class="line">    <span class="keywordtype">use </span>spectrum</div>
+<div class="line">    <span class="keywordtype">use </span>fplot_core</div>
+<div class="line">    <span class="keywordtype">implicit none</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Parameters</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span>, <span class="keywordtype">parameter</span> :: npts = 10000</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: pi = 2.0d0 * acos(0.0d0)</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: f1 = 5.0d0</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: f2 = 1.5d1</div>
+<div class="line"><span class="keywordtype">    real</span>(real64), <span class="keywordtype">parameter</span> :: alpha = 3.0d0</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Local Variables</span></div>
+<div class="line">    <span class="keywordtype">integer(int32)</span> :: i, k</div>
+<div class="line"><span class="keywordtype">    real</span>(real64) :: t(npts), x(npts), y(npts)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot Variables</span></div>
+<div class="line">    <span class="keywordtype">type</span>(plot_2d) :: plt</div>
+<div class="line">    <span class="keywordtype">type</span>(plot_data_2d) :: d1, d2</div>
+<div class="line">    <span class="keywordtype">class</span>(plot_axis), <span class="keywordtype">pointer</span> :: xAxis, yAxis</div>
+<div class="line">    <span class="keywordtype">class</span>(legend), <span class="keywordtype">pointer</span> :: lgnd</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Build the signal</span></div>
+<div class="line">    t = linspace(0.0d0, 1.0d0, npts)</div>
+<div class="line">    <span class="keyword">call </span>random_number(x)</div>
+<div class="line">    x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &amp;</div>
+<div class="line">        0.5 * sin(2.0d0 * pi * f2 * t)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Apply the filter</span></div>
+<div class="line">    y = <a class="code hl_interface" href="interfacespectrum_1_1tv__filter.html">tv_filter</a>(x, 0.5d0)</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">! Plot the results</span></div>
+<div class="line">    <span class="keyword">call </span>plt%initialize()</div>
+<div class="line">    xaxis =&gt; plt%get_x_axis()</div>
+<div class="line">    yaxis =&gt; plt%get_y_axis()</div>
+<div class="line">    lgnd =&gt; plt%get_legend()</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>xaxis%set_title(<span class="stringliteral">&quot;t&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>yaxis%set_title(<span class="stringliteral">&quot;x(t)&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>lgnd%set_is_visible(.true.)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>d1%define_data(t, x)</div>
+<div class="line">    <span class="keyword">call </span>d1%set_name(<span class="stringliteral">&quot;Original&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>plt%push(d1)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>d2%define_data(t, y)</div>
+<div class="line">    <span class="keyword">call </span>d2%set_name(<span class="stringliteral">&quot;Smoothed&quot;</span>)</div>
+<div class="line">    <span class="keyword">call </span>plt%push(d2)</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">call </span>plt%draw()</div>
+<div class="line"><span class="keyword">end program</span></div>
+<div class="ttc" id="ainterfacespectrum_1_1tv__filter_html"><div class="ttname"><a href="interfacespectrum_1_1tv__filter.html">spectrum::tv_filter</a></div><div class="ttdoc">Applies a total-variation filter to a signal.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01802">spectrum.f90:1802</a></div></div>
+</div><!-- fragment --> The above program produces the following plot using the <a href="https://github.com/jchristopherson/fplot">FPLOT</a> library. <div class="image">
+<img src="tv_filter_example_1.png" alt=""/>
+</div>
+ </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l01669">1669</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l01802">1802</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><hr/>The documentation for this interface was generated from the following file:<ul>
 <li>D:/Code/spectrum/src/<a class="el" href="spectrum_8f90_source.html">spectrum.f90</a></li>
 </ul>
