@@ -27,11 +27,14 @@ module spectrum
     public :: convolve
     public :: gaussian_filter
     public :: tv_filter
+    public :: filter
+    public :: moving_average_filter
     public :: compute_overlap_segment_count
     public :: overlap
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
+    public :: SPCTRM_ARRAY_SIZE_ERROR
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
 
@@ -41,6 +44,7 @@ module spectrum
     integer(int32), parameter :: SPCTRM_MEMORY_ERROR = 10000
     integer(int32), parameter :: SPCTRM_INVALID_INPUT_ERROR = 10001
     integer(int32), parameter :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR = 10002
+    integer(int32), parameter :: SPCTRM_ARRAY_SIZE_ERROR = 10003
 
     !> A flag for requesting a full convolution.
     integer(int32), parameter :: SPCTRM_FULL_CONVOLUTION = 50000
@@ -1670,6 +1674,82 @@ module spectrum
         module procedure :: filter_tv_1
     end interface
 
+    !> @brief Applies the specified filter to a signal.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function filter( &
+    !!  real(real64) b(:), &
+    !!  real(real64) a(:), &
+    !!  real(real64) x(:), &
+    !!  optional allocatable real(real64) delays(:), &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] b The numerator coefficients of the rational transfer 
+    !!  function.
+    !! @param[in] a The denominator coefficients of the ration transfer 
+    !!  function.  In the case of an FIR filter, this parameter should be set
+    !!  to a one-element array with a value of one.  Regardless, the value of
+    !!  a(1) must be non-zero.
+    !! @param[in] x An N-element array containing the signal to filter.
+    !! @param[in,out] delays An optional array of length 
+    !!  MAX(size(@p a), size(@p b)) - 1 that, on input, provides the initial 
+    !!  conditions for filter delays, and on ouput, the final conditions for 
+    !!  filter delays.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if a(1) is zero.
+    !!  - SPCTRM_ARRAY_SIZE_ERROR: Occurs if @p is not sized correctly, or if
+    !!      @p delays is not sized correctly.
+    !!
+    !! @return An N-element array containing the filtered signal.
+    !!
+    !! @par Remarks
+    !! The description of the filter in the Z-transform domain is a rational
+    !! transfer function of the form:
+    !! @par
+    !! \f$ Y(z) = \frac{b(1) + b(2) z^{-1} + ... + b(n_b + 1)z^{-n_b}}
+    !! {1 + a(2) z^{-1} + ... + a(n_a + 1) z^{-n_a}} X(z) \f$,
+    !! which handles both IIR and FIR filters. The above form assumes a
+    !! normalization of a(1) = 1; however, the routine will appropriately 
+    !! handle the situation where a(1) is not set to one.
+    interface filter
+        module procedure :: filter_1
+    end interface
+
+    !> @brief Applies a moving average filter to a signal.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function moving_average_filter( &
+    !!  integer(int32), intent(in) :: navg, &
+    !!  real(real64), intent(in) :: x(:), &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] navg The size of the averaging window.  This parameter must
+    !!  be positive and non-zero.
+    !! @param[in] x An N-element array containing the signal to filter.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p navg is less than one.
+    interface moving_average_filter
+        module procedure :: avg_filter_1
+    end interface
+
     interface
         module function gaussian_filter_1(x, alpha, k, err) result(rst)
             real(real64), intent(in) :: x(:), alpha
@@ -1681,6 +1761,20 @@ module spectrum
         module function filter_tv_1(x, lambda, niter, err) result(rst)
             real(real64), intent(in) :: x(:), lambda
             integer(int32), intent(in), optional :: niter
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+
+        module function filter_1(b, a, x, delays, err) result(rst)
+            real(real64), intent(in) :: b(:), a(:), x(:)
+            real(real64), intent(inout), optional, target :: delays(:)
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+
+        module function avg_filter_1(navg, x, err) result(rst)
+            integer(int32), intent(in) :: navg
+            real(real64), intent(in) :: x(:)
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function

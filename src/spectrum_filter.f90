@@ -169,7 +169,7 @@ end function
 module function filter_1(b, a, x, delays, err) result(rst)
     ! Arguments
     real(real64), intent(in) :: b(:), a(:), x(:)
-    real(real64), intent(out), allocatable, optional, target :: delays(:)
+    real(real64), intent(inout), optional, target :: delays(:)
     class(errors), intent(inout), optional, target :: err
     real(real64), allocatable :: rst(:)
 
@@ -180,7 +180,7 @@ module function filter_1(b, a, x, delays, err) result(rst)
     class(errors), pointer :: errmgr
     type(errors), target :: deferr
     character(len = :), allocatable :: errmsg
-    integer(int32) :: i, m, na, nb, n, nx, nz, flag
+    integer(int32) :: i, m, na, nb, n, nx, flag
     real(real64), allocatable :: aa(:), bb(:)
     real(real64), allocatable, target :: zdef(:)
     real(real64), pointer :: zptr(:)
@@ -201,12 +201,13 @@ module function filter_1(b, a, x, delays, err) result(rst)
     end if
 
     ! Input Checking
+    if (na < 1) go to 20
+    if (abs(a(1)) < tol) go to 30
 
     ! Memory Allocations
     if (present(delays)) then
-        nz = size(delays)
-        if (nz /= n - 1) go to 40
-        zptr(1:nz) => delays
+        if (size(delays) /= n - 1) go to 40
+        zptr(1:n-1) => delays
     else
         allocate(zdef(n - 1), stat = flag, source = 0.0d0)
         if (flag /= 0) go to 10
@@ -227,27 +228,102 @@ module function filter_1(b, a, x, delays, err) result(rst)
     end if
 
     ! Process
+    if (na > 1) then ! IIR
+        do m = 1, nx
+            rst(m) = bb(1) * x(m) + zptr(1)
+            do i = 2, n - 1
+                zptr(i-1) = bb(i) * x(m) + zptr(i) - aa(i) * rst(m)
+            end do
+            zptr(n-1) = bb(n) * x(m) - aa(n) * rst(m)
+            ! Omit z(n), which is always zero
+        end do
+    else ! FIR
+        do m = 1, nx
+            rst(m) = bb(1) * x(m) + zptr(1)
+            do i = 2, n - 1
+                zptr(i-1) = bb(i) * x(m) + zptr(i)
+            end do
+            ! Omit z(n), which is always zero
+        end do
+    end if
 
     ! End
     return
 
     ! Memory Error Handling
 10  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "Memory allocation error flag ", flag, "."
+    call errmgr%report_error("filter_1", trim(errmsg), &
+        SPCTRM_MEMORY_ERROR)
     return
 
     ! Filter Coefficient Array A Size Error Handler
 20  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "The filter coefficient array 'A' must have at " // &
+        "least 1 element, but was found to have ", na, " elements."
+    call errmgr%report_error("filter_1", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
     return
 
     ! Filter Coefficient Array Value Error Handler
 30  continue
+    call errmgr%report_error("filter_1", &
+        "The 'A(1)' coefficient must be non-zero.", &
+        SPCTRM_INVALID_INPUT_ERROR)
     return
 
-    ! Delays Size Error
+    ! Input delays array is not sized correctly
 40  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 101) "The filter delay array was expected to be of size ", &
+        n - 1, "; however, was found to be of size ", size(delta), "."
+    call errmgr%report_error("filter_1", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
+    return
+
+    ! Formatting
+100 format(A, I0, A)
+101 format(A, I0, A, I0)
 end function
 
 ! ------------------------------------------------------------------------------
+module function avg_filter_1(navg, x, err) result(rst)
+    ! Arguments
+    integer(int32), intent(in) :: navg
+    real(real64), intent(in) :: x(:)
+    class(errors), intent(inout), optional, target :: err
+    real(real64), allocatable :: rst(:)
+
+    ! Local Variables
+    real(real64) :: a(1), b(navg)
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+
+    ! Input Check
+    if (navg < 1) go to 10
+
+    ! Process
+    a = 1.0d0
+    b = 1.0d0 / navg
+    call filter(b, a, x, err = errmgr)
+
+    ! End
+    return
+
+    ! NAVG invalid value (< 1)
+10  continue
+    call errmgr%report_error("avg_filter_1", &
+        "The averaging window must have at least 1 element.", &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+end function
 
 ! ******************************************************************************
 ! HELPER ROUTINES
