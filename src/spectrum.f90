@@ -1637,6 +1637,69 @@ module spectrum
     !!      bounds.
     !!
     !! @return An N-element array containing the filtered signal.
+    !!
+    !! @par Example
+    !! The following example illustrates the use of a Gaussian filter on a noisy
+    !! signal.
+    !! @code{.f90}
+    !! program example
+    !!     use iso_fortran_env
+    !!     use spectrum
+    !!     use fplot_core
+    !!     implicit none
+    !!
+    !!     ! Parameters
+    !!     integer(int32), parameter :: npts = 10000
+    !!     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    !!     real(real64), parameter :: f1 = 5.0d0
+    !!     real(real64), parameter :: f2 = 1.5d1
+    !!     real(real64), parameter :: alpha = 3.0d0
+    !!
+    !!     ! Local Variables
+    !!     integer(int32) :: i, k
+    !!     real(real64) :: t(npts), x(npts), y(npts)
+    !!
+    !!     ! Plot Variables
+    !!     type(plot_2d) :: plt
+    !!     type(plot_data_2d) :: d1, d2
+    !!     class(plot_axis), pointer :: xAxis, yAxis
+    !!     class(legend), pointer :: lgnd
+    !!
+    !!     ! Build the signal
+    !!     t = linspace(0.0d0, 1.0d0, npts)
+    !!     call random_number(x)
+    !!     x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &
+    !!         0.5 * sin(2.0d0 * pi * f2 * t)
+    !!
+    !!     ! Apply the filter
+    !!     ! - alpha = 3
+    !!     ! - kernel size = 21
+    !!     y = gaussian_filter(x, 3.0d0, 21)
+    !!
+    !!     ! Plot the results
+    !!     call plt%initialize()
+    !!     xAxis => plt%get_x_axis()
+    !!     yAxis => plt%get_y_axis()
+    !!     lgnd => plt%get_legend()
+    !!
+    !!     call xAxis%set_title("t")
+    !!     call yAxis%set_title("x(t)")
+    !!     call lgnd%set_is_visible(.true.)
+    !!
+    !!     call d1%define_data(t, x)
+    !!     call d1%set_name("Original")
+    !!     call plt%push(d1)
+    !!
+    !!     call d2%define_data(t, y)
+    !!     call d2%set_name("Smoothed")
+    !!     call plt%push(d2)
+    !!
+    !!     call plt%draw()
+    !! end program
+    !! @endcode
+    !! The above program produces the following plot using the 
+    !! [FPLOT](https://github.com/jchristopherson/fplot) library.
+    !! @image html gaussian_filter_example_2.png
     interface gaussian_filter
         module procedure :: gaussian_filter_1
     end interface
@@ -1670,6 +1733,72 @@ module spectrum
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p niter is less than one.
     !!
     !! @return An N-element array containing the filtered signal.
+    !!
+    !! @par Remarks
+    !! The algorithm used by this routine is based upon the algorithm presented 
+    !! by [Selesnick and Bayram]
+    !! (https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf).
+    !!
+    !! @par Example
+    !! The following example illustrates the use of a total-variation filter to
+    !! filter a noisy signal.
+    !! @code{.f90}
+    !! program example
+    !!     use iso_fortran_env
+    !!     use spectrum
+    !!     use fplot_core
+    !!     implicit none
+    !!
+    !!     ! Parameters
+    !!     integer(int32), parameter :: npts = 10000
+    !!     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    !!     real(real64), parameter :: f1 = 5.0d0
+    !!     real(real64), parameter :: f2 = 1.5d1
+    !!     real(real64), parameter :: alpha = 3.0d0
+    !!
+    !!     ! Local Variables
+    !!     integer(int32) :: i, k
+    !!     real(real64) :: t(npts), x(npts), y(npts)
+    !!
+    !!     ! Plot Variables
+    !!     type(plot_2d) :: plt
+    !!     type(plot_data_2d) :: d1, d2
+    !!     class(plot_axis), pointer :: xAxis, yAxis
+    !!     class(legend), pointer :: lgnd
+    !!
+    !!     ! Build the signal
+    !!     t = linspace(0.0d0, 1.0d0, npts)
+    !!     call random_number(x)
+    !!     x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &
+    !!         0.5 * sin(2.0d0 * pi * f2 * t)
+    !!
+    !!     ! Apply the filter
+    !!     y = tv_filter(x, 0.5d0)
+    !!
+    !!     ! Plot the results
+    !!     call plt%initialize()
+    !!     xAxis => plt%get_x_axis()
+    !!     yAxis => plt%get_y_axis()
+    !!     lgnd => plt%get_legend()
+    !!
+    !!     call xAxis%set_title("t")
+    !!     call yAxis%set_title("x(t)")
+    !!     call lgnd%set_is_visible(.true.)
+    !!
+    !!     call d1%define_data(t, x)
+    !!     call d1%set_name("Original")
+    !!     call plt%push(d1)
+    !!
+    !!     call d2%define_data(t, y)
+    !!     call d2%set_name("Smoothed")
+    !!     call plt%push(d2)
+    !!
+    !!     call plt%draw()
+    !! end program
+    !! @endcode
+    !! The above program produces the following plot using the 
+    !! [FPLOT](https://github.com/jchristopherson/fplot) library.
+    !! @image html tv_filter_example_1.png
     interface tv_filter
         module procedure :: filter_tv_1
     end interface
@@ -1720,6 +1849,73 @@ module spectrum
     !! which handles both IIR and FIR filters. The above form assumes a
     !! normalization of a(1) = 1; however, the routine will appropriately 
     !! handle the situation where a(1) is not set to one.
+    !!
+    !! @par Example
+    !! The following example constructs an averaging filter as a simple FIR 
+    !! filter and applies it to a noisy signal.
+    !! @code{.f90}
+    !! program example
+    !!     use iso_fortran_env
+    !!     use spectrum
+    !!     use fplot_core
+    !!     implicit none
+    !!
+    !!     ! Parameters
+    !!     integer(int32), parameter :: winsize = 10
+    !!     integer(int32), parameter :: npts = 10000
+    !!     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    !!     real(real64), parameter :: f1 = 5.0d0
+    !!     real(real64), parameter :: f2 = 1.5d1
+    !!     real(real64), parameter :: alpha = 3.0d0
+    !!
+    !!     ! Local Variables
+    !!     integer(int32) :: i, k
+    !!     real(real64) :: t(npts), x(npts), y(npts), b(winsize), a(1)
+    !!
+    !!     ! Plot Variables
+    !!     type(plot_2d) :: plt
+    !!     type(plot_data_2d) :: d1, d2
+    !!     class(plot_axis), pointer :: xAxis, yAxis
+    !!     class(legend), pointer :: lgnd
+    !!
+    !!     ! Build the signal
+    !!     t = linspace(0.0d0, 1.0d0, npts)
+    !!     call random_number(x)
+    !!     x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &
+    !!         0.5 * sin(2.0d0 * pi * f2 * t)
+    !!
+    !!     ! Define the filter coefficients.  An averaging-type filter of window size 
+    !!     ! winsize is defined.  This is an FIR type filter.
+    !!     b = 1.0d0 / winsize ! all values in the array are the same
+    !!     a = 1.0d0
+    !!
+    !!     ! Apply the filter
+    !!     y = filter(b, a, x)
+    !!
+    !!     ! Plot the results
+    !!     call plt%initialize()
+    !!     xAxis => plt%get_x_axis()
+    !!     yAxis => plt%get_y_axis()
+    !!     lgnd => plt%get_legend()
+    !!
+    !!     call xAxis%set_title("t")
+    !!     call yAxis%set_title("x(t)")
+    !!     call lgnd%set_is_visible(.true.)
+    !!
+    !!     call d1%define_data(t, x)
+    !!     call d1%set_name("Original")
+    !!     call plt%push(d1)
+    !!
+    !!     call d2%define_data(t, y)
+    !!     call d2%set_name("Smoothed")
+    !!     call plt%push(d2)
+    !!
+    !!     call plt%draw()
+    !! end program
+    !! @endcode
+    !! The above program produces the following plot using the 
+    !! [FPLOT](https://github.com/jchristopherson/fplot) library.
+    !! @image html filter_example_1.png
     interface filter
         module procedure :: filter_1
     end interface
