@@ -8,7 +8,7 @@ module function csd_welch(win, x, y, fs, err) result(rst)
     real(real64), intent(in) :: x(:), y(:)
     real(real64), intent(in), optional :: fs
     class(errors), intent(inout), optional, target :: err
-    real(real64), allocatable :: rst(:)
+    complex(real64), allocatable :: rst(:)
 
     ! Local Variables
     integer(int32) :: nx, ny, nwin, nxfrm, noverlaps, lwork, flag
@@ -105,7 +105,7 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:), y(:)
-    real(real64), intent(out) :: xfrms(:)
+    complex(real64), intent(out) :: xfrms(:)
     integer(int32), intent(out) :: noverlaps
     real(real64), intent(out), target :: work(:)
 
@@ -114,7 +114,7 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
     real(real64), pointer :: zx(:), zy(:), w(:)
 
     ! Initialization
-    xfrms = 0.0d0
+    xfrms = (0.0d0, 0.0d0)
     nx = size(x)
     n = win%size
     nk = compute_overlap_segment_count(nx, n)
@@ -153,7 +153,7 @@ subroutine buffer_segment(win, xnew, ynew, buffer, counter, work)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: xnew(:), ynew(:)
-    real(real64), intent(inout) :: buffer(:)
+    complex(real64), intent(inout) :: buffer(:)
     integer(int32), intent(inout) :: counter
     real(real64), intent(inout), target :: work(:)
 
@@ -202,15 +202,19 @@ subroutine buffer_segment(win, xnew, ynew, buffer, counter, work)
         nend = m
     end if
 
-    buffer(1) = fac * abs((scale * xxfrm(1)) * (scale * yxfrm(1))) + buffer(1)
+    cx = cmplx(scale * xxfrm(1), 0.0d0, real64)
+    cy = cmplx(scale * yxfrm(1), 0.0d0, real64)
+    buffer(1) = fac * cx * cy + buffer(1)
+
     do i = 2, nend
         cx = scale * cmplx(xxfrm(2 * i - 2), xxfrm(2 * i - 1), real64)
-        cy = scale * cmplx(yxfrm(2 * i - 2), yxfrm(2 * i - 1), real64)
-        buffer(i) = fac * abs(cx * cy) + buffer(i)
+        cy = scale * cmplx(yxfrm(2 * i - 2), -yxfrm(2 * i - 1), real64) !-y for conjg
+        buffer(i) = fac * cx * cy + buffer(i)
     end do
     if (nend /= m) then
-        buffer(nend) = fac * abs((scale * xxfrm(n)) * (scale * yxfrm(n))) + &
-            buffer(nend)
+        cx = cmplx(scale * xxfrm(n), 0.0d0, real64)
+        cy = cmplx(scale * yxfrm(n), 0.0d0, real64)
+        buffer(nend) = fac * cx * cy + buffer(nend)
     end if
 
     ! Increment the counter

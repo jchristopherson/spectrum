@@ -87,7 +87,7 @@ function test_csd() result(rst)
     end do
 
     ! Compute the CSD of x with itself.  This is equivalent to the PSD of x.
-    pwr = csd(win, x, x, sample_rate_hz)
+    pwr = abs(csd(win, x, x, sample_rate_hz))
 
     ! Compute the expected solution
     df = frequency_bin_width(sample_rate_hz, winsize)

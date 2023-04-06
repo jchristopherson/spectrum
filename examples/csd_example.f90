@@ -38,10 +38,10 @@ program example
     ! Define the window
     win%size = winsize
 
-    ! Compute the
-    xfrm = csd(win, x, y)
+    ! Compute the spectrum
+    xfrm = abs(csd(win, x, y))
 
-    ! BUild a corresponding array of frequency values
+    ! Build a corresponding array of frequency values
     df = frequency_bin_width(sample_rate, winsize)
     allocate(freq(size(xfrm)))
     freq = (/ (df * i, i = 0, size(xfrm) - 1) /)

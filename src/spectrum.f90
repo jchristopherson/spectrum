@@ -31,12 +31,15 @@ module spectrum
     public :: moving_average_filter
     public :: compute_overlap_segment_count
     public :: overlap
+    public :: siso_transfer_function
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
     public :: SPCTRM_ARRAY_SIZE_ERROR
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
+    public :: SPCTRM_H1_ESTIMATOR
+    public :: SPCTRM_H2_ESTIMATOR
 
 ! ******************************************************************************
 ! CONSTANTS
@@ -51,6 +54,18 @@ module spectrum
     !> A flag for requesting the central portion of the convolution that is the
     !! same length as the input signal.
     integer(int32), parameter :: SPCTRM_CENTRAL_CONVOLUTION = 50001
+    !> A flag for requesting an H1 transfer function estimator.  An H1 estimator
+    !! is best used when noise is uncorrelated with the input, and results in
+    !! a transfer function estimate of
+    !! @par
+    !! \f$ H_{1} = \frac{P_{yx}}{P_{xx}} \f$.
+    integer(int32), parameter :: SPCTRM_H1_ESTIMATOR = 50002
+    !> A flag for requesting an H2 transfer function estimator.  An H2 estimator
+    !! is best used when noise is uncorrelated with the output, and results in
+    !! a transfer function estimate of
+    !! @par
+    !! \f$ H_{2} = \frac{P_{yy}}{P_{xy}} \f$.
+    integer(int32), parameter :: SPCTRM_H2_ESTIMATOR = 50003
 
 ! ******************************************************************************
 ! SPECTRUM_WINDOWS.F90
@@ -1288,10 +1303,10 @@ module spectrum
     !!     ! Define the window
     !!     win%size = winsize
     !!
-    !!     ! Compute the
-    !!     xfrm = csd(win, x, y)
+    !!     ! Compute the spectrum
+    !!     xfrm = abs(csd(win, x, y))
     !!
-    !!     ! BUild a corresponding array of frequency values
+    !!     ! Build a corresponding array of frequency values
     !!     df = frequency_bin_width(sample_rate, winsize)
     !!     allocate(freq(size(xfrm)))
     !!     freq = (/ (df * i, i = 0, size(xfrm) - 1) /)
@@ -1327,7 +1342,7 @@ module spectrum
             real(real64), intent(in) :: x(:), y(:)
             real(real64), intent(in), optional :: fs
             class(errors), intent(inout), optional, target :: err
-            real(real64), allocatable :: rst(:)
+            complex(real64), allocatable :: rst(:)
         end function
     end interface
 
@@ -2135,6 +2150,50 @@ module spectrum
             real(real64), intent(out) :: buffer(:)
             class(errors), intent(inout), optional, target :: err
         end subroutine
+    end interface
+
+! ******************************************************************************
+! SPECTRUM_TF.F90
+! ------------------------------------------------------------------------------
+    !> @brief Estimates the transfer function for a single-input/single-output
+    !! (SISO) system.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function siso_transfer_function( &
+    !!  class(window) win, &
+    !!  real(real64) x(:), &
+    !!  real(real64) y(:), &
+    !!  optional integer(int32) xfrmtype, &
+    !!  class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] win The window object.
+    !! @param[in] x An N-element array containing the input signal.
+    !! @param[in] y An N-element array containing the output signal.
+    !! @param[in] etype An optional input that, if supplied, denotes the
+    !!  estimator to use.  If no value is specified, an H1 estimator is used.
+    !!  The following options are supported.
+    !!  - @ref SPCTRM_H1_ESTIMATOR: Uses an H1 estimate.
+    !!  - @ref SPCTRM_H2_ESTIMATOR: Uses an H2 estimate.
+    !!  If an unrecognized value is provided, the routine defaults to an H1 
+    !!  estimator.
+    !! @param[in,out] err
+    !!
+    !! @return Returns the complex-valued transfer function estimate.
+    interface siso_transfer_function
+        module procedure :: siso_xfrm
+    end interface
+
+    interface
+        module function siso_xfrm(win, x, y, etype, err) result(rst)
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:), y(:)
+            integer(int32), intent(in), optional :: etype
+            class(errors), intent(inout), optional, target :: err
+            complex(real64), allocatable :: rst(:)
+        end function
     end interface
 
 ! ------------------------------------------------------------------------------
