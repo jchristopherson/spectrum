@@ -111,7 +111,6 @@ subroutine overlap_segments(win, x, y, xfrms, noverlaps, work)
 
     ! Local Variables
     integer(int32) :: k, nx, n, lw, lwork, nk
-    real(real64) :: del
     real(real64), pointer :: zx(:), zy(:), w(:)
 
     ! Initialization
