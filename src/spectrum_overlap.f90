@@ -11,7 +11,7 @@ pure module function overlap_segment_count_1(n, winsize) result(rst)
 
     ! Process
     nxfrm = compute_transform_length(winsize)
-    rst = (n - 1) / nxfrm
+    rst = max((n - 1) / nxfrm, 1)
 end function
 
 module subroutine fill_overlap_buffer_1(x, seg, winsize, buffer, err)
