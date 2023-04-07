@@ -31,6 +31,7 @@ module spectrum
     public :: moving_average_filter
     public :: compute_overlap_segment_count
     public :: overlap
+    public :: unwrap
     public :: siso_transfer_function
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
@@ -1045,6 +1046,26 @@ module spectrum
         module procedure :: next_power_of_two_1
     end interface
 
+    !> @brief Shifts phase angle arrays to deal with jumps greater than or equal
+    !! to @p tol by adding multiples of +/- 2 \f$ \pi \f$ until
+    !! the jump is less than @p tol.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! subroutine unwrap( &
+    !!  real(real64) x(:), &
+    !!  optional real(real64) tol &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x On input, the phase angle array.  On ouptut, the modified
+    !!  phase angle array.
+    !! @param[in] tol An optional input that controls the tolerated jump size.
+    !!  The default value is \f$ pi \f$.
+    interface unwrap
+        module procedure :: unwrap_1
+    end interface
+
     interface
         pure module function compute_xfrm_length_1(n) result(rst)
             integer(int32), intent(in) :: n
@@ -1066,6 +1087,17 @@ module spectrum
             integer(int32), intent(in) :: n
             integer(int32) :: rst
         end function
+
+        module subroutine unpack_real_transform(x, cx, fac)
+            real(real64), intent(in) :: x(:)
+            complex(real64), intent(out) :: cx(:)
+            real(real64), intent(in), optional :: fac
+        end subroutine
+
+        module subroutine unwrap_1(x, tol)
+            real(real64), intent(inout) :: x(:)
+            real(real64), intent(in), optional :: tol
+        end subroutine
     end interface
 
 ! ******************************************************************************
