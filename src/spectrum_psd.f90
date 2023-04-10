@@ -11,9 +11,11 @@ module function psd_welch(win, x, fs, err) result(rst)
     real(real64), allocatable :: rst(:)
 
     ! Local Variables
-    integer(int32) :: nx, nxfrm, noverlaps, lwork, flag
+    logical :: init
+    integer(int32) :: i, nx, nxfrm, nw, nk, lwork, flag
     real(real64) :: fres, fac
-    real(real64), allocatable :: work(:)
+    real(real64), allocatable, dimension(:) :: work, xw, buffer
+    complex(real64), allocatable :: cwork(:)
     class(errors), pointer :: errmgr
     type(errors), target :: deferr
     character(len = :), allocatable :: errmsg
@@ -24,31 +26,34 @@ module function psd_welch(win, x, fs, err) result(rst)
     else
         errmgr => deferr
     end if
-    nx = win%size
-    nxfrm = compute_transform_length(nx)
-    lwork = 4 * nx + 15
-    fres = 1.0d0
-    if (present(fs)) then
-        fres = frequency_bin_width(fs, nx)
-    end if
+    nx = size(x)
+    nw = win%size
+    nxfrm = compute_transform_length(nw)
+    nk = compute_overlap_segment_count(nx, nw)
+    lwork = 3 * nw + 15
 
-    ! Input Check
-    if (nx < 2) go to 20
+    ! Input Checking
+    if (size(x) < 2) go to 20
 
     ! Memory Allocation
-    allocate(rst(nxfrm), stat = flag)
+    allocate(rst(nxfrm), stat = flag, source = 0.0d0)
     if (flag == 0) allocate(work(lwork), stat = flag)
+    if (flag == 0) allocate(xw(nw), stat = flag)
+    if (flag == 0) allocate(buffer(nxfrm), stat = flag)
+    if (flag == 0) allocate(cwork(nxfrm), stat = flag)
     if (flag /= 0) go to 10
-
-    ! Overlap and compute the transform
-    call overlap_segments(win, x, rst, noverlaps, work)
-
-    ! Normalize
-    fac = 1.0d0 / (fres * noverlaps)
-    rst = fac * rst
-
-    ! Account for the symmetry of the transform
-    rst(2:nxfrm - 1) = 2.0d0 * rst(2:nxfrm - 1)
+    
+    ! Cycle over each segment
+    init = .true.
+    do i = 1, nk
+        call overlap(x, i, nw, xw)
+        call periodogram_driver(win, xw, buffer, fs, work, init, cwork, errmgr)
+        rst = rst + buffer
+        init = .false.
+    end do
+    
+    ! Average the result
+    rst = rst / real(nk, real64)
 
     ! End
     return

@@ -2228,5 +2228,24 @@ module spectrum
         end function
     end interface
 
+! ******************************************************************************
+! SPECTRUM_WELCH.F90
+! ------------------------------------------------------------------------------
+    !
+    interface
+        module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
+            cwork, err)
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:)
+            real(real64), intent(out) :: xfrm(:)
+            real(real64), intent(in), optional :: fs
+            real(real64), intent(out), optional, target :: work(:)
+            logical, intent(in), optional :: initxfrm
+            complex(real64), intent(out), optional, target :: cwork(:)
+            class(errors), intent(inout), optional, target :: err
+        end subroutine
+    end interface
+
+
 ! ------------------------------------------------------------------------------
 end module
