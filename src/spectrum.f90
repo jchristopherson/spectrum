@@ -33,6 +33,8 @@ module spectrum
     public :: overlap
     public :: unwrap
     public :: siso_transfer_function
+    public :: periodogram
+    public :: cross_periodogram
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
@@ -1269,6 +1271,8 @@ module spectrum
     !!      available.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
     !!      appropriately.
+    !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the
+    !!      same size.
     !!
     !! @return An array containing the discrete CSD estimate.  The estimate is
     !!  returned at discrete frequency intervals that can be determined as 
@@ -2231,13 +2235,149 @@ module spectrum
 ! ******************************************************************************
 ! SPECTRUM_WELCH.F90
 ! ------------------------------------------------------------------------------
-    !
+    !> @brief Computes the periodogram of a signal.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function periodogram( &
+    !!  class(window) win, &
+    !!  real(real64) x(:), &
+    !!  optional real(real64) fs, &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] win The @ref window to apply.  The size of the window must be
+    !!  non-zero and positive-valued.
+    !! @param[in] x The signal to transform.  The length of this array must be
+    !!  the same size as the window @p win.
+    !! @param[in] fs An optional input, that if supplied, allows for 
+    !!  normalization of the computed spectrum by the frequency resolution.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
+    !!      appropriately.
+    !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the 
+    !!      same size as the window @p win.
+    !!
+    !! @return An array containing the discrete PSD estimate.  The estimate is
+    !!  returned at discrete frequency intervals that can be determined as 
+    !!  follows.
+    !!
+    !! @par
+    !! \f$ \Delta f = \frac{f_{s}}{2 \left(m - 1 \right)} \f$
+    !! where,
+    !! \f$ m = \frac{n_{window}}{2} + 1 \f$ if \f$ n_{window} \f$ is even; else,
+    !! \f$ m = \frac{n_{window} + 1}{2} \f$ if \f$ n_{window} \f$ is odd.
+    !!
+    !! @par
+    !! \f$ m \f$ can be computed using @ref compute_transform_length, and
+    !! \f$ \Delta f \f$ can be computed using @ref frequency_bin_width.
+    !!
+    !! @par References
+    !! - Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
+    !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
+    !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
+    !!  AU-15 (2): 70-73, 1967.
+    interface periodogram
+        module procedure :: periodogram_1
+    end interface
+
+    !> @brief Computes the cross-spectral periodogram of two signals.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! allocatable real(real64)(:) function csd( &
+    !!  class(window) win, &
+    !!  real(real64) x(:), &
+    !!  real(real64) y(:), &
+    !!  optional real(real64) fs, &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] win The @ref window to apply.  The size of the window must be
+    !!  non-zero and positive-valued.
+    !! @param[in] x The first N-element signal to transform.
+    !! @param[in] y The second N-element signal to transform.
+    !! @param[in] fs An optional input, that if supplied, allows for 
+    !!  normalization of the computed spectrum by the frequency resolution.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
+    !!      available.
+    !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
+    !!      appropriately.
+    !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the
+    !!      same size, or if @p x and @p y are not the same size as the window
+    !!      @p win.
+    !!
+    !! @return An array containing the discrete CSD estimate.  The estimate is
+    !!  returned at discrete frequency intervals that can be determined as 
+    !!  follows.
+    !!
+    !! @par
+    !! \f$ \Delta f = \frac{f_{s}}{2 \left(m - 1 \right)} \f$
+    !! where,
+    !! \f$ m = \frac{n_{window}}{2} + 1 \f$ if \f$ n_{window} \f$ is even; else,
+    !! \f$ m = \frac{n_{window} + 1}{2} \f$ if \f$ n_{window} \f$ is odd.
+    !!
+    !! @par
+    !! \f$ m \f$ can be computed using @ref compute_transform_length, and
+    !! \f$ \Delta f \f$ can be computed using @ref frequency_bin_width.
+    !!
+    !! @par References
+    !! - Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
+    !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
+    !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
+    !!  AU-15 (2): 70-73, 1967.
+    interface cross_periodogram
+        module procedure :: cross_periodogram_1
+    end interface
+
     interface
+        module function periodogram_1(win, x, fs, err) result(rst)
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:)
+            real(real64), intent(in), optional :: fs
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+
+        module function cross_periodogram_1(win, x, y, fs, err) result(rst)
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:), y(:)
+            real(real64), intent(in), optional :: fs
+            class(errors), intent(inout), optional, target :: err
+            complex(real64), allocatable :: rst(:)
+        end function
+        
         module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
             cwork, err)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             real(real64), intent(out) :: xfrm(:)
+            real(real64), intent(in), optional :: fs
+            real(real64), intent(out), optional, target :: work(:)
+            logical, intent(in), optional :: initxfrm
+            complex(real64), intent(out), optional, target :: cwork(:)
+            class(errors), intent(inout), optional, target :: err
+        end subroutine
+
+        module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
+            initxfrm, cwork, err)
+            ! Arguments
+            class(window), intent(in) :: win
+            real(real64), intent(in) :: x(:), y(:)
+            complex(real64), intent(out) :: xfrm(:)
             real(real64), intent(in), optional :: fs
             real(real64), intent(out), optional, target :: work(:)
             logical, intent(in), optional :: initxfrm
