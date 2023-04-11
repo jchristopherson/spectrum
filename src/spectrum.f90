@@ -1114,6 +1114,7 @@ module spectrum
     !!  class(window) win, &
     !!  real(real64) x(:), &
     !!  optional real(real64) fs, &
+    !!  optional integer(int32) nfft, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -1229,10 +1230,11 @@ module spectrum
     end interface
 
     interface
-        module function psd_welch(win, x, fs, err) result(rst)
+        module function psd_welch(win, x, fs, nfft, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function
@@ -1252,6 +1254,7 @@ module spectrum
     !!  real(real64) x(:), &
     !!  real(real64) y(:), &
     !!  optional real(real64) fs, &
+    !!  integer(int32) nfft, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -1373,10 +1376,11 @@ module spectrum
     end interface
 
     interface
-        module function csd_welch(win, x, y, fs, err) result(rst)
+        module function csd_welch(win, x, y, fs, nfft, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:), y(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:)
         end function
@@ -2223,10 +2227,11 @@ module spectrum
     end interface
 
     interface
-        module function siso_xfrm(win, x, y, etype, err) result(rst)
+        module function siso_xfrm(win, x, y, etype, nfft, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:), y(:)
             integer(int32), intent(in), optional :: etype
+            integer(int32), intent(in), optional :: nfft
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:)
         end function
@@ -2243,6 +2248,7 @@ module spectrum
     !!  class(window) win, &
     !!  real(real64) x(:), &
     !!  optional real(real64) fs, &
+    !!  optional integer(int32) nfft, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -2253,6 +2259,9 @@ module spectrum
     !!  the same size as the window @p win.
     !! @param[in] fs An optional input, that if supplied, allows for 
     !!  normalization of the computed spectrum by the frequency resolution.
+    !! @param[in] nfft An optional input, that if supplied, allows for zero
+    !!  padding the FFT to the desired length.  If not supplied, this parameter
+    !!  defaults to the window size.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
     !!  during execution.  If not provided, a default implementation of the 
@@ -2297,6 +2306,7 @@ module spectrum
     !!  real(real64) x(:), &
     !!  real(real64) y(:), &
     !!  optional real(real64) fs, &
+    !!  optional integer(int32) nfft, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -2307,6 +2317,9 @@ module spectrum
     !! @param[in] y The second N-element signal to transform.
     !! @param[in] fs An optional input, that if supplied, allows for 
     !!  normalization of the computed spectrum by the frequency resolution.
+    !! @param[in] nfft An optional input, that if supplied, allows for zero
+    !!  padding the FFT to the desired length.  If not supplied, this parameter
+    !!  defaults to the window size.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
     !!  during execution.  If not provided, a default implementation of the 
@@ -2344,41 +2357,46 @@ module spectrum
     end interface
 
     interface
-        module function periodogram_1(win, x, fs, err) result(rst)
+        module function periodogram_1(win, x, fs, nfft, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             class(errors), intent(inout), optional, target :: err
             real(real64), allocatable :: rst(:)
         end function
 
-        module function cross_periodogram_1(win, x, y, fs, err) result(rst)
+        module function cross_periodogram_1(win, x, y, fs, nfft, err) &
+            result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:), y(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:)
         end function
         
-        module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
-            cwork, err)
+        module subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, &
+            initxfrm, cwork, err)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             real(real64), intent(out) :: xfrm(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             real(real64), intent(out), optional, target :: work(:)
             logical, intent(in), optional :: initxfrm
             complex(real64), intent(out), optional, target :: cwork(:)
             class(errors), intent(inout), optional, target :: err
         end subroutine
 
-        module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
-            initxfrm, cwork, err)
+        module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, &
+            work, initxfrm, cwork, err)
             ! Arguments
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:), y(:)
             complex(real64), intent(out) :: xfrm(:)
             real(real64), intent(in), optional :: fs
+            integer(int32), intent(in), optional :: nfft
             real(real64), intent(out), optional, target :: work(:)
             logical, intent(in), optional :: initxfrm
             complex(real64), intent(out), optional, target :: cwork(:)

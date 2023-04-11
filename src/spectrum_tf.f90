@@ -6,11 +6,12 @@ contains
 ! - https://github.com/giuliovv/tfest/blob/main/tfest/tfest.py
 ! - https://dsp.stackexchange.com/questions/71811/understanding-the-h1-and-h2-estimators
 ! - https://github.com/epezent/etfe/blob/main/include/ETFE.hpp
-module function siso_xfrm(win, x, y, etype, err) result(rst)
+module function siso_xfrm(win, x, y, etype, nfft, err) result(rst)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:), y(:)
     integer(int32), intent(in), optional :: etype
+    integer(int32), intent(in), optional :: nfft
     class(errors), intent(inout), optional, target :: err
     complex(real64), allocatable :: rst(:)
 
@@ -39,13 +40,13 @@ module function siso_xfrm(win, x, y, etype, err) result(rst)
     ! Process
     select case (est)
     case (SPCTRM_H1_ESTIMATOR)
-        pcross = csd(win, x, y, err = errmgr)
+        pcross = csd(win, x, y, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
-        pwr = psd(win, x, err = errmgr)
+        pwr = psd(win, x, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
         rst = pcross / pwr
     case (SPCTRM_H2_ESTIMATOR)
-        pcross = csd(win, y, x, err = errmgr)
+        pcross = csd(win, y, x, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
         pwr = psd(win, y, err = errmgr)
         if (errmgr%has_error_occurred()) return

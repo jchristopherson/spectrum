@@ -14,7 +14,7 @@ program example
 
     ! Parameters
     integer(int32), parameter :: npts = 10000
-    integer(int32), parameter :: winsize = 512
+    integer(int32), parameter :: winsize = 2048
     integer(int32), parameter :: nxfrm = winsize / 2 + 1
     real(real64), parameter :: sample_rate = 1024.0d0
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)

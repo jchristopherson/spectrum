@@ -2,16 +2,17 @@ submodule (spectrum) spectrum_periodogram
     use fftpack
 contains
 ! ------------------------------------------------------------------------------
-module function periodogram_1(win, x, fs, err) result(rst)
+module function periodogram_1(win, x, fs, nfft, err) result(rst)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:)
     real(real64), intent(in), optional :: fs
+    integer(int32), intent(in), optional :: nfft
     class(errors), intent(inout), optional, target :: err
     real(real64), allocatable :: rst(:)
 
     ! Local Variables
-    integer(int32) :: n, nxfrm, flag
+    integer(int32) :: n, nxfrm, nf, flag
     class(errors), pointer :: errmgr
     type(errors), target :: deferr
     character(len = :), allocatable :: errmsg
@@ -23,14 +24,19 @@ module function periodogram_1(win, x, fs, err) result(rst)
         errmgr => deferr
     end if
     n = size(x)
-    nxfrm = compute_transform_length(n)
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = n
+    end if
+    nxfrm = compute_transform_length(nf)
 
     ! Memory Allocation
     allocate(rst(nxfrm), stat = flag)
     if (flag /= 0) go to 10
 
     ! Process
-    call periodogram_driver(win, x, rst, fs = fs, err = errmgr)
+    call periodogram_driver(win, x, rst, fs = fs, nfft = nfft, err = errmgr)
     
     ! End
     return
@@ -48,16 +54,17 @@ module function periodogram_1(win, x, fs, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function cross_periodogram_1(win, x, y, fs, err) result(rst)
+module function cross_periodogram_1(win, x, y, fs, nfft, err) result(rst)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:), y(:)
     real(real64), intent(in), optional :: fs
+    integer(int32), intent(in), optional :: nfft
     class(errors), intent(inout), optional, target :: err
     complex(real64), allocatable :: rst(:)
 
     ! Local Variables
-    integer(int32) :: nx, nxfrm, flag
+    integer(int32) :: nx, nxfrm, nf, flag
     class(errors), pointer :: errmgr
     type(errors), target :: deferr
     character(len = :), allocatable :: errmsg
@@ -69,14 +76,20 @@ module function cross_periodogram_1(win, x, y, fs, err) result(rst)
         errmgr => deferr
     end if
     nx = size(x)
-    nxfrm = compute_transform_length(nx)
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nx
+    end if
+    nxfrm = compute_transform_length(nf)
 
     ! Memory Allocation
     allocate(rst(nxfrm), stat = flag)
     if (flag /= 0) go to 10
 
     ! Process
-    call cross_periodogram_driver(win, x, y, rst, fs = fs, err = errmgr)
+    call cross_periodogram_driver(win, x, y, rst, fs = fs, nfft = nfft, &
+        err = errmgr)
 
     ! End
     return
@@ -85,7 +98,7 @@ module function cross_periodogram_1(win, x, y, fs, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("periodogram_1", trim(errmsg), &
+    call errmgr%report_error("cross_periodogram_1", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
@@ -94,21 +107,22 @@ module function cross_periodogram_1(win, x, y, fs, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
+module subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
     cwork, err)
     ! Arguments
     class(window), intent(in) :: win        ! size = n
     real(real64), intent(in) :: x(:)        ! size = n
-    real(real64), intent(out) :: xfrm(:)    ! size = m = (n + 1) / 2 or n / 2 + 1
+    real(real64), intent(out) :: xfrm(:)    ! size = m = (nfft + 1) / 2 or nfft / 2 + 1
     real(real64), intent(in), optional :: fs
-    real(real64), intent(out), optional, target :: work(:)  ! size = 3 * n + 15
+    integer(int32), intent(in), optional :: nfft ! defaults to n, must be at least n
+    real(real64), intent(out), optional, target :: work(:)  ! size = 3 * nfft + 15
     logical, intent(in), optional :: initxfrm
     complex(real64), intent(out), optional, target :: cwork(:)  ! size = m
     class(errors), intent(inout), optional, target :: err
 
     ! Local Variables
     logical :: init
-    integer(int32) :: i, j, nx, nxfrm, lw, lwork, flag
+    integer(int32) :: i, j, nx, nxfrm, nf, lw, lwork, flag
     real(real64) :: wval, wsum, scale, fac, df
     real(real64), allocatable, target, dimension(:) :: wdef
     real(real64), pointer, dimension(:) :: w, xw
@@ -125,9 +139,14 @@ module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
         errmgr => deferr
     end if
     nx = size(x)
-    nxfrm = compute_transform_length(nx)
-    lw = 2 * nx + 15
-    lwork = lw + nx
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nx
+    end if
+    nxfrm = compute_transform_length(nf)
+    lw = 2 * nf + 15
+    lwork = lw + nf
     if (present(work) .and. present(initxfrm)) then
         init = initxfrm
     else
@@ -142,19 +161,20 @@ module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
     ! Input Checking
     if (win%size /= nx) go to 20
     if (size(xfrm) /= nxfrm) go to 50
+    if (nf < nx) go to 60
 
     ! Workspace
     if (present(work)) then
         if (size(work) < lwork) go to 30
         w(1:lw) => work(1:lw)
-        xw(1:nx) => work(lw+1:lwork)
+        xw(1:nf) => work(lw+1:lwork)
     else
         allocate(wdef(lwork), stat = flag)
         if (flag /= 0) go to 10
         w(1:lw) => wdef(1:lw)
-        xw(1:nx) => wdef(lw+1:lwork)
+        xw(1:nf) => wdef(lw+1:lwork)
     end if
-    if (init) call dffti(nx, w)
+    if (init) call dffti(nf, w)
 
     if (present(cwork)) then
         if (size(cwork) < nxfrm) go to 40
@@ -175,8 +195,11 @@ module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
     end do
     fac = nx / wsum
 
+    ! Pad with zeros
+    if (nf > nx) xw(nx+1:nf) = 0.0d0
+
     ! Compute the transform
-    call dfftf(nx, xw, w)
+    call dfftf(nf, xw, w)
     call unpack_real_transform(xw, cw, fac * scale)
 
     ! Compute the power from the windowed transform
@@ -184,7 +207,7 @@ module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
 
     ! Normalize by frequency
     if (present(fs)) then
-        df = frequency_bin_width(fs, nx)
+        df = frequency_bin_width(fs, nf)
         xfrm = xfrm / df
     end if
 
@@ -237,27 +260,37 @@ module subroutine periodogram_driver(win, x, xfrm, fs, work, initxfrm, &
         SPCTRM_ARRAY_SIZE_ERROR)
     return
 
+    ! Too small of NFFT
+60  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 101) "The length of the FFT (", nf, &
+        ") must be at least the size of the window (", nw, ")."
+    call errmgr%report_error("periodogram_driver", trim(errmsg), &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+
     ! Formatting
 100 format(A, I0, A)
 101 format(A, I0, A, I0, A)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
+module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
     initxfrm, cwork, err)
     ! Arguments
     class(window), intent(in) :: win        ! size = n
     real(real64), intent(in) :: x(:), y(:)  ! size = n
-    complex(real64), intent(out) :: xfrm(:)    ! size = m = (n + 1) / 2 or n / 2 + 1
+    complex(real64), intent(out) :: xfrm(:)    ! size = m = (nfft + 1) / 2 or nfft / 2 + 1
     real(real64), intent(in), optional :: fs
-    real(real64), intent(out), optional, target :: work(:)  ! size = 4 * n + 15
+    integer(int32), intent(in), optional :: nfft ! defaults to n, must be at least n
+    real(real64), intent(out), optional, target :: work(:)  ! size = 4 * nfft + 15
     logical, intent(in), optional :: initxfrm
     complex(real64), intent(out), optional, target :: cwork(:)  ! size = 2 * m
     class(errors), intent(inout), optional, target :: err
 
     ! Local Variables
     logical :: init
-    integer(int32) :: i, j, nx, ny, nxfrm, lw, lwork, flag
+    integer(int32) :: i, j, nx, ny, nxfrm, nf, lw, lwork, flag
     real(real64) :: wval, wsum, scale, fac, df
     real(real64), allocatable, target, dimension(:) :: wdef
     real(real64), pointer, dimension(:) :: w, xw, yw
@@ -275,9 +308,14 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
     end if
     nx = size(x)
     ny = size(y)
-    nxfrm = compute_transform_length(nx)
-    lw = 2 * nx + 15
-    lwork = lw + 2 * nx
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nx
+    end if
+    nxfrm = compute_transform_length(nf)
+    lw = 2 * nf + 15
+    lwork = lw + 2 * nf
     if (present(work) .and. present(initxfrm)) then
         init = initxfrm
     else
@@ -293,21 +331,22 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
     if (nx /= ny) go to 60
     if (win%size /= nx) go to 20
     if (size(xfrm) /= nxfrm) go to 50
+    if (nf < nx) go to 70
 
     ! Workspace
     if (present(work)) then
         if (size(work) < lwork) go to 30
         w(1:lw) => work(1:lw)
-        xw(1:nx) => work(lw+1:lw+nx)
-        yw(1:nx) => work(lw+nx+1:lwork)
+        xw(1:nf) => work(lw+1:lw+nf)
+        yw(1:nf) => work(lw+nf+1:lwork)
     else
         allocate(wdef(lwork), stat = flag)
         if (flag /= 0) go to 10
         w(1:lw) => wdef(1:lw)
-        xw(1:nx) => wdef(lw+1:lw+nx)
-        yw(1:nx) => wdef(lw+nx+1:lwork)
+        xw(1:nf) => wdef(lw+1:lw+nf)
+        yw(1:nf) => wdef(lw+nf+1:lwork)
     end if
-    if (init) call dffti(nx, w)
+    if (init) call dffti(nf, w)
 
     if (present(cwork)) then
         if (size(cwork) /= 2 * nxfrm) go to 40
@@ -331,9 +370,15 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
     end do
     fac = nx / wsum
 
+    ! Pad with zeros
+    if (nf > nx) then
+        xw(nx+1:nf) = 0.0d0
+        yw(ny+1:nf) = 0.0d0
+    end if
+
     ! Compute the transforms
-    call dfftf(nx, xw, w)
-    call dfftf(ny, yw, w)
+    call dfftf(nf, xw, w)
+    call dfftf(nf, yw, w)
     call unpack_real_transform(xw, cx, fac * scale)
     call unpack_real_transform(yw, cy, fac * scale)
 
@@ -342,7 +387,7 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
 
     ! Normalize by frequency
     if (present(fs)) then
-        df = frequency_bin_width(fs, nx)
+        df = frequency_bin_width(fs, nf)
         xfrm = xfrm / df
     end if
 
@@ -404,6 +449,15 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, work, &
     call errmgr%report_error("cross_periodogram_driver", trim(errmsg), &
         SPCTRM_ARRAY_SIZE_MISMATCH_ERROR)
 
+! Too small of NFFT
+70  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 101) "The length of the FFT (", nf, &
+        ") must be at least the size of the window (", nw, ")."
+    call errmgr%report_error("cross_periodogram_driver", trim(errmsg), &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+    
     ! Formatting
 100 format(A, I0, A)
 101 format(A, I0, A, I0, A)

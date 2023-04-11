@@ -1,17 +1,18 @@
 submodule (spectrum) spectrum_csd
     use fftpack
 contains
-module function csd_welch(win, x, y, fs, err) result(rst)
+module function csd_welch(win, x, y, fs, nfft, err) result(rst)
     ! Arguments
     class(window), intent(in) :: win
     real(real64), intent(in) :: x(:), y(:)
     real(real64), intent(in), optional :: fs
+    integer(int32), intent(in), optional :: nfft
     class(errors), intent(inout), optional, target :: err
     complex(real64), allocatable :: rst(:)
 
     ! Local Variables
     logical :: init
-    integer(int32) :: nx, ny, nw, nk, lwork, flag
+    integer(int32) :: nx, ny, nw, nk, nf, lwork, flag
     real(real64) :: fres, fac
     real(real64), allocatable, dimension(:) :: work, xw, yw
     complex(real64), allocatable, dimension(:) :: cwork, buffer
@@ -28,9 +29,14 @@ module function csd_welch(win, x, y, fs, err) result(rst)
     nx = size(x)
     ny = size(y)
     nw = win%size
-    nxfrm = compute_transform_length(nw)
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nw
+    end if
+    nxfrm = compute_transform_length(nf)
     nk = compute_overlap_segment_count(nx, nw)
-    lwork = 4 * nw + 15
+    lwork = 4 * nf + 15
 
     ! Input Checking
     if (nx < 2 .or. ny < 2) go to 20
@@ -49,7 +55,7 @@ module function csd_welch(win, x, y, fs, err) result(rst)
     do i = 1, nk
         call overlap(x, i, nw, xw)
         call overlap(y, i, nw, yw)
-        call cross_periodogram_driver(win, xw, yw, buffer, fs, work, &
+        call cross_periodogram_driver(win, xw, yw, buffer, fs, nf, work, &
             init, cwork, errmgr)
         if (errmgr%has_error_occurred()) return
         rst = rst + buffer
