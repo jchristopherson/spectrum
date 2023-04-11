@@ -89,3 +89,8 @@ link_library(tv_filter_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(siso_tf_example siso_tf_example.f90)
 link_library(siso_tf_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(siso_tf_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# SISO Transfer Function Example #2 (Periodogram Version)
+add_executable(siso_tf_example_2 siso_tf_example_2.f90)
+link_library(siso_tf_example_2 ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(siso_tf_example_2 ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})

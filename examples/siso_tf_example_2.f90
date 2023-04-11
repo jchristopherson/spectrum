@@ -13,20 +13,19 @@ program example
     implicit none
 
     ! Parameters
-    integer(int32), parameter :: npts = 10000
-    integer(int32), parameter :: winsize = 2048
-    integer(int32), parameter :: nxfrm = winsize / 2 + 1
+    integer(int32), parameter :: npts = 2048
+    integer(int32), parameter :: nxfrm = npts / 2 + 1
     real(real64), parameter :: sample_rate = 1024.0d0
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
-    real(real64), parameter :: zeta = 0.05d0
+    real(real64), parameter :: zeta = 0.01d0
     real(real64), parameter :: nat_freq_hz = 7.5d1
     real(real64), parameter :: nat_freq = 2.0d0 * pi * nat_freq_hz
 
     ! Local Variables
     integer(int32) :: i
     real(real64) :: dt, zarg, arg, t(npts), x(npts), y(npts)
-    real(real64) :: df, freq(nxfrm), mag(nxfrm), phase(nxfrm)
-    complex(real64) :: tf(nxfrm)
+    real(real64) :: df, freq(nxfrm), mag(nxfrm), phase(nxfrm), pyy(nxfrm)
+    complex(real64) :: tf(nxfrm), cyx(nxfrm)
     type(rectangular_window) :: win
 
     ! Plot Variables
@@ -46,11 +45,13 @@ program example
         ((zeta / zarg) * sin(arg * t) - cos(arg * t))
 
     ! Compute the transfer function
-    win%size = winsize
-    tf = siso_transfer_function(win, y, x)
+    win%size = npts
+    pyy = periodogram(win, y)
+    cyx = cross_periodogram(win, y, x)
+    tf = cyx / pyy
 
     ! Compute the frequency, magnitude, and phase
-    df = frequency_bin_width(sample_rate, winsize)
+    df = frequency_bin_width(sample_rate, npts)
     freq = (/ (df * i, i = 0, nxfrm - 1) /)
     mag = 2.0d1 * log10(abs(tf))    ! Convert to dB
     phase = atan2(aimag(tf), real(tf))
