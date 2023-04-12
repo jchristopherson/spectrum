@@ -4,7 +4,7 @@ Spectrum is a library containing signal analysis routines with a focus towards s
 ## Documentation
 TO DO:
 
-## Building FPLOT
+## Building Spectrum
 This library can be built using CMake.  For instructions see [Running CMake](https://cmake.org/runningcmake/).
 
 ## External Libraries
