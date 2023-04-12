@@ -277,3 +277,18 @@ end program
 This example produces the following plots.
 
 ![](images/gaussian_filter_example_2.png?raw=true)
+
+## References
+1. Welch, P.D. (1967). The Use of Fast Fourier Transform for the Estimation of Power Spectra: A Method Based on Time Averaging Over Short, Modified Periodograms. IEEE Transactions on Audio and Electroacoustics, AU-15 (2): 70-73.
+2. Stoica, Petre, and Randolph Moses. Spectral Analysis of Signals. Upper Saddle River, NJ: Prentice Hall, 2005.
+3. William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery. 2007. Numerical Recipes 3rd Edition: The Art of Scientific Computing (3rd. ed.). Cambridge University Press, USA.
+4. Millioz, Fabien & Martin, Nadine. (2011). Circularity of the STFT and Spectral Kurtosis for Time-Frequency Segmentation in Gaussian Environment. Signal Processing, IEEE Transactions on. 59. 515 - 524. 10.1109/TSP.2010.2081986. 
+5. Wikipedia Contributors. (2022, February 9). Welch’s method. Wikipedia; Wikimedia Foundation. https://en.wikipedia.org/wiki/Welch%27s_method
+6. Spectral density. (2023, April 9). Wikipedia. https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density
+7. Wikipedia Contributors. (2019, April 12). Short-time Fourier transform. Wikipedia; Wikimedia Foundation. https://en.wikipedia.org/wiki/Short-time_Fourier_transform
+8. Window function. (2020, December 12). Wikipedia. https://en.wikipedia.org/wiki/Window_function
+9. Wikipedia Contributors. (2019, March 22). Gaussian filter. Wikipedia; Wikimedia Foundation. https://en.wikipedia.org/wiki/Gaussian_filter
+10. Selesnick Andilker Bayram, I. (2010). Total Variation Filtering. https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf
+11. Unavane, T., & Panse. (2015). New Method for Online Frequency Response Function Estimation Using Circular Queue. INTERNATIONAL JOURNAL for RESEARCH in EMERGING SCIENCE and TECHNOLOGY, 2. https://ijrest.net/downloads/volume-2/issue-6/pid-ijrest-26201530.pdf
+
+‌

@@ -1063,7 +1063,7 @@ module spectrum
     !! @param[in] x On input, the phase angle array.  On ouptut, the modified
     !!  phase angle array.
     !! @param[in] tol An optional input that controls the tolerated jump size.
-    !!  The default value is \f$ pi \f$.
+    !!  The default value is \f$ \pi \f$.
     interface unwrap
         module procedure :: unwrap_1
     end interface
@@ -1297,6 +1297,7 @@ module spectrum
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
     !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !! - [Wikipedia - Cross Power Spectral Density](https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density)
     !!
     !! @par Example
     !! The following example illustrates how to compute the cross power 
@@ -1428,6 +1429,9 @@ module spectrum
     !!  transforms for each of the N time points studied.  M is the size of the
     !!  positive half of the transform, and N is the total number of transformed
     !!  segments.
+    !!
+    !! @par References
+    !! - [Wikipedia - Short Time Fourier Transform](https://en.wikipedia.org/wiki/Short-time_Fourier_transform)
     !!
     !! @par Example
     !! The following example illustrates how to compute the spectrogram of an
