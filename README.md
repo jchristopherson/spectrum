@@ -5,7 +5,7 @@ Spectrum is a library containing signal analysis routines with a focus towards s
 [![CMake](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml/badge.svg)](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml)
 
 ## Documentation
-TO DO:
+The documentation can be found [here](https://jchristopherson.github.io/spectrum/).
 
 ## Building Spectrum
 This library can be built using CMake.  For instructions see [Running CMake](https://cmake.org/runningcmake/).
