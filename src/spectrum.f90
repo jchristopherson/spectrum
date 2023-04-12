@@ -2227,7 +2227,7 @@ module spectrum
     !! The following exmple illustrates how to use a signal to compute a
     !! single-input, single-output transfer function.  The signal was generated
     !! using a second order system of the form
-    !! \f$ \frac{d^2 x}{dt^2} = 2 \zeta \omega_n \frac \left( \frac{dy}{dt} - 
+    !! \f$ \frac{d^2 x}{dt^2} = 2 \zeta \omega_n \left( \frac{dy}{dt} - 
     !! \frac{dx}{dt} \right) + \omega_n \left( y - x \right) \f$ excited with 
     !! a chirp signal that swept from 1 - 500 Hz.
     !! @code{.f90}

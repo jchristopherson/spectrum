@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.5"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>spectrum: spectrum::is_power_of_two Interface Reference</title>
+<title>spectrum: spectrum::periodogram Interface Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -71,7 +71,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('interfacespectrum_1_1is__power__of__two.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('interfacespectrum_1_1periodogram.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -98,26 +98,49 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1is__power__of__tw
 
 <div class="header">
   <div class="summary">
-<a href="interfacespectrum_1_1is__power__of__two-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">spectrum::is_power_of_two Interface Reference</div></div>
+<a href="interfacespectrum_1_1periodogram-members.html">List of all members</a>  </div>
+  <div class="headertitle"><div class="title">spectrum::periodogram Interface Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Tests to see if a value is an integer power of two.  
- <a href="interfacespectrum_1_1is__power__of__two.html#details">More...</a></p>
+<p>Computes the periodogram of a signal.  
+ <a href="interfacespectrum_1_1periodogram.html#details">More...</a></p>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Tests to see if a value is an integer power of two. </p>
-<dl class="section user"><dt>Syntax</dt><dd><div class="fragment"><div class="line"><span class="keywordtype">logical</span> <span class="keywordtype">pure</span> <span class="keywordtype">pure</span> <span class="keywordtype">elemental</span> function is_power_of_two(<span class="keywordtype">integer(int32)</span> n)</div>
+<div class="textblock"><p >Computes the periodogram of a signal. </p>
+<dl class="section user"><dt>Syntax</dt><dd><div class="fragment"><div class="line"><span class="keywordtype">allocatable</span> real(real64)(:) <span class="keyword">function </span>periodogram( &amp;</div>
+<div class="line"> class(window) win, &amp;</div>
+<div class="line"><span class="keywordtype"> real</span>(real64) x(:), &amp;</div>
+<div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">real(real64)</span> fs, &amp;</div>
+<div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">integer(int32)</span> nfft, &amp;</div>
+<div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">class</span>(errors) err &amp;</div>
+<div class="line">)</div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>The value to test. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">win</td><td>The <a class="el" href="structspectrum_1_1window.html">window</a> to apply. The size of the window must be non-zero and positive-valued. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>The signal to transform. The length of this array must be the same size as the window <code>win</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fs</td><td>An optional input, that if supplied, allows for normalization of the computed spectrum by the frequency resolution. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nfft</td><td>An optional input, that if supplied, allows for zero padding the FFT to the desired length. If not supplied, this parameter defaults to the window size. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">err</td><td>An optional errors-based object that if provided can be used to retrieve information relating to any errors encountered during execution. If not provided, a default implementation of the errors class is used internally to provide error handling. Possible errors and warning messages that may be encountered are as follows.<ul>
+<li>SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory available.</li>
+<li>SPCTRM_INVALID_INPUT_ERROR: Occurs if <code>win</code> is not sized appropriately.</li>
+<li>SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if <code>x</code> and <code>y</code> are not the same size as the window <code>win</code>.</li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Returns true if <code>n</code> is an integer power of two; else, returns false. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>An array containing the discrete PSD estimate. The estimate is returned at discrete frequency intervals that can be determined as follows.</dd></dl>
+<dl class="section user"><dt></dt><dd>\( \Delta f = \frac{f_{s}}{2 \left(m - 1 \right)} \) where, \( m = \frac{n_{window}}{2} + 1 \) if \( n_{window} \) is even; else, \( m = \frac{n_{window} + 1}{2} \) if \( n_{window} \) is odd.</dd></dl>
+<dl class="section user"><dt></dt><dd>\( m \) can be computed using <a class="el" href="interfacespectrum_1_1compute__transform__length.html">compute_transform_length</a>, and \( \Delta f \) can be computed using <a class="el" href="interfacespectrum_1_1frequency__bin__width.html">frequency_bin_width</a>.</dd></dl>
+<dl class="section user"><dt>References</dt><dd><ul>
+<li>Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
+  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
+  Periodograms." IEEE Transactions on Audio and Electroacoustics, AU-15 (2): 70-73, 1967. </li>
+</ul>
+</dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l01031">1031</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l02432">2432</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><hr/>The documentation for this interface was generated from the following file:<ul>
 <li>D:/Code/spectrum/src/<a class="el" href="spectrum_8f90_source.html">spectrum.f90</a></li>
 </ul>
@@ -126,7 +149,7 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1is__power__of__tw
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>spectrum</b></li><li class="navelem"><a class="el" href="interfacespectrum_1_1is__power__of__two.html">is_power_of_two</a></li>
+    <li class="navelem"><b>spectrum</b></li><li class="navelem"><a class="el" href="interfacespectrum_1_1periodogram.html">periodogram</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5 </li>
   </ul>
 </div>

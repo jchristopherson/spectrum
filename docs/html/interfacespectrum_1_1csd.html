@@ -112,6 +112,7 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1csd.html',''); in
 <div class="line"><span class="keywordtype"> real</span>(real64) x(:), &amp;</div>
 <div class="line"> <span class="keywordtype">real(real64)</span> y(:), &amp;</div>
 <div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">real(real64)</span> fs, &amp;</div>
+<div class="line"> <span class="keywordtype">integer(int32)</span> nfft, &amp;</div>
 <div class="line"> <span class="keywordtype">optional</span> <span class="keywordtype">class</span>(errors) err &amp;</div>
 <div class="line">)</div>
 </div><!-- fragment --></dd></dl>
@@ -124,6 +125,7 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1csd.html',''); in
     <tr><td class="paramdir">[in,out]</td><td class="paramname">err</td><td>An optional errors-based object that if provided can be used to retrieve information relating to any errors encountered during execution. If not provided, a default implementation of the errors class is used internally to provide error handling. Possible errors and warning messages that may be encountered are as follows.<ul>
 <li>SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory available.</li>
 <li>SPCTRM_INVALID_INPUT_ERROR: Occurs if <code>win</code> is not sized appropriately.</li>
+<li>SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if <code>x</code> and <code>y</code> are not the same size.</li>
 </ul>
 </td></tr>
   </table>
@@ -179,10 +181,10 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1csd.html',''); in
 <div class="line">    <span class="comment">! Define the window</span></div>
 <div class="line">    win%size = winsize</div>
 <div class="line"> </div>
-<div class="line">    <span class="comment">! Compute the</span></div>
-<div class="line">    xfrm = <a class="code hl_interface" href="interfacespectrum_1_1csd.html">csd</a>(win, x, y)</div>
+<div class="line">    <span class="comment">! Compute the spectrum</span></div>
+<div class="line">    xfrm = abs(<a class="code hl_interface" href="interfacespectrum_1_1csd.html">csd</a>(win, x, y))</div>
 <div class="line"> </div>
-<div class="line">    <span class="comment">! BUild a corresponding array of frequency values</span></div>
+<div class="line">    <span class="comment">! Build a corresponding array of frequency values</span></div>
 <div class="line">    df = <a class="code hl_interface" href="interfacespectrum_1_1frequency__bin__width.html">frequency_bin_width</a>(sample_rate, winsize)</div>
 <div class="line">    <span class="keyword">allocate</span>(freq(<span class="keyword">size</span>(xfrm)))</div>
 <div class="line">    freq = (/ (df * i, i = 0, <span class="keyword">size</span>(xfrm) - 1) /)</div>
@@ -204,14 +206,14 @@ $(document).ready(function(){initNavTree('interfacespectrum_1_1csd.html',''); in
 <div class="line">    <span class="keyword">call </span>plt%push(pd)</div>
 <div class="line">    <span class="keyword">call </span>plt%draw()</div>
 <div class="line"><span class="keyword">end program</span></div>
-<div class="ttc" id="ainterfacespectrum_1_1csd_html"><div class="ttname"><a href="interfacespectrum_1_1csd.html">spectrum::csd</a></div><div class="ttdoc">Computes the cross spectral density (CSD) of a signal via Welch's averaged method (sometimes referred...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01320">spectrum.f90:1320</a></div></div>
-<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l00999">spectrum.f90:999</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1csd_html"><div class="ttname"><a href="interfacespectrum_1_1csd.html">spectrum::csd</a></div><div class="ttdoc">Computes the cross spectral density (CSD) of a signal via Welch's averaged method (sometimes referred...</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01374">spectrum.f90:1374</a></div></div>
+<div class="ttc" id="ainterfacespectrum_1_1frequency__bin__width_html"><div class="ttname"><a href="interfacespectrum_1_1frequency__bin__width.html">spectrum::frequency_bin_width</a></div><div class="ttdoc">Computes the bin width for a discrete frequency spectrum based upon the data sample rate.</div><div class="ttdef"><b>Definition:</b> <a href="spectrum_8f90_source.html#l01017">spectrum.f90:1017</a></div></div>
 </div><!-- fragment --> The above program produces the following plot using the <a href="https://github.com/jchristopherson/fplot">FPLOT</a> library. <div class="image">
 <img src="csd_example_1.png" alt=""/>
 </div>
  </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l01320">1320</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spectrum_8f90_source.html#l01374">1374</a> of file <a class="el" href="spectrum_8f90_source.html">spectrum.f90</a>.</p>
 </div><hr/>The documentation for this interface was generated from the following file:<ul>
 <li>D:/Code/spectrum/src/<a class="el" href="spectrum_8f90_source.html">spectrum.f90</a></li>
 </ul>
