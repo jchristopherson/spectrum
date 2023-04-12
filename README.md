@@ -1,6 +1,9 @@
 # spectrum
 Spectrum is a library containing signal analysis routines with a focus towards spectral routines.
 
+## Status
+[![CMake](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml/badge.svg)](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml)
+
 ## Documentation
 TO DO:
 
