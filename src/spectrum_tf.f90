@@ -40,13 +40,13 @@ module function siso_xfrm(win, x, y, etype, nfft, err) result(rst)
     ! Process
     select case (est)
     case (SPCTRM_H1_ESTIMATOR)
-        pcross = csd(win, x, y, nfft = nfft, err = errmgr)
+        pcross = csd(win, y, x, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
         pwr = psd(win, x, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
         rst = pcross / pwr
     case (SPCTRM_H2_ESTIMATOR)
-        pcross = csd(win, y, x, nfft = nfft, err = errmgr)
+        pcross = csd(win, x, y, nfft = nfft, err = errmgr)
         if (errmgr%has_error_occurred()) return
         pwr = psd(win, y, err = errmgr)
         if (errmgr%has_error_occurred()) return
