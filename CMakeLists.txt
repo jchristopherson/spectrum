@@ -29,12 +29,13 @@ link_library(${PROJECT_NAME} ${ferror_LIBRARY} ${ferror_INCLUDE_DIR})
 link_library(${PROJECT_NAME} ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
 
 # Use OpenMP
-#
-# TO DO:
-# Detect Fortran compiler. 
-# - gfortran uses -fopenmp
-# - ifort uses -qopenmp
-target_compile_definitions(${PROJECT_NAME} PUBLIC "-fopenmp")
+if (CMAKE_Fortran_COMPILER_ID MATCHES "^Intel")
+    # Intel
+    target_compile_definitions(${PROJECT_NAME} PUBLIC "-qopenmp")
+else()
+    # Assume GFortran (String: "GNU")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC "-fopenmp")
+endif()
 
 # Installation
 add_subdirectory(install)
