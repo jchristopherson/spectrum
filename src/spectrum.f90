@@ -1401,7 +1401,6 @@ module spectrum
     !!  class(window) win, &
     !!  real(real64) x(:), &
     !!  optional allocatable integer(int32) offsets(:), &
-    !!  optional logical par, &
     !!  optional class(errors) err &
     !! )
     !! @endcode
@@ -1411,10 +1410,6 @@ module spectrum
     !!  size of the window @p win.
     !! @param[out] offsets An optional allocatable array that, if supplied, will
     !!  be filled with the starting indices of each window segment.
-    !! @param[in] par An optional input that will utilize OpenMP to parallelize
-    !!  the transform operations if set to true.  If set to false, each 
-    !!  transform will be computed in a serial manner.  The default is false 
-    !!  unless the number of transforms exceeds 50.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
     !!  during execution.  If not provided, a default implementation of the 
@@ -1523,11 +1518,10 @@ module spectrum
     end interface
 
     interface
-        module function stft(win, x, offsets, par, err) result(rst)
+        module function stft(win, x, offsets, err) result(rst)
             class(window), intent(in) :: win
             real(real64), intent(in) :: x(:)
             integer(int32), intent(out), optional, allocatable :: offsets(:)
-            logical, intent(in), optional :: par
             class(errors), intent(inout), optional, target :: err
             complex(real64), allocatable :: rst(:,:)
         end function

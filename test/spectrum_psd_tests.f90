@@ -277,8 +277,11 @@ function test_spectrogram() result(rst)
     real(real64) :: k, check, dt
     complex(real64), allocatable, dimension(:,:) :: r
     real(real64), allocatable, dimension(:) :: t, x
-    real(real64), allocatable, dimension(:,:) :: mag, magp
+    real(real64), allocatable, dimension(:,:) :: mag
     type(flat_top_window) :: win
+
+    ! Initialization
+    rst = .true.
 
     ! Create the exponential chirp signal
     npts = floor(duration * fs) + 1
@@ -291,22 +294,11 @@ function test_spectrogram() result(rst)
     ! Define the window
     win%size = window_size
 
-    ! Compute the spectrogram of x - ensure it's done in a serial manner
-    r = spectrogram(win, x, par = .false.)
+    ! Compute the spectrogram of x
+    r = spectrogram(win, x)
 
     ! Compute the magnitude
     mag = abs(r)
-
-    ! Repeat the computation, but perform in a parallel manner
-    r = spectrogram(win, x, par = .true.)
-    magp = abs(r)
-    
-    ! Ensure the matrices return the same output
-    rst = .true.
-    if (.not.assert(mag, magp)) then
-        rst = .false.
-        print '(A)', "TEST FAILED: test_spectrogram 1-1"
-    end if
 
     ! Ensure the magnitude of the largest component of each transform is one
     do i = 1, size(mag, 2)

@@ -63,6 +63,30 @@ function(link_library targ lib include_dir)
     target_include_directories(${targ} PUBLIC $<BUILD_INTERFACE:${include_dir}>)
 endfunction()
 
+# Links with OpenMP
+function(link_openmp targ)
+    find_package(OpenMP)
+    if (OpenMP_Fortran_FOUND)
+        target_link_libraries(${targ} OpenMP::OpenMP_Fortran)
+        target_compile_definitions(${targ} PUBLIC ${OpenMP_Fortran_FLAGS})
+    endif()
+endfunction()
+
+# Enable parallelism with Do-Concurrent
+function(enable_parallel_do targ nproc)
+    if (CMAKE_Fortran_COMPILER_ID MATCHES "^Intel")
+        # Intel - just requires OpenMP
+        message(STATUS "IFORT: DO CONCURRENT will be parallelized.")
+        link_openmp(${targ})
+    elseif (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+        message(STATUS "GFORTRAN: DO CONCURRENT will be parallelized.")
+        target_compile_definitions(${targ} PUBLIC "-ftree-parallelize-loops=${nproc}")
+    else()
+        # Unrecognized Compiler
+        message(STATUS "Unrecognized compiler.  DO CONCURRENT not guaranteed to be parallelized.")
+    endif()
+endfunction()
+
 # ------------------------------------------------------------------------------
 # Helpful Macros
 macro(print_all_variables)
