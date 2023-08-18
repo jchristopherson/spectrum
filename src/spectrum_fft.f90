@@ -54,12 +54,12 @@ module function stft(win, x, offsets, err) result(rst)
     if (present(offsets)) then
         do i = 1, nk
             i1 = int((i - 1) * del + 0.5d0, int32)
-            offsets(i) = i1
+            offsets(i) = i1 + 1
         end do
     end if
 
     ! Compute each transform
-    do concurrent (i = 1:nk)
+    do i = 1, nk
         rst(:,i) = stft_core(win, x, i, del, work)
     end do
 
