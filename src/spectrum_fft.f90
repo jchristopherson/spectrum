@@ -11,9 +11,9 @@ module function stft(win, x, offsets, err) result(rst)
     complex(real64), allocatable :: rst(:,:)
 
     ! Local Variables
-    integer(int32) :: i, m, nx, nxfrm, nk, lwork, flag, i1
-    real(real64) :: del
-    real(real64), allocatable :: work(:)
+    integer(int32) :: i, j, k, m, nx, nxfrm, nk, lwork, flag, i1, nend
+    real(real64) :: del, sumw, w, fac, scale
+    real(real64), allocatable, dimension(:) :: work, buffer
     class(errors), pointer :: errmgr
     type(errors), target :: deferr
     character(len = :), allocatable :: errmsg
@@ -34,6 +34,13 @@ module function stft(win, x, offsets, err) result(rst)
     else
         del = 0.0d0
     end if
+    if (mod(m, 2) == 0) then
+        nend = nxfrm - 1
+        scale = 2.0d0 / m
+    else
+        nend = nxfrm
+        scale = 2.0d0 / (m - 1.0d0)
+    end if
 
     ! Input Checking
     if (m > nx) go to 20
@@ -41,6 +48,7 @@ module function stft(win, x, offsets, err) result(rst)
     ! Memory Allocation
     allocate(rst(nxfrm, nk), stat = flag)
     if (flag == 0) allocate(work(lwork), stat = flag)
+    if (flag == 0) allocate(buffer(m), stat = flag)
     if (present(offsets)) then
         if (flag == 0) allocate(offsets(nk), stat = flag, source = 0)
     end if
@@ -50,17 +58,34 @@ module function stft(win, x, offsets, err) result(rst)
     ! same length, this array can be shared.
     call dffti(m, work)
 
-    ! Store offsets, if necessary
-    if (present(offsets)) then
-        do i = 1, nk
-            i1 = int((i - 1) * del + 0.5d0, int32)
-            offsets(i) = i1 + 1
-        end do
-    end if
-
     ! Compute each transform
     do i = 1, nk
-        rst(:,i) = stft_core(win, x, i, del, work)
+        ! Compute the offset
+        i1 = int((i - 1) * del + 0.5d0, int32)
+        if (present(offsets)) offsets(i) = i1 + 1
+
+        ! Apply the window
+        sumw = 0.0d0
+        j = 0
+        do k = 1, m
+            w = win%evaluate(j)
+            j = j + 1
+            sumw = sumw + w
+            buffer(k) = w * x(k + i1)
+        end do
+        fac = m / sumw
+
+        ! Compute the transform
+        call dfftf(m, buffer, work)
+
+        ! Scale the transform
+        rst(1,i) = fac * scale * cmplx(buffer(1), 0.0d0, real64)
+        do k = 2, nend
+            rst(k,i) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
+        end do
+        if (nend /= nxfrm) then
+            rst(nxfrm,i) = fac * scale * cmplx(buffer(m), 0.0d0, real64)
+        end if
     end do
 
     ! End
@@ -85,59 +110,6 @@ module function stft(win, x, offsets, err) result(rst)
     ! Formatting
 100 format(A, I0, A)
 101 format(A, I0, A, I0, A)
-end function
-
-! ------------------------------------------------------------------------------
-pure function stft_core(win, x, offset, del, trig) result(rst)
-    ! Arguments
-    class(window), intent(in) :: win
-    real(real64), intent(in), dimension(:) :: x
-    integer(int32), intent(in) :: offset
-    real(real64), intent(in) :: del
-    real(real64), intent(in), dimension(:) :: trig
-    complex(real64), allocatable, dimension(:) :: rst
-
-    ! Local Variables
-    integer(int32) :: j, k, m, nxfrm, nend, i1
-    real(real64) :: sumw, w, fac, scale
-    real(real64), allocatable, dimension(:) :: buffer
-
-    ! Initialization
-    m = win%size
-    nxfrm = compute_transform_length(m)
-    i1 = int((offset - 1) * del + 0.5d0, int32)
-    allocate(buffer(m))
-    allocate(rst(nxfrm))
-    if (mod(m, 2) == 0) then
-        nend = nxfrm - 1
-        scale = 2.0d0 / m
-    else
-        nend = nxfrm
-        scale = 2.0d0 / (m - 1.0d0)
-    end if
-    
-    ! Apply the window
-    sumw = 0.0d0
-    j = 0
-    do k = 1, m
-        w = win%evaluate(j)
-        j = j + 1
-        sumw = sumw + w
-        buffer(k) = w * x(k + i1)
-    end do
-    fac = m / sumw
-
-    ! Compute the transform
-    call dfftf(m, buffer, trig)
-
-    ! Scale the transform
-    rst(1) = fac * scale * cmplx(buffer(1), 0.0d0, real64)
-    do k = 2, nend
-        rst(k) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
-    end do
-    if (nend /= nxfrm) then
-        rst(nxfrm) = fac * scale * cmplx(buffer(m), 0.0d0, real64)
-    end if
 end function
 
 ! ------------------------------------------------------------------------------
