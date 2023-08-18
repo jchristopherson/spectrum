@@ -2,9 +2,9 @@ name: CMake
 
 on:
   push:
-    branches: [ "Parallel_STFT" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "Parallel_STFT" ]
+    branches: [ "main" ]
 
 env:
   BUILD_TYPE: Release
