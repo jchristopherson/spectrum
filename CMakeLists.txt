@@ -27,7 +27,11 @@ add_fortran_library(
 )
 link_library(${PROJECT_NAME} ${ferror_LIBRARY} ${ferror_INCLUDE_DIR})
 link_library(${PROJECT_NAME} ${fftpack_LIBRARY} ${fftpack_INCLUDE_DIR})
-enable_parallel_do(${PROJECT_NAME})
+
+# Enable Parallel DO CONCURRENT
+set(DO_CONCURRENT_PROC_COUNT 4 CACHE STRING "Define the number of processors")
+set_property(CACHE DO_CONCURRENT_PROC_COUNT PROPERTY VALUE "4")
+enable_parallel_do(${PROJECT_NAME} ${DO_CONCURRENT_PROC_COUNT})
 
 # Installation
 add_subdirectory(install)
