@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_convolve
     use fftpack
+    implicit none
 contains
 ! ------------------------------------------------------------------------------
 module function convolve_1(x, y, method, err) result(rst)

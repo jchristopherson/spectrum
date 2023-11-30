@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_tf
     use fftpack
+    implicit none
 contains
 ! ------------------------------------------------------------------------------
 ! REF: 

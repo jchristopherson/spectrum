@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_fft
     use fftpack
+    implicit none
 contains
 ! ------------------------------------------------------------------------------
 module function stft(win, x, offsets, err) result(rst)

@@ -3,12 +3,23 @@ Spectrum is a library containing signal analysis routines with a focus towards s
 
 ## Status
 [![CMake](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml/badge.svg)](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml)
+[![Actions Status](https://github.com/jchristopherson/spectrum/workflows/fpm/badge.svg)](https://github.com/jchristopherson/spectrum/actions)
 
 ## Documentation
 The documentation can be found [here](https://jchristopherson.github.io/spectrum/).
 
 ## Building Spectrum
-This library can be built using CMake.  For instructions see [Running CMake](https://cmake.org/runningcmake/).
+[CMake](https://cmake.org/)This library can be built using CMake.  For instructions see [Running CMake](https://cmake.org/runningcmake/).
+
+[FPM](https://github.com/fortran-lang/fpm) can also be used to build this library using the provided fpm.toml.
+```txt
+fpm build
+```
+The SPECTRUM library can be used within your FPM project by adding the following to your fpm.toml file.
+```toml
+[dependencies]
+spectrum = { git = "https://github.com/jchristopherson/spectrum" }
+```
 
 ## External Libraries
 The FPLOT library depends upon the following libraries.

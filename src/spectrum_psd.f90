@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_psd
     use fftpack
+    implicit none
 contains
 module function psd_welch(win, x, fs, nfft, err) result(rst)
     ! Arguments

@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_periodogram
     use fftpack
+    implicit none
 contains
 ! ------------------------------------------------------------------------------
 module function periodogram_1(win, x, fs, nfft, err) result(rst)
@@ -264,7 +265,7 @@ module subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
 60  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 101) "The length of the FFT (", nf, &
-        ") must be at least the size of the window (", nw, ")."
+        ") must be at least the size of the window (", nx, ")."
     call errmgr%report_error("periodogram_driver", trim(errmsg), &
         SPCTRM_INVALID_INPUT_ERROR)
     return
@@ -453,7 +454,7 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
 70  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 101) "The length of the FFT (", nf, &
-        ") must be at least the size of the window (", nw, ")."
+        ") must be at least the size of the window (", nx, ")."
     call errmgr%report_error("cross_periodogram_driver", trim(errmsg), &
         SPCTRM_INVALID_INPUT_ERROR)
     return
