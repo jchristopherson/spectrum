@@ -19,6 +19,7 @@ The SPECTRUM library can be used within your FPM project by adding the following
 ```toml
 [dependencies]
 spectrum = { git = "https://github.com/jchristopherson/spectrum" }
+```
 
 ## External Libraries
 The FPLOT library depends upon the following libraries.
