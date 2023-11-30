@@ -1,4 +1,5 @@
 submodule (spectrum) spectrum_overlap
+    implicit none
 contains
 
 pure module function overlap_segment_count_1(n, winsize) result(rst)

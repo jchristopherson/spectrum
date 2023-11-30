@@ -1,4 +1,5 @@
 submodule (spectrum) spectrum_filter
+    implicit none
 contains
 ! ******************************************************************************
 ! GAUSSIAN FILTER
@@ -11,7 +12,7 @@ module function gaussian_filter_1(x, alpha, k, err) result(rst)
     real(real64), allocatable :: rst(:)
 
     ! Local Variables
-    integer(int32) :: kappa, nk, flag
+    integer(int32) :: i, kappa, nk, flag
     real(real64) :: sumg
     real(real64), allocatable :: g(:)
     class(errors), pointer :: errmgr

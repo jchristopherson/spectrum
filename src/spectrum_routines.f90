@@ -1,4 +1,5 @@
 submodule (spectrum) spectrum_routines
+    implicit none
 contains
 ! ------------------------------------------------------------------------------
 pure module function compute_xfrm_length_1(n) result(rst)

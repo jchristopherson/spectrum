@@ -1,5 +1,6 @@
 submodule (spectrum) spectrum_csd
     use fftpack
+    implicit none
 contains
 module function csd_welch(win, x, y, fs, nfft, err) result(rst)
     ! Arguments
@@ -12,7 +13,7 @@ module function csd_welch(win, x, y, fs, nfft, err) result(rst)
 
     ! Local Variables
     logical :: init
-    integer(int32) :: nx, ny, nw, nk, nf, lwork, flag
+    integer(int32) :: i, nx, ny, nw, nk, nf, lwork, flag, nxfrm
     real(real64) :: fres, fac
     real(real64), allocatable, dimension(:) :: work, xw, yw
     complex(real64), allocatable, dimension(:) :: cwork, buffer
