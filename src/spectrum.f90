@@ -1298,6 +1298,14 @@ module spectrum
     !!  - SPCTRM_SINGULAR_MATRIX_ERROR: Occurs if the internal Hessian estimate
     !!      becomes singular.
     !! @return An N-element array containing the estimate of the derivative.
+    !!
+    !! @par References
+    !! - van Breugel, Floris & Brunton, Bingni & Kutz, J.. (2020). Numerical 
+    !!   differentiation of noisy data: A unifying multi-objective optimization 
+    !!   framework. 
+    !! - Oliver K. Ernst, Ph. D. (2021, February 16). How to differentiate 
+    !!   noisy signals. Medium. https://oliver-k-ernst.medium.com/how-to-differentiate-noisy-signals-2baf71b8bb65 
+    !! - 
     interface tvr_derivative
         module procedure :: tvr_diff
     end interface
