@@ -132,12 +132,14 @@ module function filter_tv_1(x, lambda, niter, err) result(rst)
     ! Process
     t = 0.5d0 * lambda
     do i = 1, nit
-        call difference(z, work(2:n-1))
+        ! call difference(z, work(2:n-1))
+        work(2:n-1) = difference(z)
         work(1) = z(1)
         work(n) = -z(n - 1)
         rst = x + work
 
-        call difference(rst, dx)
+        ! call difference(rst, dx)
+        dx = difference(rst)
         do k = 1, n - 1
             z(k) = z(k) + dx(k) / alpha
             z(k) = max(min(z(k), t), -t)
@@ -325,28 +327,6 @@ module function avg_filter_1(navg, x, err) result(rst)
         SPCTRM_INVALID_INPUT_ERROR)
     return
 end function
-
-! ******************************************************************************
-! HELPER ROUTINES
-! ------------------------------------------------------------------------------
-! Computes the difference between elements in an array.
-!
-! - x: An N-element array.
-! - dx: The N-1 element results array.
-subroutine difference(x, dx)
-    ! Arguments
-    real(real64), intent(in) :: x(:)
-    real(real64), intent(out) :: dx(:)
-
-    ! Local Variables
-    integer(int32) :: i, n
-
-    ! Process
-    n = size(x)
-    do i = 1, n - 1
-        dx(i) = x(i+1) - x(i)
-    end do
-end subroutine
 
 ! ------------------------------------------------------------------------------
 end submodule

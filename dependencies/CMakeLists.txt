@@ -11,3 +11,14 @@ set(ferror_INCLUDE_DIR ${ferror_INCLUDE_DIR} PARENT_SCOPE)
 add_subdirectory(fftpack)
 set(fftpack_LIBRARY ${fftpack_LIBRARY} PARENT_SCOPE)
 set(fftpack_INCLUDE_DIR ${fftpack_INCLUDE_DIR} PARENT_SCOPE)
+
+# Get BLAS
+add_subdirectory(BLAS)
+
+# Get LAPACK
+add_subdirectory(LAPACK)
+
+# Get LINALG
+add_subdirectory(linalg)
+set(linalg_LIBRARY ${linalg_LIBRARY} PARENT_SCOPE)
+set(linalg_INCLUDE_DIR ${linalg_INCLUDE_DIR} PARENT_SCOPE)

@@ -14,5 +14,6 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_filter.f90
     ${dir}/spectrum_tf.f90
     ${dir}/spectrum_periodogram.f90
+    ${dir}/spectrum_diff.f90
 )
 set(SPECTRUM_SOURCES ${SPECTRUM_SOURCES} PARENT_SCOPE)

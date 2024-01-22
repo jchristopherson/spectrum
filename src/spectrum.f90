@@ -27,13 +27,18 @@ module spectrum
     public :: compute_overlap_segment_count
     public :: overlap
     public :: unwrap
+    public :: cumulative_sum
+    public :: difference
     public :: siso_transfer_function
     public :: periodogram
     public :: cross_periodogram
+    public :: finite_difference
+    public :: tvr_derivative
     public :: SPCTRM_MEMORY_ERROR
     public :: SPCTRM_INVALID_INPUT_ERROR
     public :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR
     public :: SPCTRM_ARRAY_SIZE_ERROR
+    public :: SPCTRM_SINGULAR_MATRIX_ERROR
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
     public :: SPCTRM_H1_ESTIMATOR
@@ -46,6 +51,7 @@ module spectrum
     integer(int32), parameter :: SPCTRM_INVALID_INPUT_ERROR = 10001
     integer(int32), parameter :: SPCTRM_ARRAY_SIZE_MISMATCH_ERROR = 10002
     integer(int32), parameter :: SPCTRM_ARRAY_SIZE_ERROR = 10003
+    integer(int32), parameter :: SPCTRM_SINGULAR_MATRIX_ERROR = 10004
 
     !> A flag for requesting a full convolution.
     integer(int32), parameter :: SPCTRM_FULL_CONVOLUTION = 50000
@@ -417,6 +423,51 @@ module spectrum
         module procedure :: unwrap_1
     end interface
 
+    !> @brief Computes the cumulative sum of an array.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! real(real64)(:) function cumulative_sum( &
+    !!  real(real64) x(:), &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x The N-element array on which to operate.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    !! @return An N-element array containing the cumulative sum of each element
+    !!  in @p x (e.g. cumulative_sum(x) = [x(1), x(1) + x(2), ...]).
+    interface cumulative_sum
+        module procedure :: cumulative_sum_1
+    end interface
+
+    !> @brief Computes the difference between each element in an array.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! real(real64)(:) function difference( &
+    !!  real(real64) x(:) &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] x The N-element array on which to operate.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    !! @return An (N-1)-element array containing the difference between
+    !!  each element in @p x.
+    interface difference
+        module procedure :: difference_1
+    end interface
+
     interface
         pure module function compute_xfrm_length_1(n) result(rst)
             integer(int32), intent(in) :: n
@@ -449,6 +500,18 @@ module spectrum
             real(real64), intent(inout) :: x(:)
             real(real64), intent(in), optional :: tol
         end subroutine
+
+        module function cumulative_sum_1(x, err) result(rst)
+            real(real64), intent(in) :: x(:)
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable :: rst(:)
+        end function
+
+        module function difference_1(x, err) result(dx)
+            real(real64), intent(in), dimension(:) :: x
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable, dimension(:) :: dx
+        end function
     end interface
 
 ! ******************************************************************************
@@ -478,8 +541,7 @@ module spectrum
     !!  during execution.  If not provided, a default implementation of the 
     !!  errors class is used internally to provide error handling.  Possible 
     !!  errors and warning messages that may be encountered are as follows.
-    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
-    !!      available.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
     !!      appropriately.
     !!
@@ -548,8 +610,7 @@ module spectrum
     !!  during execution.  If not provided, a default implementation of the 
     !!  errors class is used internally to provide error handling.  Possible 
     !!  errors and warning messages that may be encountered are as follows.
-    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
-    !!      available.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
     !!      appropriately.
     !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the
@@ -619,8 +680,7 @@ module spectrum
     !!  during execution.  If not provided, a default implementation of the 
     !!  errors class is used internally to provide error handling.  Possible 
     !!  errors and warning messages that may be encountered are as follows.
-    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
-    !!      available.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in @p x is too short
     !!      relative to the window size in @p win.
     !!
@@ -1012,8 +1072,7 @@ module spectrum
     !!  during execution.  If not provided, a default implementation of the 
     !!  errors class is used internally to provide error handling.  Possible 
     !!  errors and warning messages that may be encountered are as follows.
-    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
-    !!      available.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
     !!      appropriately.
     !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the 
@@ -1070,8 +1129,7 @@ module spectrum
     !!  during execution.  If not provided, a default implementation of the 
     !!  errors class is used internally to provide error handling.  Possible 
     !!  errors and warning messages that may be encountered are as follows.
-    !!  - SPCTRM_MEMORY_ERROR: Occurs if there is insufficient memory 
-    !!      available.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if @p win is not sized 
     !!      appropriately.
     !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p x and @p y are not the
@@ -1149,6 +1207,123 @@ module spectrum
         end subroutine
     end interface
 
-
+! ******************************************************************************
+! SPECTRUM_DIFF.F90
 ! ------------------------------------------------------------------------------
+
+    !> @brief Estimates the derivative of a data set by means of a naive 
+    !! implementation of a finite difference scheme based upon central 
+    !! differences.
+    !!
+    !! @par Syntax 1
+    !! @code{.f90}
+    !! real(real64)(:) function finite_difference( &
+    !!  real(real64) dt, &
+    !!  real(real64) x(:)
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] dt The time step between data points.
+    !! @param[in] x An N-element array containing the data whose derivative is
+    !!  to be estimated.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    !! @return An N-element array containing the derivative estimate.
+    !!
+    !! @par Syntax 2
+    !! @code{.f90}
+    !! real(real64)(:) function finite_difference( &
+    !!  real(real64) t(:), &
+    !!  real(real64) x(:)
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] t An N-element array containing the time points at which
+    !!  @p x was sampled.
+    !! @param[in] x An N-element array containing the data whose derivative is
+    !!  to be estimated.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if @p t and @p x are not the
+    !!      same size.
+    !! @return An N-element array containing the derivative estimate.
+    interface finite_difference
+        module procedure :: finite_difference_1
+        module procedure :: finite_difference_2
+    end interface
+
+    !> @brief Computes an estimate to the derivative of an evenly-sampled data
+    !! set using total variation regularization.
+    !!
+    !! @par Syntax
+    !! @code{.f90}
+    !! real(real64)(:) function tvr_derivative( &
+    !!  real(real64) dt, &
+    !!  real(real64) x(:), &
+    !!  real(real64) alpha, &
+    !!  optional integer(int32) maxiter, &
+    !!  optional real(real64) tol, &
+    !!  optional integer(int32) niter, &
+    !!  optional class(errors) err &
+    !! )
+    !! @endcode
+    !!
+    !! @param[in] dt The time step between data points.
+    !! @param[in] x An N-element array containing the data whose derivative is
+    !!  to be estimated.
+    !! @param[in] alpha The regularization parameter.
+    !! @param[in] maxiter The maximum number of iterations to allow.  The 
+    !!  default is 20 iterations.
+    !! @param[in] tol The convergence tolerance to use.  The tolerance is 
+    !!  applied to the difference in Euclidean norms of the derivative update
+    !!  vector.  Once the norm of the update vector is changing less than this
+    !!  tolerance, the iteration process will terminate.  The default is 1e-2.
+    !! @param[out] niter The number of iterations actually performed.
+    !! @param[in,out] err An optional errors-based object that if provided can
+    !!  be used to retrieve information relating to any errors encountered 
+    !!  during execution.  If not provided, a default implementation of the 
+    !!  errors class is used internally to provide error handling.  Possible 
+    !!  errors and warning messages that may be encountered are as follows.
+    !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    !!  - SPCTRM_SINGULAR_MATRIX_ERROR: Occurs if the internal Hessian estimate
+    !!      becomes singular.
+    !! @return An N-element array containing the estimate of the derivative.
+    interface tvr_derivative
+        module procedure :: tvr_diff
+    end interface
+
+    interface
+        module function finite_difference_1(dt, x, err) result(rst)
+            real(real64), intent(in) :: dt
+            real(real64), intent(in), dimension(:) :: x
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable, dimension(:) :: rst
+        end function
+
+        module function finite_difference_2(t, x, err) result(rst)
+            real(real64), intent(in), dimension(:) :: t, x
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable, dimension(:) :: rst
+        end function
+
+        module function tvr_diff(dt, x, alpha, maxiter, tol, niter, err) result(rst)
+            real(real64), intent(in) :: alpha, dt
+            real(real64), intent(in), dimension(:) :: x
+            integer(int32), intent(in), optional :: maxiter
+            real(real64), intent(in), optional :: tol
+            integer(int32), intent(out), optional :: niter
+            class(errors), intent(inout), optional, target :: err
+            real(real64), allocatable, dimension(:) :: rst
+        end function
+    end interface
 end module
