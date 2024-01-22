@@ -13,6 +13,7 @@ source-dir = "src"
 [dependencies]
 ferror = { git = "https://github.com/jchristopherson/ferror" }
 fftpack = { git = "https://github.com/fortran-lang/fftpack" }
+linalg = { git = "https://github.com/jchristopherson/linalg" }
 
 [dev-dependencies]
 fortran_test_helper = { git = "https://github.com/jchristopherson/fortran_test_helper" }
@@ -21,6 +22,7 @@ fortran_test_helper = { git = "https://github.com/jchristopherson/fortran_test_h
 library = true
 
 [build]
+link = ["blas", "lapack"]
 auto-executables = false
 auto-examples = false
 auto-tests = false
