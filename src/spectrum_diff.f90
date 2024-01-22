@@ -315,6 +315,7 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
         ! Check the solution
         nrm = norm2(g)
         if (abs(nrm - nrmold) < tol) exit
+        nrmold = nrm
 
         ! Update the derivative estimate
         u = u - g
@@ -372,7 +373,7 @@ module function tvr_diff(dt, x, alpha, maxiter, tol, niter, err) result(rst)
     if (present(tol)) then
         gtol = tol
     else
-        gtol = 1.0d-2
+        gtol = 1.0d-3
     end if
     n = size(x)
     allocate(rst(n), stat = flag)

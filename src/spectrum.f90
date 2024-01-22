@@ -1287,7 +1287,7 @@ module spectrum
     !! @param[in] tol The convergence tolerance to use.  The tolerance is 
     !!  applied to the difference in Euclidean norms of the derivative update
     !!  vector.  Once the norm of the update vector is changing less than this
-    !!  tolerance, the iteration process will terminate.  The default is 1e-2.
+    !!  tolerance, the iteration process will terminate.  The default is 1e-3.
     !! @param[out] niter The number of iterations actually performed.
     !! @param[in,out] err An optional errors-based object that if provided can
     !!  be used to retrieve information relating to any errors encountered 
