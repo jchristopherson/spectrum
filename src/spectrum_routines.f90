@@ -147,17 +147,32 @@ pure function diff(x) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-pure function cumulative_sum(x) result(rst)
+module function cumulative_sum_1(x, err) result(rst)
     ! Arguments
     real(real64), intent(in) :: x(:)
+    class(errors), intent(inout), optional, target :: err
     real(real64), allocatable :: rst(:)
 
     ! Local Variables
-    integer(int32) :: i, n
+    integer(int32) :: i, n, flag
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    allocate(rst(n), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("cumulative_sum_1", &
+            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
+        return
+    end if
 
     ! Process
-    n = size(x)
-    allocate(rst(n))
     rst(1) = x(1)
     do i = 2, n
         rst(i) = rst(i-1) + x(i)
@@ -201,6 +216,17 @@ module subroutine unwrap_1(x, tol)
     ! Apply the corrections
     x(2:n) = x(2:n) - (2.0d0 * pi) * cumulative_sum(dpcorr)
 end subroutine
+
+! ------------------------------------------------------------------------------
+module function difference_1(x, err) result(dx)
+    ! Arguments
+    real(real64), intent(in), dimension(:) :: x
+    class(errors), intent(inout), optional, target :: err
+    real(real64), allocatable, dimension(:) :: dx
+
+    ! Process
+    dx = diff(x)
+end function
 
 ! ------------------------------------------------------------------------------
 end submodule

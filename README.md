@@ -25,6 +25,9 @@ spectrum = { git = "https://github.com/jchristopherson/spectrum" }
 The FPLOT library depends upon the following libraries.
 - [FERROR](https://github.com/jchristopherson/ferror)
 - [FFTPACK](https://github.com/fortran-lang/fftpack)
+- [BLAS](http://www.netlib.org/blas/)
+- [LAPACK](http://www.netlib.org/lapack/)
+- [LINALG](https://github.com/jchristopherson/linalg)
 
 Spectrum contains a large selection of signal processing routines.  The following examples illustrate some of the spectral capabilities in addition to some of the filtering options available.
 

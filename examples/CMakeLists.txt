@@ -91,3 +91,8 @@ add_executable(siso_tf_example siso_tf_example.f90)
 link_library(siso_tf_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(siso_tf_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 link_library(siso_tf_example ${fortran-csv-module_LIBRARY} ${fortran-csv-module_INCLUDE_DIR})
+
+# TVR Differentiation Example
+add_executable(tvr_diff_example tvr_diff_example.f90)
+link_library(tvr_diff_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(tvr_diff_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
