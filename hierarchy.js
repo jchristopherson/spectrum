@@ -5,7 +5,10 @@ var hierarchy =
     [ "spectrum::convolve", "interfacespectrum_1_1convolve.html", null ],
     [ "spectrum::cross_periodogram", "interfacespectrum_1_1cross__periodogram.html", null ],
     [ "spectrum::csd", "interfacespectrum_1_1csd.html", null ],
+    [ "spectrum::cumulative_sum", "interfacespectrum_1_1cumulative__sum.html", null ],
+    [ "spectrum::difference", "interfacespectrum_1_1difference.html", null ],
     [ "spectrum::filter", "interfacespectrum_1_1filter.html", null ],
+    [ "spectrum::finite_difference", "interfacespectrum_1_1finite__difference.html", null ],
     [ "spectrum::frequency_bin_width", "interfacespectrum_1_1frequency__bin__width.html", null ],
     [ "spectrum::gaussian_filter", "interfacespectrum_1_1gaussian__filter.html", null ],
     [ "spectrum::is_power_of_two", "interfacespectrum_1_1is__power__of__two.html", null ],
@@ -17,6 +20,7 @@ var hierarchy =
     [ "spectrum::siso_transfer_function", "interfacespectrum_1_1siso__transfer__function.html", null ],
     [ "spectrum::spectrogram", "interfacespectrum_1_1spectrogram.html", null ],
     [ "spectrum::tv_filter", "interfacespectrum_1_1tv__filter.html", null ],
+    [ "spectrum::tvr_derivative", "interfacespectrum_1_1tvr__derivative.html", null ],
     [ "spectrum::unwrap", "interfacespectrum_1_1unwrap.html", null ],
     [ "spectrum::window", "structspectrum_1_1window.html", [
       [ "spectrum::blackman_harris_window", "structspectrum_1_1blackman__harris__window.html", null ],

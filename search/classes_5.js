@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['is_5fpower_5fof_5ftwo_0',['is_power_of_two',['../interfacespectrum_1_1is__power__of__two.html',1,'spectrum']]]
+  ['hamming_5fwindow_0',['hamming_window',['../structspectrum_1_1hamming__window.html',1,'spectrum']]],
+  ['hann_5fwindow_1',['hann_window',['../structspectrum_1_1hann__window.html',1,'spectrum']]]
 ];

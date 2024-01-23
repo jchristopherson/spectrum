@@ -25,9 +25,9 @@
 var NAVTREE =
 [
   [ "spectrum", "index.html", [
-    [ "Data Types List", "annotated.html", [
+    [ "Data Types", "annotated.html", [
       [ "Data Types List", "annotated.html", "annotated_dup" ],
-      [ "Data Types", "classes.html", null ],
+      [ "Data Type Index", "classes.html", null ],
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Data Fields", "functions.html", [
         [ "All", "functions.html", null ],

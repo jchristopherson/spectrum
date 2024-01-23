@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['moving_5faverage_5ffilter_0',['moving_average_filter',['../interfacespectrum_1_1moving__average__filter.html',1,'spectrum']]]
+  ['is_5fpower_5fof_5ftwo_0',['is_power_of_two',['../interfacespectrum_1_1is__power__of__two.html',1,'spectrum']]]
 ];

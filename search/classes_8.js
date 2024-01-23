@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['overlap_0',['overlap',['../interfacespectrum_1_1overlap.html',1,'spectrum']]]
+  ['next_5fpower_5fof_5ftwo_0',['next_power_of_two',['../interfacespectrum_1_1next__power__of__two.html',1,'spectrum']]]
 ];
