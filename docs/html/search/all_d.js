@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['tv_5ffilter_0',['tv_filter',['../interfacespectrum_1_1tv__filter.html',1,'spectrum']]]
+  ['siso_5ftransfer_5ffunction_0',['siso_transfer_function',['../interfacespectrum_1_1siso__transfer__function.html',1,'spectrum']]],
+  ['spectrogram_1',['spectrogram',['../interfacespectrum_1_1spectrogram.html',1,'spectrum']]]
 ];
