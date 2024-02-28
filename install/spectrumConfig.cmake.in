@@ -1,3 +1,0 @@
-if (NOT TARGET spectrum)
-    include("${CMAKE_CURRENT_LIST_DIR}/spectrumTargets.cmake")
-endif()
