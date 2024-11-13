@@ -1,6 +1,9 @@
 module spectrum_filter
     use iso_fortran_env
     use ferror
+    use spectrum_errors
+    use spectrum_convolve
+    use spectrum_routines
     implicit none
     private
     public :: gaussian_filter

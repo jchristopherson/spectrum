@@ -2,6 +2,7 @@ module spectrum_convolve
     use iso_fortran_env
     use fftpack
     use ferror
+    use spectrum_errors
     implicit none
     private
     public :: convolve

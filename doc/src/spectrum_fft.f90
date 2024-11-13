@@ -4,6 +4,7 @@ module spectrum_fft
     use spectrum_windows
     use spectrum_routines
     use ferror
+    use spectrum_errors
     implicit none
     private
     public :: stft

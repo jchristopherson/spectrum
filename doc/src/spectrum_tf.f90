@@ -1,6 +1,9 @@
 module spectrum_tf
     use iso_fortran_env
     use spectrum_periodogram
+    use spectrum_windows
+    use spectrum_errors
+    use ferror
     implicit none
     private
     public :: siso_transfer_function

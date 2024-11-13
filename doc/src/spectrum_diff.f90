@@ -7,6 +7,7 @@ module spectrum_diff
     use blas
     use linalg
     use ferror
+    use spectrum_errors
     implicit none
     private
     public :: finite_difference

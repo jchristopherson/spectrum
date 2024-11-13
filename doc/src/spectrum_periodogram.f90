@@ -4,6 +4,7 @@ module spectrum_periodogram
     use spectrum_routines
     use fftpack
     use ferror
+    use spectrum_errors
     implicit none
     private
     public :: psd
