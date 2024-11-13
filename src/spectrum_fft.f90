@@ -1,15 +1,46 @@
-submodule (spectrum) spectrum_fft
+module spectrum_fft
+    use iso_fortran_env
     use fftpack
+    use spectrum_windows
+    use spectrum_routines
+    use ferror
+    use spectrum_errors
     implicit none
+    private
+    public :: stft
+
 contains
 ! ------------------------------------------------------------------------------
-module function stft(win, x, offsets, err) result(rst)
-    ! Arguments
+function stft(win, x, offsets, err) result(rst)
+    !! Computes the short time Fourier transform of a signal.
+    !!
+    !! See Also
+    !!
+    !! - [Wikipedia - Short Time Fourier Transform](https://en.wikipedia.org/wiki/Short-time_Fourier_transform)
     class(window), intent(in) :: win
+        !! The window to apply.
     real(real64), intent(in) :: x(:)
+        !! The signal to analyze.  The signal must be longer than the size of 
+        !! the window.
     integer(int32), intent(out), optional, allocatable :: offsets(:)
+        !! An optional allocatable array that, if supplied, will be filled with 
+        !! the starting indices of each window segment.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in x is too short
+        !!      relative to the window size in win.
     complex(real64), allocatable :: rst(:,:)
+        !! An M-by-N matrix containing the M-element complex-valued 
+        !! transforms for each of the N time points studied.  M is the size of 
+        !! the positive half of the transform, and N is the total number of 
+        !! transformed segments.
 
     ! Local Variables
     integer(int32) :: i, j, k, m, nx, nxfrm, nk, lwork, flag, i1, nend
@@ -114,4 +145,4 @@ module function stft(win, x, offsets, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-end submodule
+end module

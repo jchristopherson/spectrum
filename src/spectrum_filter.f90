@@ -1,15 +1,45 @@
-submodule (spectrum) spectrum_filter
+module spectrum_filter
+    use iso_fortran_env
+    use ferror
+    use spectrum_errors
+    use spectrum_convolve
+    use spectrum_routines
     implicit none
+    private
+    public :: gaussian_filter
+    public :: tv_filter
+    public :: filter
+    public :: moving_average_filter
+
 contains
 ! ******************************************************************************
 ! GAUSSIAN FILTER
 ! ------------------------------------------------------------------------------
-module function gaussian_filter_1(x, alpha, k, err) result(rst)
-    ! Arguments
-    real(real64), intent(in) :: x(:), alpha
+function gaussian_filter(x, alpha, k, err) result(rst)
+    !! Applies a Gaussian filter to a signal.
+    real(real64), intent(in) :: x(:)
+        !! An N-element array containing the signal to filter.
+    real(real64), intent(in) :: alpha
+        !! A parameter that specifies the number of standard deviations 
+        !! \( \sigma \) desired in the kernel.  This parameter is related to the 
+        !! standard deviation by \( \sigma = \frac{k - 1}{2 \alpha} \).
     integer(int32), intent(in) :: k
+        !! The kernel size.  This value must be a positive, non-zero
+        !! integer value less than N.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+        !!      available.
+        !! 
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if k is not within the proper
+        !!      bounds.
     real(real64), allocatable :: rst(:)
+        !! An N-element array containing the filtered signal.
 
     ! Local Variables
     integer(int32) :: i, kappa, nk, flag
@@ -61,20 +91,20 @@ module function gaussian_filter_1(x, alpha, k, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("gaussian_filter_1", trim(errmsg), &
+    call errmgr%report_error("gaussian_filter", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
     ! Kernel Size Error
 20  continue
-    call errmgr%report_error("gaussian_filter_1", "The kernel size must " // &
+    call errmgr%report_error("gaussian_filter", "The kernel size must " // &
         "be a positive valued integer less than the size of the signal " // &
         "being filtered.", SPCTRM_INVALID_INPUT_ERROR)
     return
 
     ! Invalid Kernel Parameter
 30  continue
-    call errmgr%report_error("gaussian_filter_1", "The kernal parameter " // &
+    call errmgr%report_error("gaussian_filter", "The kernal parameter " // &
         "alpha must be positive-valued.", SPCTRM_INVALID_INPUT_ERROR)
     return
 
@@ -88,12 +118,35 @@ end function
 ! ------------------------------------------------------------------------------
 ! REF:
 ! https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf
-module function filter_tv_1(x, lambda, niter, err) result(rst)
-    ! Arguments
-    real(real64), intent(in) :: x(:), lambda
+function tv_filter(x, lambda, niter, err) result(rst)
+    !! Applies a total-variation filter to a signal.
+    !!
+    !! The algorithm used by this routine is based upon the algorithm presented 
+    !! by [Selesnick and Bayram]
+    !! (https://eeweb.engineering.nyu.edu/iselesni/lecture_notes/TV_filtering.pdf).
+    real(real64), intent(in) :: x(:)
+        !! An N-element array containing the signal to filter.
+    real(real64), intent(in) :: lambda
+        !! The regularization parameter.  The actual value to use
+        !! is problem dependent, but the noisier the data, the larger this value
+        !! should be.  A good starting point is typically 0.3 - 0.5; however, the
+        !! actual value is problem dependent.
     integer(int32), intent(in), optional :: niter
+        !! An optional parameter controlling the number of iterations performed.
+        !! The default limit is 10 iterations.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+        !!      available.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if niter is less than one.
     real(real64), allocatable :: rst(:)
+        !! An N-element array containing the filtered signal.
 
     ! Parameters
     real(real64), parameter :: alpha = 4.0d0
@@ -153,13 +206,13 @@ module function filter_tv_1(x, lambda, niter, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("filter_tv_1", trim(errmsg), &
+    call errmgr%report_error("tv_filter", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
     ! Invalid Input Error
 20  continue
-    call errmgr%report_error("filter_tv_1", "The number of input " // &
+    call errmgr%report_error("tv_filter", "The number of input " // &
         "iterations must be at least 1.", SPCTRM_INVALID_INPUT_ERROR)
     return
 
@@ -169,12 +222,47 @@ module function filter_tv_1(x, lambda, niter, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function filter_1(b, a, x, delays, err) result(rst)
-    ! Arguments
-    real(real64), intent(in) :: b(:), a(:), x(:)
+function filter(b, a, x, delays, err) result(rst)
+    !! Applies the specified filter to a signal.
+    !!
+    !! The description of the filter in the Z-transform domain is a rational
+    !! transfer function of the form:
+    !! 
+    !! \( Y(z) = \frac{b(1) + b(2) z^{-1} + ... + b(n_b + 1)z^{-n_b}}
+    !! {1 + a(2) z^{-1} + ... + a(n_a + 1) z^{-n_a}} X(z) \),
+    !! which handles both IIR and FIR filters. The above form assumes a
+    !! normalization of a(1) = 1; however, the routine will appropriately 
+    !! handle the situation where a(1) is not set to one.
+    real(real64), intent(in) :: b(:)
+        !! The numerator coefficients of the rational transfer function.
+    real(real64), intent(in) :: a(:)
+        !! The denominator coefficients of the ration transfer function.  In 
+        !! the case of an FIR filter, this parameter should be set to a 
+        !! one-element array with a value of one.  Regardless, the value of
+        !! a(1) must be non-zero.
+    real(real64), intent(in) :: x(:)
+        !! An N-element array containing the signal to filter.
     real(real64), intent(inout), optional, target :: delays(:)
+        !! An optional array of length 
+        !! MAX(size(a), size(b)) - 1 that, on input, provides the initial 
+        !! conditions for filter delays, and on ouput, the final conditions for 
+        !! filter delays.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+        !!      available.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if a(1) is zero.
+        !!
+        !!  - SPCTRM_ARRAY_SIZE_ERROR: Occurs if a is not sized correctly, or if
+        !!      delays is not sized correctly.
     real(real64), allocatable :: rst(:)
+        !! An N-element array containing the filtered signal.
 
     ! Parameters
     real(real64), parameter :: tol = 2.0d0 * epsilon(2.0d0)
@@ -257,7 +345,7 @@ module function filter_1(b, a, x, delays, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("filter_1", trim(errmsg), &
+    call errmgr%report_error("filter", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
@@ -266,12 +354,12 @@ module function filter_1(b, a, x, delays, err) result(rst)
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "The filter coefficient array 'A' must have at " // &
         "least 1 element, but was found to have ", na, " elements."
-    call errmgr%report_error("filter_1", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
+    call errmgr%report_error("filter", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
     return
 
     ! Filter Coefficient Array Value Error Handler
 30  continue
-    call errmgr%report_error("filter_1", &
+    call errmgr%report_error("filter", &
         "The 'A(1)' coefficient must be non-zero.", &
         SPCTRM_INVALID_INPUT_ERROR)
     return
@@ -281,7 +369,7 @@ module function filter_1(b, a, x, delays, err) result(rst)
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 101) "The filter delay array was expected to be of size ", &
         n - 1, "; however, was found to be of size ", size(delays), "."
-    call errmgr%report_error("filter_1", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
+    call errmgr%report_error("filter", trim(errmsg), SPCTRM_ARRAY_SIZE_ERROR)
     return
 
     ! Formatting
@@ -290,12 +378,26 @@ module function filter_1(b, a, x, delays, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function avg_filter_1(navg, x, err) result(rst)
-    ! Arguments
+function moving_average_filter(navg, x, err) result(rst)
+    !! Applies a moving average filter to a signal.
     integer(int32), intent(in) :: navg
+        !! The size of the averaging window.  This parameter must be positive
+        !! and non-zero.
     real(real64), intent(in) :: x(:)
+        !! An N-element array containing the signal to filter.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+        !!      available.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if navg is less than one.
     real(real64), allocatable :: rst(:)
+        !! An N-element array containing the filtered signal.
 
     ! Local Variables
     real(real64) :: a(1), b(navg)
@@ -322,11 +424,11 @@ module function avg_filter_1(navg, x, err) result(rst)
 
     ! NAVG invalid value (< 1)
 10  continue
-    call errmgr%report_error("avg_filter_1", &
+    call errmgr%report_error("moving_average_filter", &
         "The averaging window must have at least 1 element.", &
         SPCTRM_INVALID_INPUT_ERROR)
     return
 end function
 
 ! ------------------------------------------------------------------------------
-end submodule
+end module

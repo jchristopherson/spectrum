@@ -1,14 +1,51 @@
-submodule (spectrum) spectrum_convolve
+module spectrum_convolve
+    use iso_fortran_env
     use fftpack
+    use ferror
+    use spectrum_errors
     implicit none
+    private
+    public :: convolve
+    public :: SPCTRM_FULL_CONVOLUTION
+    public :: SPCTRM_CENTRAL_CONVOLUTION
+
+    integer(int32), parameter :: SPCTRM_FULL_CONVOLUTION = 50000
+        !! A flag for requesting a full convolution.
+    integer(int32), parameter :: SPCTRM_CENTRAL_CONVOLUTION = 50001
+        !! A flag for requesting the central portion of the convolution that is 
+        !! the same length as the input signal.
+
 contains
 ! ------------------------------------------------------------------------------
-module function convolve_1(x, y, method, err) result(rst)
-    ! Arguments
-    real(real64), intent(in) :: x(:), y(:)
+function convolve(x, y, method, err) result(rst)
+    !! Computes the convolution of a signal and kernel.
+    real(real64), intent(in) :: x(:)
+        !! The N-element signal.
+    real(real64), intent(in) :: y(:)
+        !! The M-element kernel.
     integer(int32), intent(in), optional :: method
+        !! An optional input that dictates the expected
+        !! convolution result.  The following options are available.
+        !!
+        !! - SPCTRM_FULL_CONVOLUTION: The full convolution results are provided, 
+        !!     including the portions polluted courtesy of the zero-padding and
+        !!     the corresponding wrap-around effects.  The length of this output
+        !!     is N + M - 1.
+        !!
+        !!   SPCTRM_CENTRAL_CONVOLUTION: The N-element result containing the 
+        !!     convolved signal not poluted by the zero-padding and 
+        !!     corresponding wrap-around effects.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_OUT_OF_MEMORY_ERROR: Occurs if there is insufficient memory 
+        !!      available.
     real(real64), allocatable :: rst(:)
+        !! The convolved result.
 
     ! Local Variables
     integer(int32) :: mth, n1, n2
@@ -179,4 +216,4 @@ subroutine convolve_driver(x, y, method, rst, err)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-end submodule
+end module

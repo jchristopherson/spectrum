@@ -2,9 +2,21 @@
 ! - https://ejde.math.txstate.edu/conf-proc/21/k3/knowles.pdf
 ! - https://arxiv.org/pdf/2009.01911.pdf
 
-submodule (spectrum) spectrum_diff
+module spectrum_diff
+    use iso_fortran_env
+    use blas
     use linalg
+    use ferror
+    use spectrum_errors
     implicit none
+    private
+    public :: finite_difference
+    public :: tvr_derivative
+
+    interface finite_difference
+        module procedure :: finite_difference_1
+        module procedure :: finite_difference_2
+    end interface
 
     interface finite_difference_driver
         module procedure :: finite_difference_driver_1
@@ -13,29 +25,29 @@ submodule (spectrum) spectrum_diff
 
     ! BLAS Routines:
     interface
-        subroutine dgbmv(trans, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy)
-            use iso_fortran_env, only : int32, real64
-            character, intent(in) :: trans
-            integer(int32), intent(in) :: m, n, kl, ku, lda, incx, incy
-            real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
-            real(real64), intent(inout) :: y(*)
-        end subroutine
+        ! subroutine dgbmv(trans, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy)
+        !     use iso_fortran_env, only : int32, real64
+        !     character, intent(in) :: trans
+        !     integer(int32), intent(in) :: m, n, kl, ku, lda, incx, incy
+        !     real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
+        !     real(real64), intent(inout) :: y(*)
+        ! end subroutine
 
-        subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-            use iso_fortran_env, only : int32, real64
-            character, intent(in) :: transa, transb
-            integer(int32), intent(in) :: m, n, k, lda, ldb, ldc
-            real(real64), intent(in) :: alpha, beta, a(lda,*), b(ldb,*)
-            real(real64), intent(inout) :: c(ldc,*)
-        end subroutine
+        ! subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        !     use iso_fortran_env, only : int32, real64
+        !     character, intent(in) :: transa, transb
+        !     integer(int32), intent(in) :: m, n, k, lda, ldb, ldc
+        !     real(real64), intent(in) :: alpha, beta, a(lda,*), b(ldb,*)
+        !     real(real64), intent(inout) :: c(ldc,*)
+        ! end subroutine
 
-        subroutine dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy)
-            use iso_fortran_env, only : int32, real64
-            character, intent(in) :: trans
-            integer(int32), intent(in) :: m, n, lda, incx, incy
-            real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
-            real(real64), intent(inout) :: y(*)
-        end subroutine
+        ! subroutine dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        !     use iso_fortran_env, only : int32, real64
+        !     character, intent(in) :: trans
+        !     integer(int32), intent(in) :: m, n, lda, incx, incy
+        !     real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
+        !     real(real64), intent(inout) :: y(*)
+        ! end subroutine
 
         subroutine dgesv(n, nrhs, a, lda, ipiv, b, ldb, info)
             use iso_fortran_env, only : int32, real64
@@ -93,12 +105,25 @@ pure subroutine finite_difference_driver_2(t, x, dxdt)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-module function finite_difference_1(dt, x, err) result(rst)
-    ! Arguments
+function finite_difference_1(dt, x, err) result(rst)
+    !! Estimates the derivative of a data set by means of a naive 
+    !! implementation of a finite difference scheme based upon central 
+    !! differences.
     real(real64), intent(in) :: dt
+        !! The time step between data points.
     real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is to be 
+        !! estimated.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the derivative estimate.
 
     ! Local Variables
     integer(int32) :: n, flag
@@ -124,11 +149,27 @@ module function finite_difference_1(dt, x, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function finite_difference_2(t, x, err) result(rst)
-    ! Arguments
-    real(real64), intent(in), dimension(:) :: t, x
+function finite_difference_2(t, x, err) result(rst)
+    !! Computes an estimate to the derivative of an evenly-sampled data
+    !! set using total variation regularization.
+    real(real64), intent(in), dimension(:) :: t
+        !! An N-element array containing the time points at which x was sampled.
+    real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is to be 
+        !! estimated.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if t and x are not the
+        !!      same size.
     real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the derivative estimate.
 
     ! Local Variables
     integer(int32) :: n, flag
@@ -241,7 +282,6 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
-    ! Arguments
     real(real64), intent(in) :: alpha ! variational parameter
     real(real64), intent(in) :: dt  ! time step
     real(real64), intent(in), dimension(:) :: x ! data array to differentiate
@@ -343,15 +383,49 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-module function tvr_diff(dt, x, alpha, maxiter, tol, niter, err) result(rst)
-    ! Arguments
-    real(real64), intent(in) :: alpha, dt
+function tvr_derivative(dt, x, alpha, maxiter, tol, niter, err) result(rst)
+    !! Computes an estimate to the derivative of an evenly-sampled data
+    !! set using total variation regularization.
+    !!
+    !! See Also
+    !!
+    !! - van Breugel, Floris & Brunton, Bingni & Kutz, J.. (2020). Numerical 
+    !!   differentiation of noisy data: A unifying multi-objective optimization 
+    !!   framework. 
+    !!
+    !! - Oliver K. Ernst, Ph. D. (2021, February 16). How to differentiate 
+    !!   noisy signals. Medium. https://oliver-k-ernst.medium.com/how-to-differentiate-noisy-signals-2baf71b8bb65 
+    real(real64), intent(in) :: dt
+        !! The time step between data points.
     real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is
+        !! to be estimated.
+    real(real64), intent(in) :: alpha
+        !! The regularization parameter.
     integer(int32), intent(in), optional :: maxiter
+        !! The maximum number of iterations to allow.  The default is 20 
+        !! iterations.
     real(real64), intent(in), optional :: tol
+        !! The convergence tolerance to use.  The tolerance is 
+        !! applied to the difference in Euclidean norms of the derivative update
+        !! vector.  Once the norm of the update vector is changing less than 
+        !! this tolerance, the iteration process will terminate.  The default
+        !! is 1e-3.
     integer(int32), intent(out), optional :: niter
+        !! The number of iterations actually performed.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_SINGULAR_MATRIX_ERROR: Occurs if the internal Hessian 
+        !!      estimate becomes singular.
     real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the estimate of the derivative.
 
     ! Local Variables
     integer(int32) :: mi, n, flag, ni
@@ -378,7 +452,7 @@ module function tvr_diff(dt, x, alpha, maxiter, tol, niter, err) result(rst)
     n = size(x)
     allocate(rst(n), stat = flag)
     if (flag /= 0) then
-        call errmgr%report_error("tvr_diff", "Memory allocation error.", &
+        call errmgr%report_error("tvr_derivative", "Memory allocation error.", &
             SPCTRM_MEMORY_ERROR)
         return
     end if
@@ -389,4 +463,4 @@ module function tvr_diff(dt, x, alpha, maxiter, tol, niter, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-end submodule
+end module
