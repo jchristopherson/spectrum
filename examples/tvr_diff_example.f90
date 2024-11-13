@@ -33,8 +33,8 @@ program example
     tvr = tvr_derivative(dt, x, alpha, niter = niter)
     print "(AI0)", "Iterations: ", niter
 
-    ! For comparison, compute the derivative by finite differences
-    fd = finite_difference(dt, x)
+    ! For comparison, compute the derivative via a 5-point stencil
+    fd = stencil_diff_5(dt, x)
 
     ! Configure the plot
     call plt%initialize()
@@ -63,7 +63,7 @@ program example
     call pd3%define_data(t, fd)
     call pd3%set_draw_against_y2(.true.)
     call pd3%set_line_width(2.0)
-    call pd3%set_name("Finite Diff.")
+    call pd3%set_name("5-Point Stencil")
     call plt%push(pd3)
 
     call plt%draw()

@@ -12,6 +12,7 @@ module spectrum_diff
     private
     public :: finite_difference
     public :: tvr_derivative
+    public :: stencil_diff_5
 
     interface finite_difference
         module procedure :: finite_difference_1
@@ -460,6 +461,67 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter, err) result(rst)
     ! Process
     call tvr_diff_small(alpha, dt, x, mi, rst, gtol, ni, errmgr)
     if (present(niter)) niter = ni
+end function
+
+! ******************************************************************************
+! V1.1.2 ADDITIONS
+! ------------------------------------------------------------------------------
+function stencil_diff_5(dt, x, err) result(rst)
+    !! Utilizes a 5-point stencil to estimate the derivative of a data set.
+    !!
+    !! See Also
+    !!
+    !! - [Wikipedia](https://en.wikipedia.org/wiki/Five-point_stencil)
+    real(real64), intent(in) :: dt
+        !! The time step between data points.
+    real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is to be 
+        !! estimated.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the derivative estimate.
+
+    ! Local Variables
+    integer(int32) :: i, n, flag
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    allocate(rst(n), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("stencil_diff_5", &
+            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
+        return
+    end if
+
+    ! Process
+    ! Step in and out of the problem via finite differences; else, use
+    ! a 5-point stencil of the form:
+    !
+    ! f'(x) = (-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)) / (12h)
+    rst(1) = (x(2) - x(1)) / dt
+    rst(2) = (x(3) - x(2)) / dt
+
+    do i = 3, n - 2
+        rst(i) = (-x(i + 2) + 8.0d0 * (x(i + 1) - x(i - 1)) + x(i - 2)) / &
+            (12.0d0 * dt)
+    end do
+
+    rst(n-1) = (x(n-1) - x(n-2)) / dt
+    rst(n) = (x(n) - x(n-1)) / dt
 end function
 
 ! ------------------------------------------------------------------------------

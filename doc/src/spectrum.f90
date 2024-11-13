@@ -60,5 +60,6 @@ module spectrum
     ! SPECTRUM_DIFF.F90
     public :: finite_difference
     public :: tvr_derivative
+    public :: stencil_diff_5
  
 end module
