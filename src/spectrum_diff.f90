@@ -13,6 +13,7 @@ module spectrum_diff
     public :: finite_difference
     public :: tvr_derivative
     public :: stencil_diff_5
+    public :: stencil_second_diff_5
 
     interface finite_difference
         module procedure :: finite_difference_1
@@ -100,7 +101,7 @@ pure subroutine finite_difference_driver_2(t, x, dxdt)
     end if
     dxdt(1) = (x(2) - x(1)) / (t(2) - t(1))
     do i = 2, n - 1
-        dxdt(i) = 0.5d0 * (x(i + 1) - x(i - 1)) / (t(i + 1) - t(i - 1))
+        dxdt(i) = (x(i + 1) - x(i - 1)) / (t(i + 1) - t(i - 1))
     end do
     dxdt(n) = (x(n) - x(n - 1)) / (t(n) - t(n - 1))
 end subroutine
@@ -522,6 +523,68 @@ function stencil_diff_5(dt, x, err) result(rst)
 
     rst(n-1) = (x(n-1) - x(n-2)) / dt
     rst(n) = (x(n) - x(n-1)) / dt
+end function
+
+! ------------------------------------------------------------------------------
+function stencil_second_diff_5(dt, x, err) result(rst)
+    !! Utilizes a 5-point stencil to estimate the second derivative of a data
+    !! set.
+    !!
+    !! See Also
+    !!
+    !! - [Wikipedia](https://en.wikipedia.org/wiki/Five-point_stencil)
+    real(real64), intent(in) :: dt
+        !! The time step between data points.
+    real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is to be 
+        !! estimated.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the derivative estimate.
+
+    ! Local Variables
+    integer(int32) :: i, n, flag
+    real(real64) :: h2
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    allocate(rst(n), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("stencil_second_diff_5", &
+            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
+        return
+    end if
+
+    ! Process
+    ! Step in and out of the problem via finite differences; else, use
+    ! a 5-point stencil of the form:
+    !
+    ! f"(x) = (-f(x+2h) + 16f(x+h) - 30f(x) + 16f(x-h) - f(x-2h)) / (12h**2)
+    h2 = dt**2
+    rst(1) = (x(3) - 2.0d0 * x(2) + x(1)) / h2
+    rst(2) = (x(4) - 2.0d0 * x(3) + x(2)) / h2
+
+    do i = 3, n - 2
+        rst(i) = (-x(i + 2) - 3.0d1 * x(i) + 1.6d1 * (x(i + 1) + x(i - 1)) - &
+            x(i - 2)) / (1.2d1 * h2)
+    end do
+
+    rst(n - 1) = (x(n - 1) - 2.0d0 * x(n - 2) + x(n - 3)) / h2
+    rst(n) = (x(n) - 2.0d0 * x(n - 1) + x(n - 2)) / h2
 end function
 
 ! ------------------------------------------------------------------------------
