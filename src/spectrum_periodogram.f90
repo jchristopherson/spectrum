@@ -272,7 +272,7 @@ function csd(win, x, y, fs, nfft, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function periodogram(win, x, fs, nfft, err) result(rst)
+function periodogram(win, x, fs, nfft, err) result(rst)
     !! Computes the periodogram of a signal.
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
@@ -346,7 +346,7 @@ module function periodogram(win, x, fs, nfft, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function cross_periodogram(win, x, y, fs, nfft, err) result(rst)
+function cross_periodogram(win, x, y, fs, nfft, err) result(rst)
     !! Computes the cross-spectral periodogram of two signals.
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
