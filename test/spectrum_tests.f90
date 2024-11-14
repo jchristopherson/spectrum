@@ -1,6 +1,7 @@
 program test
     use spectrum_psd_tests
     use spectrum_convolution_tests
+    use spectrum_diff_tests
     implicit none
 
     ! Local Variables
@@ -25,6 +26,15 @@ program test
 
     local = test_spectrogram()
     if (.not.local) flag = 5
+
+    local = test_finite_difference()
+    if (.not.local) flag = 6
+
+    local = test_stencil_diff()
+    if (.not.local) flag = 7
+
+    local = test_stencil_diff_2()
+    if (.not.local) flag = 8
 
     ! Output
     stop flag

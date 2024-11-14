@@ -295,7 +295,7 @@ function test_spectrogram() result(rst)
     win%size = window_size
 
     ! Compute the spectrogram of x
-    r = spectrogram(win, x)
+    r = stft(win, x)
 
     ! Compute the magnitude
     mag = abs(r)

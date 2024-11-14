@@ -1,16 +1,307 @@
-submodule (spectrum) spectrum_periodogram
+module spectrum_periodogram
+    use iso_fortran_env
+    use spectrum_windows
+    use spectrum_routines
     use fftpack
+    use ferror
+    use spectrum_errors
     implicit none
+    private
+    public :: psd
+    public :: csd
+    public :: periodogram
+    public :: cross_periodogram
+
 contains
 ! ------------------------------------------------------------------------------
-module function periodogram_1(win, x, fs, nfft, err) result(rst)
-    ! Arguments
+function psd(win, x, fs, nfft, err) result(rst)
+    !! Computes the power spectral density (PSD) of a signal via Welch's
+    !! method.
+    !!
+    !! References
+    !!
+    !! - Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
+    !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
+    !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
+    !!  AU-15 (2): 70-73, 1967.
+    !!
+    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
     class(window), intent(in) :: win
+        !! The window to apply.  The size of the window must be non-zero and 
+        !! positive-valued.
     real(real64), intent(in) :: x(:)
+        !! The signal to transform.
     real(real64), intent(in), optional :: fs
+        !! An optional input, that if supplied, allows for normalization of 
+        !! the computed spectrum by the frequency resolution.
     integer(int32), intent(in), optional :: nfft
+        !! An optional input that can be used to force the length of each
+        !! individual DFT operation by padding any remaining space with zeros.
+        !! If not supplied, the window size is used to determine the size of
+        !! the DFT.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if win is not sized 
+        !!      appropriately.
     real(real64), allocatable :: rst(:)
+        !! An array containing the discrete PSD estimate.  The estimate is
+        !! returned at discrete frequency intervals that can be determined by
+        !! a call to frequency_bin_width.
+
+    ! Local Variables
+    logical :: init
+    integer(int32) :: i, nx, nxfrm, nw, nk, nf, lwork, flag
+    real(real64) :: fres, fac
+    real(real64), allocatable, dimension(:) :: work, xw, buffer
+    complex(real64), allocatable :: cwork(:)
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    character(len = :), allocatable :: errmsg
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    nx = size(x)
+    nw = win%size
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nw
+    end if
+    nxfrm = compute_transform_length(nf)
+    nk = compute_overlap_segment_count(nx, nw)
+    lwork = 3 * nf + 15
+
+    ! Input Checking
+    if (size(x) < 2) go to 20
+
+    ! Memory Allocation
+    allocate(rst(nxfrm), stat = flag, source = 0.0d0)
+    if (flag == 0) allocate(work(lwork), stat = flag)
+    if (flag == 0) allocate(xw(nw), stat = flag)
+    if (flag == 0) allocate(buffer(nxfrm), stat = flag)
+    if (flag == 0) allocate(cwork(nxfrm), stat = flag)
+    if (flag /= 0) go to 10
+    
+    ! Cycle over each segment
+    init = .true.
+    do i = 1, nk
+        call overlap(x, i, nw, xw)
+        call periodogram_driver(win, xw, buffer, fs, nf, work, init, cwork, &
+            errmgr)
+        if (errmgr%has_error_occurred()) return
+        rst = rst + buffer
+        init = .false.
+    end do
+    
+    ! Average the result
+    rst = rst / real(nk, real64)
+
+    ! End
+    return
+
+    ! Memory Error Handling
+10  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "Memory allocation error flag ", flag, "."
+    call errmgr%report_error("psd_welch", trim(errmsg), SPCTRM_MEMORY_ERROR)
+    return
+
+    ! Window Size Error
+20  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) &
+        "The window must have at least 2 points, but was found to have ", &
+        nx, "."
+    call errmgr%report_error("psd_welch", trim(errmsg), &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+
+    ! Formatting
+100 format(A, I0, A)
+end function
+
+! ------------------------------------------------------------------------------
+function csd(win, x, y, fs, nfft, err) result(rst)
+    !! Computes the cross spectral density (CSD) of a signal via Welch's
+    !! method (sometimes referred to as cross power spectral density
+    !! or CPSD).
+    !!
+    !! References
+    !!
+    !! - Welch, P.D. "The Use of Fast Fourier Transform for the Estimation of 
+    !!  Power Spectra: A Method Based on Time Averaging Over Short, Modified 
+    !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
+    !!  AU-15 (2): 70-73, 1967.
+    !!
+    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !!
+    !! - [Wikipedia - Cross Power Spectral Density](https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density)
+    class(window), intent(in) :: win
+        !! The window to apply.  The size of the window must be non-zero and 
+        !! positive-valued.
+    real(real64), intent(in) :: x(:)
+        !! The first N-element signal to transform.
+    real(real64), intent(in) :: y(:)
+        !! The second N-element signal to transform.
+    real(real64), intent(in), optional :: fs
+        !! An optional input, that if supplied, allows for normalization of 
+        !! the computed spectrum by the frequency resolution.
+    integer(int32), intent(in), optional :: nfft
+        !! An optional input that can be used to force the length of each
+        !! individual DFT operation by padding any remaining space with zeros.
+        !! If not supplied, the window size is used to determine the size of
+        !! the DFT.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if win is not sized 
+        !!      appropriately.
+        !!
+        !! - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if x and y are not the 
+        !!      same size.
+    complex(real64), allocatable :: rst(:)
+        !! An array containing the discrete CSD estimate.  The estimate is
+        !! returned at discrete frequency intervals that can be determined by
+        !! a call to frequency_bin_width.
+
+    ! Local Variables
+    logical :: init
+    integer(int32) :: i, nx, ny, nw, nk, nf, lwork, flag, nxfrm
+    real(real64) :: fres, fac
+    real(real64), allocatable, dimension(:) :: work, xw, yw
+    complex(real64), allocatable, dimension(:) :: cwork, buffer
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    character(len = :), allocatable :: errmsg
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    nx = size(x)
+    ny = size(y)
+    nw = win%size
+    if (present(nfft)) then
+        nf = nfft
+    else
+        nf = nw
+    end if
+    nxfrm = compute_transform_length(nf)
+    nk = compute_overlap_segment_count(nx, nw)
+    lwork = 4 * nf + 15
+
+    ! Input Checking
+    if (nx < 2 .or. ny < 2) go to 20
+
+    ! Memory Allocation
+    allocate(rst(nxfrm), stat = flag, source = (0.0d0, 0.0d0))
+    if (flag == 0) allocate(work(lwork), stat = flag)
+    if (flag == 0) allocate(xw(nw), stat = flag)
+    if (flag == 0) allocate(yw(nw), stat = flag)
+    if (flag == 0) allocate(buffer(nxfrm), stat = flag)
+    if (flag == 0) allocate(cwork(2 * nxfrm), stat = flag)
+    if (flag /= 0) go to 10
+    
+    ! Cycle over each segment
+    init = .true.
+    do i = 1, nk
+        call overlap(x, i, nw, xw)
+        call overlap(y, i, nw, yw)
+        call cross_periodogram_driver(win, xw, yw, buffer, fs, nf, work, &
+            init, cwork, errmgr)
+        if (errmgr%has_error_occurred()) return
+        rst = rst + buffer
+        init = .false.
+    end do
+
+    ! Average the result
+    rst = rst / real(nk, real64)
+
+    ! End
+    return
+
+    ! Memory Error Handling
+10  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) "Memory allocation error flag ", flag, "."
+    call errmgr%report_error("csd_welch", trim(errmsg), SPCTRM_MEMORY_ERROR)
+    return
+
+    ! Window Size Error
+20  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 100) &
+        "The window must have at least 2 points, but was found to have ", &
+        nx, "."
+    call errmgr%report_error("csd_welch", trim(errmsg), &
+        SPCTRM_INVALID_INPUT_ERROR)
+    return
+
+    ! Array Size Mismatch Error
+30  continue
+    allocate(character(len = 256) :: errmsg)
+    write(errmsg, 101) "The two arrays must be the same length.  " // &
+        "Array X was found to be of length ", nx, ", and array Y was " // &
+        "found to be of length ", ny, "."
+    call errmgr%report_error("csd_welch", trim(errmsg), &
+        SPCTRM_ARRAY_SIZE_MISMATCH_ERROR)
+    return
+
+    ! Formatting
+100 format(A, I0, A)
+101 format(A, I0, A, I0, A)
+end function
+
+! ------------------------------------------------------------------------------
+function periodogram(win, x, fs, nfft, err) result(rst)
+    !! Computes the periodogram of a signal.
+    class(window), intent(in) :: win
+        !! The window to apply.  The size of the window must be non-zero and 
+        !! positive-valued.
+    real(real64), intent(in) :: x(:)
+        !! The signal to transform.
+    real(real64), intent(in), optional :: fs
+        !! An optional input, that if supplied, allows for normalization of 
+        !! the computed spectrum by the frequency resolution.
+    integer(int32), intent(in), optional :: nfft
+        !! An optional input that can be used to force the length of each
+        !! individual DFT operation by padding any remaining space with zeros.
+        !! If not supplied, the window size is used to determine the size of
+        !! the DFT.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if win is not sized 
+        !!      appropriately.
+    real(real64), allocatable :: rst(:)
+        !! An array containing the discrete PSD estimate.  The estimate is
+        !! returned at discrete frequency intervals that can be determined by
+        !! a call to frequency_bin_width.
 
     ! Local Variables
     integer(int32) :: n, nxfrm, nf, flag
@@ -46,7 +337,7 @@ module function periodogram_1(win, x, fs, nfft, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("periodogram_1", trim(errmsg), &
+    call errmgr%report_error("periodogram", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
@@ -55,14 +346,42 @@ module function periodogram_1(win, x, fs, nfft, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module function cross_periodogram_1(win, x, y, fs, nfft, err) result(rst)
-    ! Arguments
+function cross_periodogram(win, x, y, fs, nfft, err) result(rst)
+    !! Computes the cross-spectral periodogram of two signals.
     class(window), intent(in) :: win
-    real(real64), intent(in) :: x(:), y(:)
+        !! The window to apply.  The size of the window must be non-zero and 
+        !! positive-valued.
+    real(real64), intent(in) :: x(:)
+        !! The first N-element signal to transform.
+    real(real64), intent(in) :: y(:)
+        !! The second N-element signal to transform.
     real(real64), intent(in), optional :: fs
+        !! An optional input, that if supplied, allows for normalization of 
+        !! the computed spectrum by the frequency resolution.
     integer(int32), intent(in), optional :: nfft
+        !! An optional input that can be used to force the length of each
+        !! individual DFT operation by padding any remaining space with zeros.
+        !! If not supplied, the window size is used to determine the size of
+        !! the DFT.
     class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if win is not sized 
+        !!      appropriately.
+        !!
+        !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if x and y are not the
+        !!      same size, or if x and y are not the same size as the window
+        !!      win.
     complex(real64), allocatable :: rst(:)
+        !! An array containing the discrete cross periodogram estimate.  The 
+        !! estimate is returned at discrete frequency intervals that can be 
+        !! determined by a call to frequency_bin_width.
 
     ! Local Variables
     integer(int32) :: nx, nxfrm, nf, flag
@@ -99,7 +418,7 @@ module function cross_periodogram_1(win, x, y, fs, nfft, err) result(rst)
 10  continue
     allocate(character(len = 256) :: errmsg)
     write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("cross_periodogram_1", trim(errmsg), &
+    call errmgr%report_error("cross_periodogram", trim(errmsg), &
         SPCTRM_MEMORY_ERROR)
     return
 
@@ -108,7 +427,7 @@ module function cross_periodogram_1(win, x, y, fs, nfft, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-module subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
+subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
     cwork, err)
     ! Arguments
     class(window), intent(in) :: win        ! size = n
@@ -276,7 +595,7 @@ module subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
 end subroutine
 
 ! ------------------------------------------------------------------------------
-module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
+subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
     initxfrm, cwork, err)
     ! Arguments
     class(window), intent(in) :: win        ! size = n
@@ -465,4 +784,4 @@ module subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
 end subroutine
 
 ! ------------------------------------------------------------------------------
-end submodule
+end module

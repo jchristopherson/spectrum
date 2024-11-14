@@ -41,7 +41,7 @@ program example
     win%size = window_size
 
     ! Compute the spectrogram of x
-    rst = spectrogram(win, x, offsets)
+    rst = stft(win, x, offsets)
 
     ! Compute the magnitude, along with each frequency and time point
     mag = abs(rst)
