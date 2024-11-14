@@ -8,7 +8,7 @@
     <meta name="author" content="Jason Christopherson" >
     <link rel="icon" href="../favicon.png">
 
-    <title>is_power_of_two &ndash; SPECTRUM</title>
+    <title>stencil_second_diff_5 &ndash; SPECTRUM</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -84,7 +84,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>is_power_of_two
+    <h1>stencil_second_diff_5
       <small>Function</small>
       
     </h1>
@@ -96,18 +96,18 @@
           <li id="statements"><i class="fa fa-list-ol"></i>
             <a data-toggle="tooltip"
                data-placement="bottom" data-html="true"
-               title=" 0.6% of total for procedures.">5 statements</a>
+               title=" 3.5% of total for procedures.">29 statements</a>
           </li>
 
             <li id="source-file">
               <i class="fa fa-code"></i>
-              <a href="../src/spectrum_routines.f90"> Source File</a>
+              <a href="../src/spectrum_diff.f90"> Source File</a>
             </li>
         </ul>
         <ol class="breadcrumb in-well text-right">
-              <li><a href='../sourcefile/spectrum_routines.f90.html'>spectrum_routines.f90</a></li>
-              <li><a href='../module/spectrum_routines.html'>spectrum_routines</a></li>
-          <li class="active">is_power_of_two</li>
+              <li><a href='../sourcefile/spectrum_diff.f90.html'>spectrum_diff.f90</a></li>
+              <li><a href='../module/spectrum_diff.html'>spectrum_diff</a></li>
+          <li class="active">stencil_second_diff_5</li>
         </ol>
       </div>
     </div>
@@ -150,11 +150,16 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure elemental function is_power_of_two(n) result(rst)  
+    <h2>public  function stencil_second_diff_5(dt, x, err) result(rst)  
 </h2>
     
 
-    <p>Tests to see if a value is an integer power of two.</p>
+    <p>Utilizes a 5-point stencil to estimate the second derivative of a data
+set.</p>
+<p>See Also</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Five-point_stencil">Wikipedia</a></li>
+</ul>
 
 
     <h3>Arguments</h3>
@@ -170,17 +175,55 @@
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-n~3"></span>
-              integer(kind=int32),
+              <span class="anchor" id="variable-dt~4"></span>
+              real(kind=real64),
             </td>
 <td>intent(in)</td>
               <td></td>            <td>
               
             </td>
             <td>::</td>
-            <td><strong>n</strong></td>
+            <td><strong>dt</strong></td>
             <td>
-                <p>The value to test.</p>
+                <p>The time step between data points.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-x~6"></span>
+              real(kind=real64),
+            </td>
+<td>intent(in),</td>
+              <td></td>            <td>
+              dimension(:)
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+                <p>An N-element array containing the data whose derivative is to be 
+estimated.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-err~6"></span>
+              class(errors),
+            </td>
+<td>intent(inout),</td>
+              <td>optional,</td>            <td>
+              target
+            </td>
+            <td>::</td>
+            <td><strong>err</strong></td>
+            <td>
+                <p>An optional errors-based object that if provided can
+be used to retrieve information relating to any errors encountered 
+during execution.  If not provided, a default implementation of the 
+errors class is used internally to provide error handling.  Possible 
+errors and warning messages that may be encountered are as follows.</p>
+<ul>
+<li>SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.</li>
+</ul>
             </td>
         </tr>
     </tbody>
@@ -188,11 +231,11 @@
 
       <h3>Return Value
         <small>
-          <span class="anchor" id="variable-rst~18"></span>
-          logical
+          <span class="anchor" id="variable-rst~6"></span>
+          real(kind=real64), allocatable, dimension(:)
         </small>
       </h3>
-      <p>Returns true if n is a power of two; else, false.</p>
+      <p>An N-element array containing the derivative estimate.</p>
     <br>
 
     <section class="visible-xs visible-sm hidden-md">

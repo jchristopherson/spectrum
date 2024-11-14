@@ -61,5 +61,6 @@ module spectrum
     public :: finite_difference
     public :: tvr_derivative
     public :: stencil_diff_5
+    public :: stencil_second_diff_5
  
 end module
