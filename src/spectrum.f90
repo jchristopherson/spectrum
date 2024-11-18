@@ -32,6 +32,7 @@ module spectrum
     public :: difference
     public :: compute_overlap_segment_count
     public :: overlap
+    public :: remove_mean
 
     ! SPECTRUM_PERIODOGRAM.F90
     public :: psd
