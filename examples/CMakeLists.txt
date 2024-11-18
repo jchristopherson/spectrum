@@ -96,3 +96,9 @@ link_library(siso_tf_example ${fortran-csv-module_LIBRARY} ${fortran-csv-module_
 add_executable(tvr_diff_example tvr_diff_example.f90)
 link_library(tvr_diff_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(tvr_diff_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Integration Example
+add_executable(integrate_example integrate_example.f90)
+link_library(integrate_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(integrate_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+

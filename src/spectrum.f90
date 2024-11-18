@@ -7,6 +7,7 @@ module spectrum
     use spectrum_filter
     use spectrum_tf
     use spectrum_diff
+    use spectrum_integrate
     implicit none
     private
 
@@ -62,5 +63,8 @@ module spectrum
     public :: tvr_derivative
     public :: stencil_diff_5
     public :: stencil_second_diff_5
+
+    ! SPECTRUM_INTEGRATE.F90
+    public :: integrate
  
 end module
