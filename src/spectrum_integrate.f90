@@ -47,7 +47,7 @@ function integrate(dt, x, iv, err) result(rst)
     n = size(x)
     allocate(rst(n), stat = flag)
     if (flag /= 0) then
-        call errmgr%report_error("integrate_1", "Memory allocation error.", &
+        call errmgr%report_error("integrate", "Memory allocation error.", &
             SPCTRM_MEMORY_ERROR)
         return
     end if
