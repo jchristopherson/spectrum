@@ -106,3 +106,8 @@ link_library(integrate_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(remove_mean_example remove_mean_example.f90)
 link_library(remove_mean_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(remove_mean_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Resample Example
+add_executable(resample_example resample_example.f90)
+link_library(resample_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(resample_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
