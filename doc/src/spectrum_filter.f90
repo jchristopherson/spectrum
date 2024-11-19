@@ -4,12 +4,14 @@ module spectrum_filter
     use spectrum_errors
     use spectrum_convolve
     use spectrum_routines
+    use fftpack
     implicit none
     private
     public :: gaussian_filter
     public :: tv_filter
     public :: filter
     public :: moving_average_filter
+    public :: sinc_filter
 
 contains
 ! ******************************************************************************
@@ -428,6 +430,91 @@ function moving_average_filter(navg, x, err) result(rst)
         "The averaging window must have at least 1 element.", &
         SPCTRM_INVALID_INPUT_ERROR)
     return
+end function
+
+! ******************************************************************************
+! V1.1.3 ADDITIONS
+! ------------------------------------------------------------------------------
+function sinc_filter(fc, fs, x, err) result(rst)
+    !! Applies a sinc-in-time filter (rectangular frequency response).
+    real(real64), intent(in) :: fc
+        !! The filter cutoff frequency, in Hz.
+    real(real64), intent(in) :: fs
+        !! The sampling frequency, in Hz.
+    real(real64), intent(in), dimension(:) :: x
+        !! The signal to filter.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if the cutoff frequency is 
+        !!      greater than or equal to the sampling frequency, or if either 
+        !!      the cutoff or sampling frequency is zero or negative-valued.
+    real(real64), allocatable, dimension(:) :: rst
+        !! The filtered signal.
+
+    ! Local Variables
+    integer(int32) :: start, n, nw, flag
+    real(real64) :: df
+    real(real64), allocatable, dimension(:) :: wsave
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    nw = 2 * n + 15
+
+    ! Input Checking
+    if (fs <= 0.0d0) then
+        call errmgr%report_error("sinc_filter", &
+            "The sampling frequency must be non-zero and positive-valued.", &
+            SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+    if (fc <= 0.0d0) then
+        call errmgr%report_error("sinc_filter", &
+            "The cutoff frequency must be non-zero and positive-valued.", &
+            SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+    if (fc >= fs) then
+        call errmgr%report_error("sinc_filter", &
+            "The cutoff frequency must be less than the sampling frequency.", &
+            SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+
+    ! Memory Allocations
+    allocate(rst(n), stat = flag, source = x)
+    if (flag == 0) allocate(wsave(nw), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("sinc_filter", &
+            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
+        return
+    end if
+
+    ! Initialize and compute the Fourier transform
+    call dffti(n, wsave)
+    call dfftf(n, rst, wsave)
+
+    ! Zero out anything above the cutoff frequency
+    df = frequency_bin_width(fs, n)
+    start = floor(fc / df) * 2
+    rst(start:n) = 0.0d0
+
+    ! Compute the inverse transform to retrieve the filtered signal
+    call dfftb(n, rst, wsave)
+    rst = rst / n
 end function
 
 ! ------------------------------------------------------------------------------
