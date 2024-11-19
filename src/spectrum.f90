@@ -8,6 +8,7 @@ module spectrum
     use spectrum_tf
     use spectrum_diff
     use spectrum_integrate
+    use spectrum_resample
     implicit none
     private
 
@@ -53,6 +54,7 @@ module spectrum
     public :: tv_filter
     public :: filter
     public :: moving_average_filter
+    public :: sinc_filter
 
     ! SPECTRUM_TF.F90
     public :: siso_transfer_function
@@ -67,5 +69,8 @@ module spectrum
 
     ! SPECTRUM_INTEGRATE.F90
     public :: integrate
+
+    ! SPECTRUM_RESAMPLE.F90
+    public :: upsample
  
 end module
