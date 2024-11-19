@@ -74,7 +74,7 @@ function upsample(n, fs, x, err) result(rst)
     end do
 
     ! Filter the upsampled frequency at the sample rate of the old signal
-    rst = sinc_filter(fs, fs * n, rst, errmgr)
+    rst = sinc_filter(0.5d0 * fs, fs * n, rst, errmgr) * n
 end function
 
 ! ------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ function downsample(n, fs, x, err) result(rst)
     end if
 
     ! Filter the signal at the downsampled frequency - prevents aliasing issues
-    xf = sinc_filter(fs / n, fs, x, errmgr)
+    xf = sinc_filter(0.5d0 * fs / n, fs, x, errmgr)
     if (errmgr%has_error_occurred()) return
 
     ! Resample
