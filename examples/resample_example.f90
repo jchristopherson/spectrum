@@ -10,7 +10,7 @@ program example
     real(real64), parameter :: freq = 5.0d0
     real(real64), parameter :: fs1 = 40.0d0
     integer(int32), parameter :: nu = 4
-    integer(int32), parameter :: nd = 4
+    integer(int32), parameter :: nd = 2
     integer(int32) :: i, n
     real(real64) :: dt
     real(real64), allocatable, dimension(:) :: t, tu, td, x, xu, xd
@@ -24,7 +24,7 @@ program example
     ! Build the signal
     dt = 1.0d0 / fs1
     n = floor(tmax / dt) + 1
-    allocate(t(n), x(n), tu(nu * n), td(n / nd), xu(nu * n), xd(n / nd))
+    allocate(t(n), x(n), tu(nu * n), td(n * nu / nd), xu(nu * n), xd(n * nu / nd))
     t = (/ (dt * i, i = 0, n - 1) /)
     x = sin(2.0d0 * pi * freq * t)
 
@@ -33,8 +33,8 @@ program example
     tu = (/ (i * dt / nu, i = 0, n * nu - 1) /)
 
     ! Downsample the signal
-    xd = downsample(nd, fs1, x)
-    td = (/ (i * dt * nd, i = 0, n / nd - 1) /)
+    xd = downsample(nd, fs1, xu)
+    td = (/ (i * dt * nd / nu, i = 0, n * nu / nd - 1) /)
 
 ! ------------------------------------------------------------------------------
     ! Plot

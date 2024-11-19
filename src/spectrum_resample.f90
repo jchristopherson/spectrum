@@ -74,7 +74,7 @@ function upsample(n, fs, x, err) result(rst)
     end do
 
     ! Filter the upsampled frequency at the sample rate of the old signal
-    rst = sinc_filter(0.5d0 * fs, fs * n, rst, errmgr)
+    rst = sinc_filter(0.5d0 * fs, fs * n, rst, errmgr) * n
 end function
 
 ! ------------------------------------------------------------------------------
