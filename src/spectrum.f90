@@ -72,5 +72,6 @@ module spectrum
 
     ! SPECTRUM_RESAMPLE.F90
     public :: upsample
+    public :: downsample
  
 end module
