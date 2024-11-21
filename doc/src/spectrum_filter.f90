@@ -453,8 +453,9 @@ function sinc_filter(fc, fs, x, err) result(rst)
         !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
         !!
         !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if the cutoff frequency is 
-        !!      greater than or equal to the sampling frequency, or if either 
-        !!      the cutoff or sampling frequency is zero or negative-valued.
+        !!      greater than or equal to half the sampling frequency, or if 
+        !!      either the cutoff or sampling frequency is zero or 
+        !!      negative-valued.
     real(real64), allocatable, dimension(:) :: rst
         !! The filtered signal.
 
@@ -487,9 +488,9 @@ function sinc_filter(fc, fs, x, err) result(rst)
             SPCTRM_INVALID_INPUT_ERROR)
         return
     end if
-    if (fc >= fs) then
+    if (fc >= 0.5d0 * fs) then
         call errmgr%report_error("sinc_filter", &
-            "The cutoff frequency must be less than the sampling frequency.", &
+            "The cutoff frequency must be less than half the sampling frequency.", &
             SPCTRM_INVALID_INPUT_ERROR)
         return
     end if
