@@ -3,6 +3,7 @@ program test
     use spectrum_convolution_tests
     use spectrum_diff_tests
     use spectrum_integrate_tests
+    use spectrum_filter_tests
     implicit none
 
     ! Local Variables
@@ -39,6 +40,9 @@ program test
 
     local = test_integrate()
     if (.not.local) flag = 9
+
+    local = test_sinc_filter()
+    if (.not.local) flag = 10
 
     ! Output
     stop flag
