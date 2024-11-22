@@ -14,6 +14,7 @@ module spectrum_diff
     public :: tvr_derivative
     public :: stencil_diff_5
     public :: stencil_second_diff_5
+    public :: filter_diff
 
     interface finite_difference
         module procedure :: finite_difference_1
@@ -585,6 +586,106 @@ function stencil_second_diff_5(dt, x, err) result(rst)
 
     rst(n - 1) = (x(n - 1) - 2.0d0 * x(n - 2) + x(n - 3)) / h2
     rst(n) = (x(n) - 2.0d0 * x(n - 1) + x(n - 2)) / h2
+end function
+
+! ******************************************************************************
+! V1.1.3 ADDITIONS
+! ------------------------------------------------------------------------------
+function filter_diff(dt, x, fc, err) result(rst)
+    !! Estimates the derivative of a signal by utilization of a second-order
+    !! system as a filter.
+    real(real64), intent(in) :: dt
+        !! The time step between data points.
+    real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is to be 
+        !! estimated.
+    real(real64), intent(in) :: fc
+        !! The filter cutoff frequency, in Hz.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if fc is greater than or equal 
+        !!      to half the sampling frequency, or if fc is less than or equal
+        !!      to zero.
+    real(real64), allocatable, dimension(:,:) :: rst
+        !! An N-element array containing the filtered signal in the first column
+        !! and the derivative estimate in the second.
+
+    ! Parameters
+    real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+    real(real64), parameter :: zeta = 0.5d0 * sqrt(2.0d0)
+
+    ! Local Variables
+    integer(int32) :: i, n, flag
+    real(real64) :: fs, wn
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    fs = 1.0d0 / dt
+    wn = 2.0d0 * pi * fc
+
+    ! Input Checking
+    if (fc >= 0.5d0 * fs .or. fc <= 0.0d0) then
+        call errmgr%report_error("filter_diff", &
+            "The cutoff frequency must not exceed half the " // &
+            "sampling frequency and must be nonzero and positive-valued.", &
+            SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+
+    ! Memory Allocations
+    allocate(rst(n,2), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("filter_diff", "Memory allocation error.", &
+            SPCTRM_MEMORY_ERROR)
+        return
+    end if
+
+    ! Define the initial conditions
+    rst(1,1) = x(1)    ! output initial value is equivalent to the original value
+    rst(1,2) = (x(2) - x(1)) / dt  ! finite difference estimate of the first point
+
+    ! Perform the integration using Euler's method
+    do i = 2, n
+        ! Predictor Stage (Explicit Method)
+        rst(i,:) = rst(i-1,:) + dt * fcn(rst(i-1,:), x(i-1), wn, zeta)
+
+        ! Corrector Stage (Implicit Method)
+        rst(i,:) = rst(i-1,:) + dt * fcn(Rst(i,:), x(i), wn, zeta)
+    end do
+end function
+
+! ----------
+pure function fcn(x, y, wn, zeta) result(dxdt)
+    !! The second-order equations of motion.
+    real(real64), intent(in) :: x(2)
+        !! The current state variables.
+    real(real64), intent(in) :: y
+        !! The current value of the original signal.
+    real(real64), intent(in) :: wn
+        !! The second-order system natural frequency, in rad/s.
+    real(real64), intent(in) :: zeta
+        !! The second-order system damping ratio.
+    real(real64) :: dxdt(2)
+        !! The output derivative values.
+
+    ! Equation of Motion:
+    ! x" + 2 * zeta * wn * x' + wn**2 * x = wn**2 * y
+    dxdt(1) = x(2)
+    dxdt(2) = wn**2 * (y - x(1)) - 2.0d0 * zeta * wn * x(2)
 end function
 
 ! ------------------------------------------------------------------------------

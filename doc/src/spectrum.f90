@@ -66,6 +66,7 @@ module spectrum
     public :: tvr_derivative
     public :: stencil_diff_5
     public :: stencil_second_diff_5
+    public :: filter_diff
 
     ! SPECTRUM_INTEGRATE.F90
     public :: integrate
