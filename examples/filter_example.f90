@@ -10,20 +10,22 @@ program example
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
     real(real64), parameter :: f1 = 5.0d0
     real(real64), parameter :: f2 = 1.5d1
+    real(real64), parameter :: cutoff = 2.0d1
     real(real64), parameter :: alpha = 3.0d0
     
     ! Local Variables
     integer(int32) :: i, k
-    real(real64) :: t(npts), x(npts), y(npts), b(winsize), a(1)
+    real(real64) :: fs, t(npts), x(npts), y(npts), b(winsize), a(1), ys(npts)
 
     ! Plot Variables
     type(plot_2d) :: plt
-    type(plot_data_2d) :: d1, d2
+    type(plot_data_2d) :: d1, d2, d3
     class(plot_axis), pointer :: xAxis, yAxis
     class(legend), pointer :: lgnd
 
     ! Build the signal
     t = linspace(0.0d0, 1.0d0, npts)
+    fs = 1.0d0 / (t(2) - t(1))
     call random_number(x)
     x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &
         0.5 * sin(2.0d0 * pi * f2 * t)
@@ -35,6 +37,9 @@ program example
 
     ! Apply the filter
     y = filter(b, a, x)
+
+    ! Apply a sinc filter
+    ys = sinc_filter(cutoff, fs, x)
 
     ! Plot the results
     call plt%initialize()
@@ -53,6 +58,10 @@ program example
     call d2%define_data(t, y)
     call d2%set_name("Smoothed")
     call plt%push(d2)
+
+    call d3%define_data(t, ys)
+    call d3%set_name("Sinc Filtered")
+    call plt%push(d3)
 
     call plt%draw()
 end program

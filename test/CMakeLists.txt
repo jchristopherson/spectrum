@@ -7,6 +7,8 @@ set(spectrum_test_sources
     spectrum_psd_tests.f90
     spectrum_convolution_tests.f90
     spectrum_diff_tests.f90
+    spectrum_integrate_tests.f90
+    spectrum_filter_tests.f90
 )
 
 add_executable(spectrum_tests ${spectrum_test_sources})

@@ -1,5 +1,8 @@
 module spectrum_routines
     use iso_fortran_env
+    use fftpack
+    use ferror
+    use spectrum_errors
     implicit none
     private
     public :: compute_transform_length
@@ -12,6 +15,7 @@ module spectrum_routines
     public :: difference
     public :: compute_overlap_segment_count
     public :: overlap
+    public :: remove_mean
 
 contains
 ! ------------------------------------------------------------------------------
@@ -324,6 +328,56 @@ pure subroutine overlap(x, seg, winsize, buffer)
     ! End
     return
 end subroutine
+
+! ******************************************************************************
+! V1.1.3 ADDITIONS
+! ------------------------------------------------------------------------------
+function remove_mean(x, err) result(rst)
+    !! Removes the mean offset from the specified data set.
+    real(real64), intent(in), dimension(:) :: x
+        !! The array on which to operate.
+    class(errors), intent(inout), optional, target :: err
+        !! An optional errors-based object that if provided can
+        !! be used to retrieve information relating to any errors encountered 
+        !! during execution.  If not provided, a default implementation of the 
+        !! errors class is used internally to provide error handling.  Possible 
+        !! errors and warning messages that may be encountered are as follows.
+        !!
+        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+    real(real64), allocatable, dimension(:) :: rst
+        !! The data set with its mean removed.
+
+    ! Local Variables
+    integer(int32) :: n, nw, flag
+    real(real64), allocatable, dimension(:) :: wsave
+    class(errors), pointer :: errmgr
+    type(errors), target :: deferr
+    
+    ! Initialization
+    if (present(err)) then
+        errmgr => err
+    else
+        errmgr => deferr
+    end if
+    n = size(x)
+    nw = 2 * n + 15
+    allocate(rst(n), stat = flag, source = x)
+    if (flag == 0) allocate(wsave(nw), stat = flag)
+    if (flag /= 0) then
+        call errmgr%report_error("remove_mean", "Memory allocation error.", &
+            SPCTRM_MEMORY_ERROR)
+        return
+    end if
+
+    ! Initialize and compute the Fourier transform
+    call dffti(n, wsave)
+    call dfftf(n, rst, wsave)
+
+    ! Zero out the DC value and compute the inverse transform
+    rst(1) = 0.0d0
+    call dfftb(n, rst, wsave)
+    rst = rst / n
+end function
 
 ! ------------------------------------------------------------------------------
 end module

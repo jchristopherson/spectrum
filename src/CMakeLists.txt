@@ -13,5 +13,7 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_periodogram.f90
     ${dir}/spectrum_diff.f90
     ${dir}/spectrum_errors.f90
+    ${dir}/spectrum_integrate.f90
+    ${dir}/spectrum_resample.f90
 )
 set(SPECTRUM_SOURCES ${SPECTRUM_SOURCES} PARENT_SCOPE)
