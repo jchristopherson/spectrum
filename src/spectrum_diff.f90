@@ -609,6 +609,10 @@ function filter_diff(dt, x, fc, err) result(rst)
         !! errors and warning messages that may be encountered are as follows.
         !!
         !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
+        !!
+        !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if fc is greater than or equal 
+        !!      to half the sampling frequency, or if fc is less than or equal
+        !!      to zero.
     real(real64), allocatable, dimension(:,:) :: rst
         !! An N-element array containing the filtered signal in the first column
         !! and the derivative estimate in the second.
@@ -634,8 +638,12 @@ function filter_diff(dt, x, fc, err) result(rst)
     wn = 2.0d0 * pi * fc
 
     ! Input Checking
-    if (fc >= 0.5d0 * fs) then
-        ! TO DO: Error
+    if (fc >= 0.5d0 * fs .or. fc <= 0.0d0) then
+        call errmgr%report_error("filter_diff", &
+            "The cutoff frequency must not exceed half the " // &
+            "sampling frequency and must be nonzero and positive-valued.", &
+            SPCTRM_INVALID_INPUT_ERROR)
+        return
     end if
 
     ! Memory Allocations
@@ -650,60 +658,13 @@ function filter_diff(dt, x, fc, err) result(rst)
     rst(1,1) = x(1)    ! output initial value is equivalent to the original value
     rst(1,2) = (x(2) - x(1)) / dt  ! finite difference estimate of the first point
 
-    ! Perform the integration using an Adams-Bashforth method
+    ! Perform the integration using Euler's method
     do i = 2, n
-        if (i == 2) then
-            rst(i,:) = rst(i-1,:) + dt * fcn(rst(i-1,:), x(i-1), wn, zeta)
-        else if (i == 3) then
-            rst(i,:) = rst(i-1,:) + 0.5d0 * dt * ( &
-                3.0d0 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                fcn(rst(i-2,:), x(i-2), wn, zeta) )
-        else if (i == 4) then
-            rst(i,:) = rst(i-1,:) + (dt / 1.2d1) * ( &
-                2.3d1 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                1.6d1 * fcn(rst(i-2,:), x(i-2), wn, zeta) + &
-                5.0d0 * fcn(rst(i-3,:), x(i-3), wn, zeta) )
-        else if (i == 5) then
-            rst(i,:) = rst(i-1,:) + (dt / 2.4d1) * ( &
-                5.5d1 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                5.9d1 * fcn(rst(i-2,:), x(i-2), wn, zeta) + &
-                3.7d1 * fcn(rst(i-3,:), x(i-3), wn, zeta) - &
-                9.0d0 * fcn(rst(i-4,:), x(i-4), wn, zeta) )
-        else
-            rst(i,:) = rst(i-1,:) + (dt / 7.2d2) * ( &
-                1.901d3 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                2.774d3 * fcn(rst(i-2,:), x(i-2), wn, zeta) + &
-                2.616d3 * fcn(rst(i-3,:), x(i-3), wn, zeta) - &
-                1.274d3 * fcn(rst(i-4,:), x(i-4), wn, zeta) + &
-                2.51d2 * fcn(rst(i-5,:), x(i-5), wn, zeta) )
-        end if
-    end do
+        ! Predictor Stage (Explicit Method)
+        rst(i,:) = rst(i-1,:) + dt * fcn(rst(i-1,:), x(i-1), wn, zeta)
 
-    ! Perform the correction with the Adams-Moulton methods
-    do i = 2, n
-        if (i == 2) then
-            rst(i,:) = rst(i-1,:) + 0.5d0 * dt * ( &
-                fcn(rst(i,:), x(i), wn, zeta) + &
-                fcn(rst(i-1,:), x(i-1), wn, zeta))
-        else if (i == 3) then
-            rst(i,:) = rst(i-1,:) + (dt / 1.2d1) * ( &
-                5.0d0 * fcn(rst(i,:), x(i), wn, zeta) + &
-                8.0d0 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                fcn(rst(i-2,:), x(i-2), wn, zeta) )
-        else if (i == 4) then
-            rst(i,:) = rst(i-1,:) + (dt / 2.4d1) * ( &
-                9.0d0 * fcn(rst(i,:), x(i), wn, zeta) + &
-                1.9d1 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                5.0d0 * fcn(rst(i-2,:), x(i-2), wn, zeta) + &
-                fcn(rst(i-3,:), x(i-3), wn, zeta) )
-        else
-            rst(i,:) = rst(i-1,:) + (dt / 7.2d2) * ( &
-                2.51d2 * fcn(rst(i,:), x(i), wn, zeta) + &
-                6.46d2 * fcn(rst(i-1,:), x(i-1), wn, zeta) - &
-                2.64d2 * fcn(rst(i-2,:), x(i-2), wn, zeta) + &
-                1.06d2 * fcn(rst(i-3,:), x(i-3), wn, zeta) - &
-                1.9d1 * fcn(rst(i-4,:), x(i-4), wn, zeta))
-        end if
+        ! Corrector Stage (Implicit Method)
+        rst(i,:) = rst(i-1,:) + dt * fcn(Rst(i,:), x(i), wn, zeta)
     end do
 end function
 
