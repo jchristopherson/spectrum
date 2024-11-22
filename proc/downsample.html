@@ -8,7 +8,7 @@
     <meta name="author" content="Jason Christopherson" >
     <link rel="icon" href="../favicon.png">
 
-    <title>overlap &ndash; SPECTRUM</title>
+    <title>downsample &ndash; SPECTRUM</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -84,8 +84,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>overlap
-      <small>Subroutine</small>
+    <h1>downsample
+      <small>Function</small>
       
     </h1>
       <div class="row" id="info-bar">
@@ -96,18 +96,18 @@
           <li id="statements"><i class="fa fa-list-ol"></i>
             <a data-toggle="tooltip"
                data-placement="bottom" data-html="true"
-               title=" 2.6% of total for procedures.">27 statements</a>
+               title=" 3.5% of total for procedures.">36 statements</a>
           </li>
 
             <li id="source-file">
               <i class="fa fa-code"></i>
-              <a href="../src/spectrum_routines.f90"> Source File</a>
+              <a href="../src/spectrum_resample.f90"> Source File</a>
             </li>
         </ul>
         <ol class="breadcrumb in-well text-right">
-              <li><a href='../sourcefile/spectrum_routines.f90.html'>spectrum_routines.f90</a></li>
-              <li><a href='../module/spectrum_routines.html'>spectrum_routines</a></li>
-          <li class="active">overlap</li>
+              <li><a href='../sourcefile/spectrum_resample.f90.html'>spectrum_resample.f90</a></li>
+              <li><a href='../module/spectrum_resample.html'>spectrum_resample</a></li>
+          <li class="active">downsample</li>
         </ol>
       </div>
     </div>
@@ -150,11 +150,11 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine overlap(x, seg, winsize, buffer)  
+    <h2>public  function downsample(n, fs, x, err) result(rst)  
 </h2>
     
 
-    <p>Extracts a segment from a signal allowing for a nominally 50% overlap.</p>
+    <p>Downsamples an evenly sampled signal by the specified factor.</p>
 
 
     <h3>Arguments</h3>
@@ -170,22 +170,7 @@
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~27"></span>
-              real(kind=real64),
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>x</strong>(:)</td>
-            <td>
-                <p>An N-element array containing the entire signal.</p>
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-seg"></span>
+              <span class="anchor" id="variable-n~2"></span>
               integer(kind=int32),
             </td>
 <td>intent(in)</td>
@@ -193,45 +178,79 @@
               
             </td>
             <td>::</td>
-            <td><strong>seg</strong></td>
+            <td><strong>n</strong></td>
             <td>
-                <p>The one-based index of the segment to extract.</p>
+                <p>The downsample factor.  The value must be non-zer and positive
+valued.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-winsize~2"></span>
-              integer(kind=int32),
+              <span class="anchor" id="variable-fs~7"></span>
+              real(kind=real64),
             </td>
 <td>intent(in)</td>
               <td></td>            <td>
               
             </td>
             <td>::</td>
-            <td><strong>winsize</strong></td>
+            <td><strong>fs</strong></td>
             <td>
-                <p>The size of the window (segment).  If this value is less than N, the 
-end of the segment will be padded with zeros.</p>
+                <p>The original signal sample rate, in Hz.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-buffer"></span>
+              <span class="anchor" id="variable-x~21"></span>
               real(kind=real64),
             </td>
-<td>intent(out)</td>
+<td>intent(in),</td>
               <td></td>            <td>
-              
+              dimension(:)
             </td>
             <td>::</td>
-            <td><strong>buffer</strong>(:)</td>
+            <td><strong>x</strong></td>
             <td>
-                <p>A winsize array where the segment will be written.</p>
+                <p>The signal to downsample.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-err~20"></span>
+              class(errors),
+            </td>
+<td>intent(inout),</td>
+              <td>optional,</td>            <td>
+              target
+            </td>
+            <td>::</td>
+            <td><strong>err</strong></td>
+            <td>
+                <p>An optional errors-based object that if provided can
+be used to retrieve information relating to any errors encountered 
+during execution.  If not provided, a default implementation of the 
+errors class is used internally to provide error handling.  Possible 
+errors and warning messages that may be encountered are as follows.</p>
+<ul>
+<li>
+<p>SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.</p>
+</li>
+<li>
+<p>SPCTRM_INVALID_INPUT_ERROR: Occurs if n is negative or zero-valued.</p>
+</li>
+</ul>
             </td>
         </tr>
     </tbody>
   </table>
 
+      <h3>Return Value
+        <small>
+          <span class="anchor" id="variable-rst~20"></span>
+          real(kind=real64), allocatable, dimension(:)
+        </small>
+      </h3>
+      <p>The downsampled signal.</p>
     <br>
 
     <section class="visible-xs visible-sm hidden-md">

@@ -100,11 +100,15 @@ method (sometimes referred to as cross power spectral density
 or CPSD).</p><a href="../proc/csd.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
 			   <tr><td><a href='../proc/cumulative_sum.html'>cumulative_sum</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Computes the cumulative sum of an array.</p></td></tr>
 			   <tr><td><a href='../proc/difference.html'>difference</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Computes the difference between each element in an array.</p></td></tr>
+			   <tr><td><a href='../proc/downsample.html'>downsample</a></td><td><a href='../module/spectrum_resample.html'>spectrum_resample</a></td><td>Function</td><td><p>Downsamples an evenly sampled signal by the specified factor.</p></td></tr>
 			   <tr><td><a href='../proc/filter.html'>filter</a></td><td><a href='../module/spectrum_filter.html'>spectrum_filter</a></td><td>Function</td><td><p>Applies the specified filter to a signal.</p><a href="../proc/filter.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+			   <tr><td><a href='../proc/filter_diff.html'>filter_diff</a></td><td><a href='../module/spectrum_diff.html'>spectrum_diff</a></td><td>Function</td><td><p>Estimates the derivative of a signal by utilization of a second-order
+system as a filter.</p></td></tr>
 			   <tr><td><a href='../interface/finite_difference.html'>finite_difference</a></td><td><a href='../module/spectrum_diff.html'>spectrum_diff</a></td><td>Interface</td><td></td></tr>
 			   <tr><td><a href='../proc/frequency_bin_width.html'>frequency_bin_width</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Computes the bin width for a discrete frequency spectrum based
 upon the data sample rate.</p><a href="../proc/frequency_bin_width.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
 			   <tr><td><a href='../proc/gaussian_filter.html'>gaussian_filter</a></td><td><a href='../module/spectrum_filter.html'>spectrum_filter</a></td><td>Function</td><td><p>Applies a Gaussian filter to a signal.</p></td></tr>
+			   <tr><td><a href='../proc/integrate.html'>integrate</a></td><td><a href='../module/spectrum_integrate.html'>spectrum_integrate</a></td><td>Function</td><td><p>Integrates a data set.</p></td></tr>
 			   <tr><td><a href='../proc/is_power_of_two.html'>is_power_of_two</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Tests to see if a value is an integer power of two.</p></td></tr>
 			   <tr><td><a href='../proc/moving_average_filter.html'>moving_average_filter</a></td><td><a href='../module/spectrum_filter.html'>spectrum_filter</a></td><td>Function</td><td><p>Applies a moving average filter to a signal.</p></td></tr>
 			   <tr><td><a href='../proc/next_power_of_two.html'>next_power_of_two</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Provides the next higher integer power of two.</p></td></tr>
@@ -112,6 +116,8 @@ upon the data sample rate.</p><a href="../proc/frequency_bin_width.html" class="
 			   <tr><td><a href='../proc/periodogram.html'>periodogram</a></td><td><a href='../module/spectrum_periodogram.html'>spectrum_periodogram</a></td><td>Function</td><td><p>Computes the periodogram of a signal.</p></td></tr>
 			   <tr><td><a href='../proc/psd.html'>psd</a></td><td><a href='../module/spectrum_periodogram.html'>spectrum_periodogram</a></td><td>Function</td><td><p>Computes the power spectral density (PSD) of a signal via Welch's
 method.</p><a href="../proc/psd.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+			   <tr><td><a href='../proc/remove_mean.html'>remove_mean</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Function</td><td><p>Removes the mean offset from the specified data set.</p></td></tr>
+			   <tr><td><a href='../proc/sinc_filter.html'>sinc_filter</a></td><td><a href='../module/spectrum_filter.html'>spectrum_filter</a></td><td>Function</td><td><p>Applies a sinc-in-time filter (rectangular frequency response).</p></td></tr>
 			   <tr><td><a href='../proc/siso_transfer_function.html'>siso_transfer_function</a></td><td><a href='../module/spectrum_tf.html'>spectrum_tf</a></td><td>Function</td><td><p>Estimates the transfer function for a single-input/single-output
 (SISO) system.</p></td></tr>
 			   <tr><td><a href='../proc/stencil_diff_5.html'>stencil_diff_5</a></td><td><a href='../module/spectrum_diff.html'>spectrum_diff</a></td><td>Function</td><td><p>Utilizes a 5-point stencil to estimate the derivative of a data set.</p><a href="../proc/stencil_diff_5.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
@@ -125,6 +131,7 @@ set using total variation regularization.</p><a href="../proc/tvr_derivative.htm
 			   <tr><td><a href='../proc/unwrap.html'>unwrap</a></td><td><a href='../module/spectrum_routines.html'>spectrum_routines</a></td><td>Subroutine</td><td><p>Shifts phase angle arrays to deal with jumps greater than or equal
 to tol by adding multiples of <script type="math/tex">  \pm 2 \pi </script> until
 the jump is less than tol.</p></td></tr>
+			   <tr><td><a href='../proc/upsample.html'>upsample</a></td><td><a href='../module/spectrum_resample.html'>spectrum_resample</a></td><td>Function</td><td><p>Upsamples an evenly sampled signal by the specified factor.</p></td></tr>
 			   <tr><td><a href='../interface/window_function.html'>window_function</a></td><td><a href='../module/spectrum_windows.html'>spectrum_windows</a></td><td>Interface</td><td></td></tr>
 			 </tbody></table>
              
@@ -142,7 +149,7 @@ the jump is less than tol.</p></td></tr>
             <p class="text-right">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2024-11-14 08:44              </p>
+ on 2024-11-22 06:35              </p>
           </div>
         </div>
         <br>

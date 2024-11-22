@@ -96,7 +96,7 @@
           <li id="statements"><i class="fa fa-list-ol"></i>
             <a data-toggle="tooltip"
                data-placement="bottom" data-html="true"
-               title="18.6% of total for modules and submodules.">295 statements</a>
+               title="18.5% of total for modules and submodules.">341 statements</a>
           </li>
 
             <li id="source-file">
@@ -154,6 +154,7 @@
       </div>
       <div id="funcs-0" class="panel-collapse collapse">
         <div class="list-group">
+            <a class="list-group-item" href="../module/spectrum_diff.html#proc-filter_diff">filter_diff</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-stencil_diff_5">stencil_diff_5</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-stencil_second_diff_5">stencil_second_diff_5</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-tvr_derivative">tvr_derivative</a>
@@ -183,9 +184,9 @@
       <ul class="list-group">
           <li class="list-group-item">
             <ul class="list-inline">
+                <li><a href='../module/spectrum_errors.html'>spectrum_errors</a></li>
                 <li>linalg</li>
                 <li>ferror</li>
-                <li><a href='../module/spectrum_errors.html'>spectrum_errors</a></li>
                 <li>blas</li>
                 <li><a href='<a href="http://fortranwiki.org/fortran/show/iso_fortran_env">iso_fortran_env</a>'>iso_fortran_env</a></li>
             </ul>
@@ -229,6 +230,7 @@
       </div>
       <div id="funcs-1" class="panel-collapse collapse">
         <div class="list-group">
+            <a class="list-group-item" href="../module/spectrum_diff.html#proc-filter_diff">filter_diff</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-stencil_diff_5">stencil_diff_5</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-stencil_second_diff_5">stencil_second_diff_5</a>
             <a class="list-group-item" href="../module/spectrum_diff.html#proc-tvr_derivative">tvr_derivative</a>
@@ -441,6 +443,103 @@ errors and warning messages that may be encountered are as follows.</p>
 
         <section>
           <h2>Functions</h2>
+              <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-filter_diff"></span><h3>public  function <a href='../proc/filter_diff.html'>filter_diff</a>(dt, x, fc, err) result(rst)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Estimates the derivative of a signal by utilization of a second-order
+system as a filter.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>dt</strong></td>
+            <td>
+<p>The time step between data points.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in),</td>
+              <td></td>            <td>
+              dimension(:)
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+<p>An N-element array containing the data whose derivative is to be 
+estimated.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>fc</strong></td>
+            <td>
+<p>The filter cutoff frequency, in Hz.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(errors),
+            </td>
+<td>intent(inout),</td>
+              <td>optional,</td>            <td>
+              target
+            </td>
+            <td>::</td>
+            <td><strong>err</strong></td>
+            <td>
+<p>An optional errors-based object that if provided can
+be used to retrieve information relating to any errors encountered 
+during execution.  If not provided, a default implementation of the 
+errors class is used internally to provide error handling.  Possible 
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/filter_diff.html#variable-err~7" class="pull-right"><emph>Read more&hellip;</emph></a>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=real64), allocatable, dimension(:,:)</small>
+    </h4>
+    <p>An N-element array containing the filtered signal in the first column
+and the derivative estimate in the second.</p>
+
+    </div>
+  </div>
+
               <div class="panel panel-default">
     <div class="panel-heading codesum"><span class="anchor" id="proc-stencil_diff_5"></span><h3>public  function <a href='../proc/stencil_diff_5.html'>stencil_diff_5</a>(dt, x, err) result(rst)  
 </h3></div>
@@ -769,7 +868,7 @@ errors and warning messages that may be encountered are as follows.</p><a href="
             <p class="text-right">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2024-11-14 08:44              </p>
+ on 2024-11-22 06:35              </p>
           </div>
         </div>
         <br>

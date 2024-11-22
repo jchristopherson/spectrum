@@ -96,7 +96,7 @@
           <li id="statements"><i class="fa fa-list-ol"></i>
             <a data-toggle="tooltip"
                data-placement="bottom" data-html="true"
-               title="14.3% of total for modules and submodules.">227 statements</a>
+               title="14.8% of total for modules and submodules.">273 statements</a>
           </li>
 
             <li id="source-file">
@@ -145,6 +145,7 @@
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-filter">filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-gaussian_filter">gaussian_filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-moving_average_filter">moving_average_filter</a>
+            <a class="list-group-item" href="../module/spectrum_filter.html#proc-sinc_filter">sinc_filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-tv_filter">tv_filter</a>
         </div>
       </div>
@@ -172,9 +173,10 @@
       <ul class="list-group">
           <li class="list-group-item">
             <ul class="list-inline">
-                <li>ferror</li>
-                <li><a href='../module/spectrum_convolve.html'>spectrum_convolve</a></li>
                 <li><a href='../module/spectrum_errors.html'>spectrum_errors</a></li>
+                <li><a href='../module/spectrum_convolve.html'>spectrum_convolve</a></li>
+                <li>ferror</li>
+                <li>fftpack</li>
                 <li><a href='<a href="http://fortranwiki.org/fortran/show/iso_fortran_env">iso_fortran_env</a>'>iso_fortran_env</a></li>
                 <li><a href='../module/spectrum_routines.html'>spectrum_routines</a></li>
             </ul>
@@ -209,6 +211,7 @@
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-filter">filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-gaussian_filter">gaussian_filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-moving_average_filter">moving_average_filter</a>
+            <a class="list-group-item" href="../module/spectrum_filter.html#proc-sinc_filter">sinc_filter</a>
             <a class="list-group-item" href="../module/spectrum_filter.html#proc-tv_filter">tv_filter</a>
         </div>
       </div>
@@ -334,7 +337,7 @@ filter delays.</p>
 be used to retrieve information relating to any errors encountered 
 during execution.  If not provided, a default implementation of the 
 errors class is used internally to provide error handling.  Possible 
-errors and warning messages that may be encountered are as follows.</p><a href="../proc/filter.html#variable-err~10" class="pull-right"><emph>Read more&hellip;</emph></a>
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/filter.html#variable-err~11" class="pull-right"><emph>Read more&hellip;</emph></a>
             </td>
         </tr>
     </tbody>
@@ -431,7 +434,7 @@ integer value less than N.</p>
 be used to retrieve information relating to any errors encountered 
 during execution.  If not provided, a default implementation of the 
 errors class is used internally to provide error handling.  Possible 
-errors and warning messages that may be encountered are as follows.</p><a href="../proc/gaussian_filter.html#variable-err~8" class="pull-right"><emph>Read more&hellip;</emph></a>
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/gaussian_filter.html#variable-err~9" class="pull-right"><emph>Read more&hellip;</emph></a>
             </td>
         </tr>
     </tbody>
@@ -511,7 +514,7 @@ and non-zero.</p>
 be used to retrieve information relating to any errors encountered 
 during execution.  If not provided, a default implementation of the 
 errors class is used internally to provide error handling.  Possible 
-errors and warning messages that may be encountered are as follows.</p><a href="../proc/moving_average_filter.html#variable-err~11" class="pull-right"><emph>Read more&hellip;</emph></a>
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/moving_average_filter.html#variable-err~12" class="pull-right"><emph>Read more&hellip;</emph></a>
             </td>
         </tr>
     </tbody>
@@ -522,6 +525,100 @@ errors and warning messages that may be encountered are as follows.</p><a href="
     <small>real(kind=real64), allocatable, (:)</small>
     </h4>
     <p>An N-element array containing the filtered signal.</p>
+
+    </div>
+  </div>
+
+              <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-sinc_filter"></span><h3>public  function <a href='../proc/sinc_filter.html'>sinc_filter</a>(fc, fs, x, err) result(rst)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Applies a sinc-in-time filter (rectangular frequency response).</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>fc</strong></td>
+            <td>
+<p>The filter cutoff frequency, in Hz.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>fs</strong></td>
+            <td>
+<p>The sampling frequency, in Hz.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=real64),
+            </td>
+<td>intent(in),</td>
+              <td></td>            <td>
+              dimension(:)
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+<p>The signal to filter.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(errors),
+            </td>
+<td>intent(inout),</td>
+              <td>optional,</td>            <td>
+              target
+            </td>
+            <td>::</td>
+            <td><strong>err</strong></td>
+            <td>
+<p>An optional errors-based object that if provided can
+be used to retrieve information relating to any errors encountered 
+during execution.  If not provided, a default implementation of the 
+errors class is used internally to provide error handling.  Possible 
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/sinc_filter.html#variable-err~13" class="pull-right"><emph>Read more&hellip;</emph></a>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=real64), allocatable, dimension(:)</small>
+    </h4>
+    <p>The filtered signal.</p>
 
     </div>
   </div>
@@ -609,7 +706,7 @@ The default limit is 10 iterations.</p>
 be used to retrieve information relating to any errors encountered 
 during execution.  If not provided, a default implementation of the 
 errors class is used internally to provide error handling.  Possible 
-errors and warning messages that may be encountered are as follows.</p><a href="../proc/tv_filter.html#variable-err~9" class="pull-right"><emph>Read more&hellip;</emph></a>
+errors and warning messages that may be encountered are as follows.</p><a href="../proc/tv_filter.html#variable-err~10" class="pull-right"><emph>Read more&hellip;</emph></a>
             </td>
         </tr>
     </tbody>
@@ -645,7 +742,7 @@ errors and warning messages that may be encountered are as follows.</p><a href="
             <p class="text-right">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2024-11-14 08:44              </p>
+ on 2024-11-22 06:35              </p>
           </div>
         </div>
         <br>

@@ -7,6 +7,8 @@ module spectrum
     use spectrum_filter
     use spectrum_tf
     use spectrum_diff
+    use spectrum_integrate
+    use spectrum_resample
     implicit none
     private
 
@@ -31,6 +33,7 @@ module spectrum
     public :: difference
     public :: compute_overlap_segment_count
     public :: overlap
+    public :: remove_mean
 
     ! SPECTRUM_PERIODOGRAM.F90
     public :: psd
@@ -51,6 +54,7 @@ module spectrum
     public :: tv_filter
     public :: filter
     public :: moving_average_filter
+    public :: sinc_filter
 
     ! SPECTRUM_TF.F90
     public :: siso_transfer_function
@@ -62,5 +66,13 @@ module spectrum
     public :: tvr_derivative
     public :: stencil_diff_5
     public :: stencil_second_diff_5
+    public :: filter_diff
+
+    ! SPECTRUM_INTEGRATE.F90
+    public :: integrate
+
+    ! SPECTRUM_RESAMPLE.F90
+    public :: upsample
+    public :: downsample
  
 end module
