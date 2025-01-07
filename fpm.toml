@@ -27,7 +27,6 @@ auto-examples = false
 auto-tests = false
 
 [[test]]
-link = ["blas", "lapack"]
 name = "spectrum_tests"
 source-dir = "test"
 main = "spectrum_tests.f90"

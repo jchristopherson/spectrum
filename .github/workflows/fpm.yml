@@ -34,7 +34,8 @@ jobs:
       run: |
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100 \
         --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-${GCC_V} \
-        --slave /usr/bin/gcov gcov /usr/bin/gcov-${GCC_V}
+        --slave /usr/bin/gcov gcov /usr/bin/gcov-${GCC_V} \
+        --install liblapack-dev libblas-dev
     
     - name: Install fpm
       uses: fortran-lang/setup-fpm@v3
