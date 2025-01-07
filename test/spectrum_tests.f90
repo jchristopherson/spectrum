@@ -44,9 +44,6 @@ program test
     local = test_sinc_filter()
     if (.not.local) flag = 10
 
-    local = test_butterworth()
-    if (.not.local) flag = 11
-
     ! Output
     stop flag
 end program

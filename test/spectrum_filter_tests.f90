@@ -51,28 +51,4 @@ contains
     end function
 
 ! ------------------------------------------------------------------------------
-    function test_butterworth() result(rst)
-        ! Arguments
-        logical :: rst
-
-        ! Parameters
-        real(real64), parameter :: fs = 1.0d3
-        real(real64), parameter :: fc = 3.0d2
-        
-        ! Local Variables
-        type(biquad), allocatable, dimension(:) :: f1
-
-        ! Initialization
-        rst = .true.
-
-        ! Test 1 - 2nd order low-pass filter
-        f1 = butterworth(2, [fc], fs)
-        if (size(f1) /= 2) then
-            rst = .false.
-            print "(A)", "TEST FAILED: test_butterworth -1"
-            return
-        end if
-    end function
-
-! ------------------------------------------------------------------------------
 end module

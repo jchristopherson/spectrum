@@ -55,9 +55,6 @@ module spectrum
     public :: filter
     public :: moving_average_filter
     public :: sinc_filter
-    public :: bilinear_transform
-    public :: butterworth
-    public :: biquad
     public :: LOW_PASS_FILTER
     public :: HIGH_PASS_FILTER
     public :: BAND_PASS_FILTER

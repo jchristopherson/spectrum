@@ -12,9 +12,6 @@ module spectrum_filter
     public :: filter
     public :: moving_average_filter
     public :: sinc_filter
-    public :: bilinear_transform
-    public :: butterworth
-    public :: biquad
     public :: LOW_PASS_FILTER
     public :: HIGH_PASS_FILTER
     public :: BAND_PASS_FILTER
@@ -29,11 +26,6 @@ module spectrum_filter
     integer(int32), parameter :: BAND_STOP_FILTER = 4
         !! Denotes a band-stop filter.
 
-    type biquad
-        !! Biquad filter coefficients.
-        real(real64) :: b0, b1, b2, a1, a2
-            !! The filter coefficients.
-    end type
 
 contains
 ! ******************************************************************************
@@ -457,7 +449,7 @@ end function
 ! ******************************************************************************
 ! V1.1.3 ADDITIONS
 ! ------------------------------------------------------------------------------
-function sinc_filter(fc, fs, x, err) result(rst)
+function sinc_filter(fc, fs, x, fc2, ftype, err) result(rst)
     !! Applies a sinc-in-time filter (rectangular frequency response).
     real(real64), intent(in) :: fc
         !! The filter cutoff frequency, in Hz.
@@ -465,6 +457,20 @@ function sinc_filter(fc, fs, x, err) result(rst)
         !! The sampling frequency, in Hz.
     real(real64), intent(in), dimension(:) :: x
         !! The signal to filter.
+    real(real64), intent(in), optional :: fc2
+        !! The second cutoff frequency for band-pass and band-stop filters.
+    integer(int32), intent(in), optional :: ftype
+        !! The filter type.  This parameter must be one of the following values:
+        !!
+        !!  - LOW_PASS_FILTER: Denotes a low-pass filter.
+        !!
+        !!  - HIGH_PASS_FILTER: Denotes a high-pass filter.
+        !!
+        !!  - BAND_PASS_FILTER: Denotes a band-pass filter.
+        !!
+        !!  - BAND_STOP_FILTER: Denotes a band-stop filter.
+        !!
+        !! The default value is LOW_PASS_FILTER.
     class(errors), intent(inout), optional, target :: err
         !! An optional errors-based object that if provided can
         !! be used to retrieve information relating to any errors encountered 
@@ -482,7 +488,7 @@ function sinc_filter(fc, fs, x, err) result(rst)
         !! The filtered signal.
 
     ! Local Variables
-    integer(int32) :: start, n, nw, flag
+    integer(int32) :: start, finish, n, nw, flag, filterType
     real(real64) :: df
     real(real64), allocatable, dimension(:) :: wsave
     class(errors), pointer :: errmgr
@@ -493,6 +499,11 @@ function sinc_filter(fc, fs, x, err) result(rst)
         errmgr => err
     else
         errmgr => deferr
+    end if
+    if (present(ftype)) then
+        filterType = ftype
+    else
+        filterType = LOW_PASS_FILTER
     end if
     n = size(x)
     nw = 2 * n + 15
@@ -516,6 +527,33 @@ function sinc_filter(fc, fs, x, err) result(rst)
             SPCTRM_INVALID_INPUT_ERROR)
         return
     end if
+    if (filterType < LOW_PASS_FILTER .or. filterType > BAND_STOP_FILTER) then
+        call errmgr%report_error("sinc_filter", &
+            "The filter type must be one of the following values: " // &
+            "LOW_PASS_FILTER, HIGH_PASS_FILTER, BAND_PASS_FILTER, or " // &
+            "BAND_STOP_FILTER.", SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+    if (filterType == BAND_PASS_FILTER .or. filterType == BAND_STOP_FILTER) then
+        if (.not. present(fc2)) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be provided for band-pass " // &
+                "and band-stop filters.", SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+        if (fc2 <= 0.0d0) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be non-zero and positive-valued.", &
+                SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+        if (fc2 >= 0.5d0 * fs) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be less than half the " // &
+                "sampling frequency.", SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+    end if
 
     ! Memory Allocations
     allocate(rst(n), stat = flag, source = x)
@@ -533,542 +571,31 @@ function sinc_filter(fc, fs, x, err) result(rst)
     ! Zero out anything above the cutoff frequency
     df = frequency_bin_width(fs, n)
     start = floor(fc / df) * 2
-    rst(start:n) = 0.0d0
+    if (present(fc2)) then
+        finish = floor(fc2 / df) * 2
+    end if
+
+    ! Apply the appropriate filter
+    select case (filterType)
+    case (LOW_PASS_FILTER)
+        ! Zero out anything above the cutoff frequency
+        rst(start:n) = 0.0d0
+    case (HIGH_PASS_FILTER)
+        ! Zero out anything below the cutoff frequency
+        rst(1:start) = 0.0d0
+    case (BAND_PASS_FILTER)
+        ! Zero out anything below the first cutoff frequency
+        rst(1:start) = 0.0d0
+        ! Zero out anything above the second cutoff frequency
+        rst(finish:n) = 0.0d0
+    case (BAND_STOP_FILTER)
+        ! Zero out anything between the two cutoff frequencies
+        rst(start:finish) = 0.0d0
+    end select
 
     ! Compute the inverse transform to retrieve the filtered signal
     call dfftb(n, rst, wsave)
     rst = rst / n
-end function
-
-! ******************************************************************************
-! V1.1.4 ADDITIONS
-! ------------------------------------------------------------------------------
-pure elemental function bilinear_transform(s, T) result(z)
-    !! Computes the bilinear transform of a continuous-time Laplace domain.
-    complex(real64), intent(in) :: s
-        !! The continuous-time Laplace domain value.
-    real(real64), intent(in) :: T
-        !! The sampling period.
-    complex(real64) :: z
-        !! The discrete-time Laplace domain value.
-
-    ! Compute the bilinear transform
-    z = (2.0d0 + s * T) / (2.0d0 - s * T)
-end function
-
-! ------------------------------------------------------------------------------
-! REF: https://github.com/ruohoruotsi/Butterworth-Filter-Design/blob/master/Butterworth.cpp
-subroutine prototype_analog_lowpass(filterOrder, poles)
-    !! Prototype analog low-pass filter.  Poles are placed evenly around the 
-    !! s-plane unit circle.
-    integer(int32), intent(in) :: filterOrder
-        !! The filter order.
-    complex(real64), intent(out), dimension(2 * filterOrder) :: poles
-        !! The poles of the filter.
-
-    ! Parameters
-    real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i
-    real(real64) :: theta, re, imag
-
-    ! Process
-    do i = 1, (filterOrder + 1) / 2
-        theta = pi * (2.0d0 * i + 1) / (2.0d0 * filterOrder)
-        re = -sin(theta)
-        imag = cos(theta)
-        poles(2 * i - 1) = cmplx(re, imag)
-        poles(2 * i) = cmplx(re, -imag)
-    end do
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_to_lowpass(gain, f1, f2, numPoles, numZeros, poles, zeros, wc, bw)
-    !! Converts a low-pass filter prototype to a low-pass filter.
-    real(real64), intent(inout) :: gain
-        !! The filter gain.
-    real(real64), intent(in) :: f1, f2
-        !! The cutoff frequencies.
-    integer(int32), intent(inout) :: numPoles, numZeros
-        !! The number of poles and zeros.
-    complex(real64), intent(inout), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(inout), dimension(:) :: zeros
-        !! The zeros of the filter.
-    real(real64), intent(inout) :: wc, bw
-        !! The cutoff frequency and bandwidth.
-
-    ! Process
-    wc = f2
-    gain = gain * wc**numPoles
-    numZeros = 0
-    poles(:numPoles) = poles(:numPoles) * wc
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_to_highpass(gain, f1, f2, numPoles, numZeros, poles, zeros, wc, bw)
-    !! Converts a low-pass filter prototype to a high-pass filter.
-    real(real64), intent(inout) :: gain
-        !! The filter gain.
-    real(real64), intent(in) :: f1, f2
-        !! The cutoff frequencies.
-    integer(int32), intent(inout) :: numPoles, numZeros
-        !! The number of poles and zeros.
-    complex(real64), intent(inout), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(inout), dimension(:) :: zeros
-        !! The zeros of the filter.
-    real(real64), intent(inout) :: wc, bw
-        !! The cutoff frequency and bandwidth.
-
-    ! Parameters
-    complex(real64), parameter :: c_zero = cmplx(0.0d0, 0.0d0)
-    complex(real64), parameter :: c_one = cmplx(1.0d0, 0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i
-    complex(real64) :: prodz, prodp
-
-    ! Compute Gain
-    wc = f2
-    prodz = c_one
-    prodp = c_one
-    do i = 1, numZeros
-        prodz = prodz * (-zeros(i))
-    end do
-    do i = 1, numPoles
-        prodp = prodp * (-poles(i))
-    end do
-    gain = gain * real(prodz) / real(prodp)
-
-    ! Convert the poles to high-pass
-    do i = 1, numPoles
-        if (abs(poles(i)) < 1.0d-10) then
-            poles(i) = c_zero
-        else
-            poles(i) = wc / poles(i)
-        end if
-    end do
-
-    ! Deal with the zeros
-    numZeros = numPoles
-    zeros(:numZeros) = c_zero
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_to_bandpass(gain, f1, f2, numPoles, numZeros, poles, zeros, wc, bw)
-    !! Converts a low-pass filter prototype to a band-pass filter.
-    real(real64), intent(inout) :: gain
-        !! The filter gain.
-    real(real64), intent(in) :: f1, f2
-        !! The cutoff frequencies.
-    integer(int32), intent(inout) :: numPoles, numZeros
-        !! The number of poles and zeros.
-    complex(real64), intent(inout), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(inout), dimension(:) :: zeros
-        !! The zeros of the filter.
-    real(real64), intent(inout) :: wc, bw
-        !! The cutoff frequency and bandwidth.
-
-    ! Parameters
-    complex(real64), parameter :: c_zero = cmplx(0.0d0, 0.0d0)
-    complex(real64), parameter :: c_one = cmplx(1.0d0, 0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i
-    complex(real64) :: firstTerm, secondTerm, tempPoles(2 * numPoles)
-
-    ! Calculate the gain
-    bw = f2 - f1
-    wc = sqrt(f1 * f2)
-    gain = gain * bw**(numPoles - numZeros)
-
-    ! Convert the poles to band-pass
-    do i = 1, numPoles
-        if (abs(poles(i)) > 1.0d-10) then
-            firstTerm = 0.5d0 * poles(i) * bw
-            secondTerm = 0.5d0 * sqrt(poles(i)**2 * bw**2 - 4.0d0 * wc**2)
-            tempPoles(i) = firstTerm + secondTerm
-            tempPoles(i + numPoles) = firstTerm - secondTerm
-        else
-            tempPoles(i) = c_zero
-            tempPoles(i + numPoles) = c_zero
-        end if
-    end do
-
-    ! Initialize the zeros
-    numZeros = numPoles
-    zeros(:numZeros) = c_zero
-
-    ! Update the poles
-    poles(:2 * numPoles) = tempPoles
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_to_bandstop(gain, f1, f2, numPoles, numZeros, poles, zeros, wc, bw)
-    !! Converts a low-pass filter prototype to a band-stop filter.
-    real(real64), intent(inout) :: gain
-        !! The filter gain.
-    real(real64), intent(in) :: f1, f2
-        !! The cutoff frequencies.
-    integer(int32), intent(inout) :: numPoles, numZeros
-        !! The number of poles and zeros.
-    complex(real64), intent(inout), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(inout), dimension(:) :: zeros
-        !! The zeros of the filter.
-    real(real64), intent(inout) :: wc, bw
-        !! The cutoff frequency and bandwidth.
-
-    ! Parameters
-    complex(real64), parameter :: c_zero = cmplx(0.0d0, 0.0d0)
-    complex(real64), parameter :: c_one = cmplx(1.0d0, 0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i
-    complex(real64) :: prodp, prodz, ztemp(2 * numPoles), &
-        term1, term2, tempPoles(2 * numPoles)
-
-    ! Calculate the gain
-    bw = f2 - f1
-    wc = sqrt(f1 * f2)
-    prodp = c_one
-    prodz = c_one
-    do i = 1, numZeros
-        prodz = prodz * (-zeros(i))
-    end do
-    do i = 1, numPoles
-        prodp = prodp * (-poles(i))
-    end do
-    gain = gain * real(prodz) / real(prodp)
-
-    ! Convert the poles to band-stop
-    numZeros = numPoles
-    do i = 1, numZeros
-        ztemp(2 * i - 1) = cmplx(0.0d0, wc)
-        ztemp(2 * i) = cmplx(0.0d0, -wc)
-    end do
-
-    do i = 1, numPoles
-        if (abs(poles(i)) > 1.0d-10) then
-            term1 = 0.5d0 * bw / poles(i)
-            term2 = 0.5d0 * sqrt(bw**2 / poles(i)**2 - 4.0d0 * wc**2)
-            tempPoles(i) = term1 + term2
-            tempPoles(i + numPoles) = term1 - term2
-        else
-            tempPoles(i) = c_zero
-            tempPoles(i + numPoles) = c_zero
-        end if
-    end do
-
-    ! Copy the poles and zeros to the output arrays
-    poles(:2 * numPoles) = tempPoles
-    zeros(:2 * numPoles) = ztemp
-    numZeros = 2 * numPoles
-    numPoles = 2 * numPoles
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_s_to_z(gain, numPoles, numZeros, poles, zeros)
-    !! Converts the poles and zeros from S-plane to Z-plane via the bilinear
-    !! transform.
-    real(real64), intent(inout) :: gain
-        !! The gain of the filter.
-    integer(int32), intent(in) :: numZeros, numPoles
-        !! The number of zeros and poles.
-    complex(real64), intent(in), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(in), dimension(:) :: zeros
-        !! The zeros of the filter.
-
-    ! Local Variables
-    integer(int32) :: i
-
-    ! Zeros
-    do i = 1, numZeros
-        gain = gain / bilinear_transform(zeros(i), 1.0d0)
-    end do
-
-    ! Poles
-    do i = 1, numPoles
-        gain = gain * bilinear_transform(poles(i), 1.0d0)
-    end do
-end subroutine
-
-! ------------------------------------------------------------------------------
-subroutine convert_pole_zero_to_sos(gain, numPoles, numZeros, poles, zeros, &
-    ba, nba, numSOS)
-    !! Converts the poles and zeros to second-order sections.
-    real(real64), intent(in) :: gain
-        !! The gain of the filter.
-    integer(int32), intent(in) :: numPoles, numZeros
-        !! The number of poles and zeros.
-    complex(real64), intent(in), dimension(:) :: poles
-        !! The poles of the filter.
-    complex(real64), intent(in), dimension(:) :: zeros
-        !! The zeros of the filter.
-    real(real64), intent(out), dimension(0:) :: ba
-        !! The second-order sections.
-    integer(int32), intent(out) :: nba
-        !! The size of ba.
-    integer(int32), intent(out) :: numSOS
-        !! The number of second-order sections.
-
-    ! Parameters
-    complex(real64), parameter :: c_zero = cmplx(0.0d0, 0.0d0)
-    complex(real64), parameter :: n_one = cmplx(-1.0d0, 0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i, j, filterOrder
-    complex(real64), dimension(max(numZeros, numPoles)) :: zTemp, pTemp
-
-    ! Initialization
-    filterOrder = max(numZeros, numPoles)
-    zTemp(:numZeros) = c_zero
-    zTemp(numZeros + 1:) = n_one
-    pTemp(:numPoles) = poles(:numPoles)
-    ba(1) = gain
-
-    ! Process
-    numSOS = 0
-    do i = 0, filterOrder - 2, 2
-        j = i + 1
-        ba(4 * numSOS + 1) = -real(zTemp(j) + zTemp(j + 1))
-        ba(4 * numSOS + 2) = real(zTemp(j) * zTemp(j + 1))
-        ba(4 * numSOS + 3) = -real(pTemp(j) + pTemp(j + 1))
-        ba(4 * numSOS + 4) = real(pTemp(j) * pTemp(j + 1))
-        numSOS = numSOS + 1
-    end do
-
-    ! Odd filter order, thus one pole/zero left
-    if (mod(filterOrder, 2) == 1) then
-        ba(4 * numSOS + 1) = -real(zTemp(filterOrder))
-        ba(4 * numSOS + 2) = 0.0d0
-        ba(4 * numSOS + 3) = -real(pTemp(filterOrder))
-        ba(4 * numSOS + 4) = 0.0d0
-        numSOS = numSOS + 1
-    end if
-
-    ! Define the output parameter
-    nba = 1 + 4 * numSOS
-end subroutine
-
-! ------------------------------------------------------------------------------
-pure function direct_form_to_biquad(b0, b1, b2, a0, a1, a2) result(rst)
-    !! Converts a direct form filter to a biquad filter.
-    real(real64), intent(in) :: b0, b1, b2, a0, a1, a2
-        !! The direct form filter coefficients.
-    type(biquad) :: rst
-        !! The biquad filter coefficients.
-
-    ! Process
-    rst%b0 = b0 / a0
-    rst%b1 = b1 / a0
-    rst%b2 = b2 / a0
-    rst%a1 = -a1 / a0
-    rst%a2 = -a2 / a0
-end function
-
-! ------------------------------------------------------------------------------
-function butterworth(n, fc, fs, ftype, fgain, fpoles, fzeros, err) result(rst)
-    !! Computes the coefficients for a Butterworth filter.
-    integer(int32), intent(in) :: n
-        !! The filter order.
-    real(real64), intent(in) :: fc(:)
-        !! The filter cutoff frequency, in Hz.  This value must be a one-element
-        !! array if a low-pass or high-pass filter is desired, or a two-element
-        !! array if a band-pass or band-stop filter is desired.
-    real(real64), intent(in) :: fs
-        !! The sampling frequency, in Hz.
-    integer(int32), intent(in), optional :: ftype
-        !! The filter type.  The default is a low-pass filter.  The possible
-        !! options are:
-        !!
-        !! - LOW_PASS_FILTER: Denotes a low-pass filter.
-        !!    
-        !! - HIGH_PASS_FILTER: Denotes a high-pass filter.
-        !!
-        !! - BAND_PASS_FILTER: Denotes a band-pass filter.
-        !!
-        !! - BAND_STOP_FILTER: Denotes a band-stop filter.
-    real(real64), intent(out), optional :: fgain
-        !! The filter gain.
-    complex(real64), intent(out), optional, allocatable :: fpoles(:)
-        !! The filter poles.
-    complex(real64), intent(out), optional, allocatable :: fzeros(:)
-        !! The filter zeros.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if the cutoff frequency is 
-        !!      greater than or equal to half the sampling frequency, or if 
-        !!      either the cutoff or sampling frequency is zero or 
-        !!      negative-valued.  Also, if the filter order is insufficient.
-    type(biquad), allocatable :: rst(:)
-        !! The filter coefficients.
-
-    ! Parameters
-    real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
-
-    ! Local Variables
-    integer(int32) :: i, j, flag, ft, numPoles, numZeros, numSOS, nba, &
-        numFilters
-    real(real64) :: f1, f2, gain, bw, wc, preBLTgain, overallGain
-    real(real64), allocatable, dimension(:) :: ba
-    complex(real64) :: tempPoles(2 * n)
-    complex(real64), allocatable, dimension(:) :: poles, zeros
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
-    
-    ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
-    if (present(ftype)) then
-        ft = ftype
-    else
-        ft = LOW_PASS_FILTER
-    end if
-
-    ! Input Checking
-    if (n < 1) then
-        call errmgr%report_error("butterworth", &
-            "The filter order must be at least 1.", SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
-    if (fs <= 0.0d0) then
-        call errmgr%report_error("butterworth", &
-            "The sampling frequency must be non-zero and positive-valued.", &
-            SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
-    if (minval(fc) <= 0.0d0) then
-        call errmgr%report_error("butterworth", &
-            "The cutoff frequency must be non-zero and positive-valued.", &
-            SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
-    if (maxval(fc) > 0.5d0 * fs) then
-        call errmgr%report_error("butterworth", &
-            "The cutoff frequency must be less than half the sampling frequency.", &
-            SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
-    if (ft < LOW_PASS_FILTER .or. ft > BAND_STOP_FILTER) then
-        call errmgr%report_error("butterworth", &
-            "The filter type is invalid.", SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
-
-    ! Additional Initialization
-    if (size(fc) == 1) then
-        f1 = 0.0d0
-        f2 = 2.0d0 * tan(pi * fc(1) / fs)
-    else
-        f1 = 2.0d0 * tan(pi * fc(1) / fs)
-        f2 = 2.0d0 * tan(pi * fc(2) / fs)
-    end if
-    bw = 0.0d0
-    wc = 0.0d0
-
-    ! Design the basic S-plane, poles-only LP prototype
-    call prototype_analog_lowpass(n, tempPoles)
-    numPoles = size(tempPoles)
-    numZeros = 0    ! lowpass filter has no zeros
-    gain = 1.0d0
-    allocate( &
-        poles(2 * numPoles), &
-        zeros(2 * numPoles), &
-        stat = flag)
-    if (flag /= 0) go to 10
-    poles(:numPoles) = tempPoles
-
-    ! Convert the prototype to the desired filter type
-    select case (ft)
-    case (LOW_PASS_FILTER)
-        call convert_to_lowpass(gain, f1, f2, numPoles, numZeros, poles, &
-            zeros, wc, bw)
-    case (HIGH_PASS_FILTER)
-        call convert_to_highpass(gain, f1, f2, numPoles, numZeros, poles, &
-            zeros, wc, bw)
-    case (BAND_PASS_FILTER)
-        call convert_to_bandpass(gain, f1, f2, numPoles, numZeros, poles, &
-            zeros, wc, bw)
-    case (BAND_STOP_FILTER)
-        call convert_to_bandstop(gain, f1, f2, numPoles, numZeros, poles, &
-            zeros, wc, bw)
-    end select
-
-    ! Map the poles and zeros to the Z-plane
-    nba = 0
-    allocate(ba(0 : 2 * max(numPoles, numZeros) + 4), stat = flag)
-    if (flag /= 0) go to 10
-    preBLTgain = gain
-    call convert_s_to_z(gain, numPoles, numZeros, poles, zeros)
-
-    ! Convert to SOS
-    call convert_pole_zero_to_sos(gain, numPoles, numZeros, poles, zeros, &
-        ba, nba, numSOS)
-
-    ! Correct the overall gain
-    if (ft == LOW_PASS_FILTER .or. ft == BAND_PASS_FILTER) then
-        ba(0) = preBLTgain * (preBLTgain / gain)
-    else if (ft == HIGH_PASS_FILTER .or. ft == BAND_STOP_FILTER) then
-        ba(0) = 1.0d0 / ba(0)
-    end if
-
-    ! Set up the biquad structure
-    overallGain = ba(0)
-    numFilters = n / 2
-    if (ft == BAND_PASS_FILTER .or. ft == BAND_STOP_FILTER) then
-        numFilters = n
-    end if
-    allocate(rst(numFilters), stat = flag)
-    if (flag /= 0) go to 10
-    do i = 1, numFilters
-        j = i - 1
-        rst(i) = direct_form_to_biquad( &
-            1.0d0, &
-            ba(4 * j + 1), &
-            ba(4 * j + 2), &
-            1.0d0, &
-            ba(4 * j + 3), &
-            ba(4 * j + 4))
-    end do
-
-    ! Provide optional outputs
-    if (present(fgain)) then
-        fgain = overallGain
-    end if
-    if (present(fpoles)) then
-        allocate(fpoles(numPoles), source = poles(:numPoles), stat = flag)
-        if (flag /= 0) go to 10
-    end if
-    if (present(fzeros)) then
-        allocate(fzeros(numZeros), source = zeros(:numZeros), stat = flag)
-        if (flag /= 0) go to 10
-    end if
-
-    ! End
-    return
-
-    ! Memory Error Handling
-10  continue
-    if (flag /= 0) then
-        call errmgr%report_error("butterworth", &
-            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
-        return
-    end if
 end function
 
 ! ------------------------------------------------------------------------------
