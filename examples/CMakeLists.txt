@@ -116,3 +116,8 @@ link_library(resample_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
 add_executable(filtered_derivative_example filtered_derivative_example.f90)
 link_library(filtered_derivative_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
 link_library(filtered_derivative_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
+
+# Filter Comparison Example
+add_executable(filter_comparison_example filter_comparison_example.f90)
+link_library(filter_comparison_example ${PROJECT_NAME} ${PROJECT_INCLUDE_DIR})
+link_library(filter_comparison_example ${fplot_LIBRARY} ${fplot_INCLUDE_DIR})
