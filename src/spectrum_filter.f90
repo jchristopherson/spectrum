@@ -12,6 +12,20 @@ module spectrum_filter
     public :: filter
     public :: moving_average_filter
     public :: sinc_filter
+    public :: LOW_PASS_FILTER
+    public :: HIGH_PASS_FILTER
+    public :: BAND_PASS_FILTER
+    public :: BAND_STOP_FILTER
+
+    integer(int32), parameter :: LOW_PASS_FILTER = 1
+        !! Denotes a low-pass filter.
+    integer(int32), parameter :: HIGH_PASS_FILTER = 2
+        !! Denotes a high-pass filter.
+    integer(int32), parameter :: BAND_PASS_FILTER = 3
+        !! Denotes a band-pass filter.
+    integer(int32), parameter :: BAND_STOP_FILTER = 4
+        !! Denotes a band-stop filter.
+
 
 contains
 ! ******************************************************************************
@@ -435,7 +449,7 @@ end function
 ! ******************************************************************************
 ! V1.1.3 ADDITIONS
 ! ------------------------------------------------------------------------------
-function sinc_filter(fc, fs, x, err) result(rst)
+function sinc_filter(fc, fs, x, fc2, ftype, err) result(rst)
     !! Applies a sinc-in-time filter (rectangular frequency response).
     real(real64), intent(in) :: fc
         !! The filter cutoff frequency, in Hz.
@@ -443,6 +457,20 @@ function sinc_filter(fc, fs, x, err) result(rst)
         !! The sampling frequency, in Hz.
     real(real64), intent(in), dimension(:) :: x
         !! The signal to filter.
+    real(real64), intent(in), optional :: fc2
+        !! The second cutoff frequency for band-pass and band-stop filters.
+    integer(int32), intent(in), optional :: ftype
+        !! The filter type.  This parameter must be one of the following values:
+        !!
+        !!  - LOW_PASS_FILTER: Denotes a low-pass filter.
+        !!
+        !!  - HIGH_PASS_FILTER: Denotes a high-pass filter.
+        !!
+        !!  - BAND_PASS_FILTER: Denotes a band-pass filter.
+        !!
+        !!  - BAND_STOP_FILTER: Denotes a band-stop filter.
+        !!
+        !! The default value is LOW_PASS_FILTER.
     class(errors), intent(inout), optional, target :: err
         !! An optional errors-based object that if provided can
         !! be used to retrieve information relating to any errors encountered 
@@ -460,7 +488,7 @@ function sinc_filter(fc, fs, x, err) result(rst)
         !! The filtered signal.
 
     ! Local Variables
-    integer(int32) :: start, n, nw, flag
+    integer(int32) :: start, finish, n, nw, flag, filterType
     real(real64) :: df
     real(real64), allocatable, dimension(:) :: wsave
     class(errors), pointer :: errmgr
@@ -471,6 +499,11 @@ function sinc_filter(fc, fs, x, err) result(rst)
         errmgr => err
     else
         errmgr => deferr
+    end if
+    if (present(ftype)) then
+        filterType = ftype
+    else
+        filterType = LOW_PASS_FILTER
     end if
     n = size(x)
     nw = 2 * n + 15
@@ -494,6 +527,33 @@ function sinc_filter(fc, fs, x, err) result(rst)
             SPCTRM_INVALID_INPUT_ERROR)
         return
     end if
+    if (filterType < LOW_PASS_FILTER .or. filterType > BAND_STOP_FILTER) then
+        call errmgr%report_error("sinc_filter", &
+            "The filter type must be one of the following values: " // &
+            "LOW_PASS_FILTER, HIGH_PASS_FILTER, BAND_PASS_FILTER, or " // &
+            "BAND_STOP_FILTER.", SPCTRM_INVALID_INPUT_ERROR)
+        return
+    end if
+    if (filterType == BAND_PASS_FILTER .or. filterType == BAND_STOP_FILTER) then
+        if (.not. present(fc2)) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be provided for band-pass " // &
+                "and band-stop filters.", SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+        if (fc2 <= 0.0d0) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be non-zero and positive-valued.", &
+                SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+        if (fc2 >= 0.5d0 * fs) then
+            call errmgr%report_error("sinc_filter", &
+                "The second cutoff frequency must be less than half the " // &
+                "sampling frequency.", SPCTRM_INVALID_INPUT_ERROR)
+            return
+        end if
+    end if
 
     ! Memory Allocations
     allocate(rst(n), stat = flag, source = x)
@@ -511,7 +571,27 @@ function sinc_filter(fc, fs, x, err) result(rst)
     ! Zero out anything above the cutoff frequency
     df = frequency_bin_width(fs, n)
     start = floor(fc / df) * 2
-    rst(start:n) = 0.0d0
+    if (present(fc2)) then
+        finish = floor(fc2 / df) * 2
+    end if
+
+    ! Apply the appropriate filter
+    select case (filterType)
+    case (LOW_PASS_FILTER)
+        ! Zero out anything above the cutoff frequency
+        rst(start:n) = 0.0d0
+    case (HIGH_PASS_FILTER)
+        ! Zero out anything below the cutoff frequency
+        rst(1:start) = 0.0d0
+    case (BAND_PASS_FILTER)
+        ! Zero out anything below the first cutoff frequency
+        rst(1:start) = 0.0d0
+        ! Zero out anything above the second cutoff frequency
+        rst(finish:n) = 0.0d0
+    case (BAND_STOP_FILTER)
+        ! Zero out anything between the two cutoff frequencies
+        rst(start:finish) = 0.0d0
+    end select
 
     ! Compute the inverse transform to retrieve the filtered signal
     call dfftb(n, rst, wsave)

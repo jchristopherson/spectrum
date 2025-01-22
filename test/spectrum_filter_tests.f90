@@ -3,7 +3,6 @@ module spectrum_filter_tests
     use spectrum
     use fortran_test_helper
     implicit none
-
 contains
 ! ------------------------------------------------------------------------------
     function test_sinc_filter() result(rst)

@@ -5,6 +5,21 @@ Spectrum is a library containing signal analysis routines with a focus towards s
 [![CMake](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml/badge.svg)](https://github.com/jchristopherson/spectrum/actions/workflows/cmake.yml)
 [![Actions Status](https://github.com/jchristopherson/spectrum/workflows/fpm/badge.svg)](https://github.com/jchristopherson/spectrum/actions)
 
+## Available Operations
+- Spectral Estimators (power spectral density, cross spectral density, etc.)
+- Short Time Fourier Transform (STFT)
+- Windowing
+- Convolution
+- Offset Removal (Mean Removal)
+- Filtering
+    - Low-Pass, High-Pass, Band-Pass, & Band-Stop
+    - Total Variation
+    - Gaussian
+    - Moving Average
+- Upsampling & Downsampling
+- Transfer Function Estimation
+- Differentiation & Integration
+
 ## Documentation
 The documentation can be found [here](https://jchristopherson.github.io/spectrum/).
 
@@ -31,7 +46,101 @@ The FPLOT library depends upon the following libraries.
 
 Spectrum contains a large selection of signal processing routines.  The following examples illustrate some of the spectral capabilities in addition to some of the filtering options available.
 
-## Example 1
+## Filtering & PSD Example
+This example illustrates some available filtering options on a randomly generated signal by comparing the power spectrums of the unfiltered vs. filtered signals.  This example utilizes the [fplot](https://github.com/jchristopherson/fplot) library for plotting.
+```fortran
+program example
+    use iso_fortran_env
+    use spectrum
+    use fplot_core
+    implicit none
+
+    ! Parameters
+    integer(int32), parameter :: winsize = 1024
+    integer(int32), parameter :: n = 10000
+    real(real64), parameter :: fs = 1.0d3
+    real(real64), parameter :: fc1 = 1.0d2
+    real(real64), parameter :: fc2 = 3.0d2
+
+    ! Local Variables
+    integer(int32) :: i
+    real(real64) :: df, x(n), xlp(n), xhp(n), xbp(n), xbs(n)
+    real(real64), allocatable, dimension(:) :: freq, p, plp, php, pbp, pbs
+    type(hamming_window) :: win
+
+    ! Plot Variables
+    type(multiplot) :: freqPlot
+    type(plot_2d) :: plt, pltlp, plthp, pltbp, pltbs
+    class(terminal), pointer :: term
+    type(plot_data_2d) :: pd, pdlp, pdhp, pdbp, pdbs
+
+    ! Build the signal and remove the mean
+    call random_number(x)
+    x = remove_mean(x)
+
+    ! Filter the signals
+    xlp = sinc_filter(fc1, fs, x, ftype = LOW_PASS_FILTER)
+    xhp = sinc_filter(fc1, fs, x, ftype = HIGH_PASS_FILTER)
+    xbp = sinc_filter(fc1, fs, x, ftype = BAND_PASS_FILTER, fc2 = fc2)
+    xbs = sinc_filter(fc1, fs, x, ftype = BAND_STOP_FILTER, fc2 = fc2)
+
+    ! Compute PSD's
+    win%size = winsize
+    p = psd(win, x, fs = fs)
+    plp = psd(win, xlp, fs = fs)
+    php = psd(win, xhp, fs = fs)
+    pbp = psd(win, xbp, fs = fs)
+    pbs = psd(win, xbs, fs = fs)
+
+    ! Build a corresponding array of frequency values
+    df = frequency_bin_width(fs, winsize)
+    allocate(freq(size(p)))
+    freq = (/ (df * i, i = 0, size(p) - 1) /)
+
+    ! Create the plot
+    call freqPlot%initialize(5, 1)
+    call plt%initialize()
+    call pltlp%initialize()
+    call plthp%initialize()
+    call pltbp%initialize()
+    call pltbs%initialize()
+    term => freqPlot%get_terminal()
+    call term%set_window_height(900)
+    
+    call plt%set_title("Original Signal")
+    call pltlp%set_title("Low Pass Filtered Signal")
+    call plthp%set_title("High Pass Filtered Signal")
+    call pltbp%set_title("Band Pass Filtered Signal")
+    call pltbs%set_title("Band Stop Filtered Signal")
+
+    call pd%define_data(freq, p)
+    call plt%push(pd)
+    call freqPlot%set(1, 1, plt)
+
+    call pdlp%define_data(freq, plp)
+    call pltlp%push(pdlp)
+    call freqPlot%set(2, 1, pltlp)
+
+    call pdhp%define_data(freq, php)
+    call plthp%push(pdhp)
+    call freqPlot%set(3, 1, plthp)
+
+    call pdbp%define_data(freq, pbp)
+    call pltbp%push(pdbp)
+    call freqPlot%set(4, 1, pltbp)
+
+    call pdbs%define_data(freq, pbs)
+    call pltbs%push(pdbs)
+    call freqPlot%set(5, 1, pltbs)
+
+    call freqPlot%draw()
+end program
+```
+This example produces the following plot.
+
+![](images/filter_comparison.png?raw=true)
+
+## Transfer Function Example
 This example illustrates the calculation of a single-input/single-output (SISO) transfer function from a signal stored in a CSV file.  This example utilizes the [fplot](https://github.com/jchristopherson/fplot) library for plotting and the [fortran-csv-module](https://github.com/jacobwilliams/fortran-csv-module) library for reading the CSV file.
 ```fortran
 program example
@@ -162,8 +271,8 @@ This example produces the following plots.
 ![](images/siso_tf_example_time_history.png?raw=true)
 ![](images/siso_tf_example_bode.png?raw=true)
 
-## Example 2
-This example illustrates the calculation of the power-spectral-density (PSD) of a signal.  This example also utilizes the [fplot](https://github.com/jchristopherson/fplot) library for plotting.
+## STFT Example
+This example illustrates the STFT capabilities.
 ```fortran
 program example
     use iso_fortran_env
@@ -172,128 +281,80 @@ program example
     implicit none
 
     ! Parameters
-    integer(int32), parameter :: npts = 20000
-    integer(int32), parameter :: winsize = 1024
-    real(real64), parameter :: sample_rate = 2.048d3
-    real(real64), parameter :: freq1 = 5.0d1
-    real(real64), parameter :: freq2 = 2.5d2
-    real(real64), parameter :: phase1 = 0.0d0
-    real(real64), parameter :: phase2 = 4.5d1
+    integer(int32), parameter :: window_size = 512
+    real(real64), parameter :: fs = 2048.0d0
+    real(real64), parameter :: f0 = 1.0d2
+    real(real64), parameter :: f1 = 1.0d3
+    real(real64), parameter :: duration = 50.0d0
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
-    real(real64), parameter :: amp1 = 1.5d0
-    real(real64), parameter :: amp2 = 7.5d-1
 
     ! Local Variables
-    integer(int32) :: i, nxfrm
-    real(real64) :: df, dt, t(npts), x(npts)
-    real(real64), allocatable, dimension(:) :: pwr, freq
+    integer(int32) :: i, npts
+    integer(int32), allocatable, dimension(:) :: offsets
+    real(real64) :: k, df
+    complex(real64), allocatable, dimension(:,:) :: rst
+    real(real64), allocatable, dimension(:) :: t, x, f, s
+    real(real64), allocatable, dimension(:,:) :: mag
+    real(real64), allocatable, dimension(:,:,:) :: xy
     type(hann_window) :: win
 
     ! Plot Variables
-    type(plot_2d) :: plt
-    type(plot_data_2d) :: pd
+    type(surface_plot) :: plt
+    type(surface_plot_data) :: pd
     class(plot_axis), pointer :: xAxis, yAxis
+    type(rainbow_colormap) :: map
 
-    ! Build the signal - assume units of V
-    dt = 1.0d0 / sample_rate
-    t = (/ (dt * i, i = 0, npts - 1) /)
-    x = amp1 * sin(2.0d0 * pi * freq1 * t - pi * phase1 / 1.8d2) + &
-        amp2 * sin(2.0d0 * pi * freq2 * t - pi * phase2 / 1.8d2)
+    ! Create the exponential chirp signal
+    npts = floor(duration * fs) + 1
+    t = linspace(0.0d0, duration, npts)
+    k = (f1 / f0)**(1.0 / duration)
+    x = sin(2.0d0 * pi * f0 * (k**t - 1.0d0) / log(k))
+
+    ! Determine sampling frequency parameters
+    df = frequency_bin_width(fs, window_size)
 
     ! Define the window
-    win%size = winsize
+    win%size = window_size
 
-    ! Compute the PSD
-    pwr = psd(win, x)
+    ! Compute the spectrogram of x
+    rst = stft(win, x, offsets)
 
-    ! Build a corresponding array of frequency values
-    df = frequency_bin_width(sample_rate, winsize)
-    allocate(freq(size(pwr)))
-    freq = (/ (df * i, i = 0, size(pwr) - 1) /)
+    ! Compute the magnitude, along with each frequency and time point
+    mag = abs(rst)
 
-    ! Plot the spectrum
+    allocate(f(size(mag, 1)))
+    f = (/ (df * i, i = 0, size(f) - 1) /)
+
+    allocate(s(size(mag, 2)))
+    do i = 1, size(s)
+        if (i == 1) then
+            s(i) = offsets(i) / fs
+        else
+            s(i) = i * (offsets(i) - offsets(i-1)) / fs
+        end if
+    end do
+    xy = meshgrid(s, f)
+
+    ! Plot the results
     call plt%initialize()
+    call plt%set_colormap(map)
+    call plt%set_use_map_view(.true.)
     xAxis => plt%get_x_axis()
     yAxis => plt%get_y_axis()
 
-    call xAxis%set_title("f [Hz]")
-    call yAxis%set_title("P [V^{2}]")
-
-    call xAxis%set_is_log_scaled(.true.)
-    call xAxis%set_use_default_tic_label_format(.false.)
-    call xAxis%set_tic_label_format("%0.0e")
-
-    call pd%define_data(freq, pwr)
-    call pd%set_line_width(2.0)
+    call xAxis%set_title("Time [s]")
+    call yAxis%set_title("Frequency [Hz]")
+    call yAxis%set_autoscale(.false.)
+    call yAxis%set_limits(0.0d0, f(size(mag, 1)))
+    
+    call pd%define_data(xy(:,:,1), xy(:,:,2), mag)
     call plt%push(pd)
     call plt%draw()
 end program
 ```
-This example produces the following plots.
+This example produces the following plot.
 
-![](images/psd_example_1.png?raw=true)
-
-## Example 3
-This example highlights some of the filtering capabilities; specifically, Gaussian filtering.
-```fortran
-program example
-    use iso_fortran_env
-    use spectrum
-    use fplot_core
-    implicit none
-
-    ! Parameters
-    integer(int32), parameter :: npts = 10000
-    real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
-    real(real64), parameter :: f1 = 5.0d0
-    real(real64), parameter :: f2 = 1.5d1
-    real(real64), parameter :: alpha = 3.0d0
-    
-    ! Local Variables
-    integer(int32) :: i, k
-    real(real64) :: t(npts), x(npts), y(npts)
-
-    ! Plot Variables
-    type(plot_2d) :: plt
-    type(plot_data_2d) :: d1, d2
-    class(plot_axis), pointer :: xAxis, yAxis
-    class(legend), pointer :: lgnd
-
-    ! Build the signal
-    t = linspace(0.0d0, 1.0d0, npts)
-    call random_number(x)
-    x = 0.25d0 * (x - 0.5d0) + sin(2.0d0 * pi * f1 * t) + &
-        0.5 * sin(2.0d0 * pi * f2 * t)
-
-    ! Apply the filter
-    ! - alpha = 3
-    ! - kernel size = 21
-    y = gaussian_filter(x, 3.0d0, 21)
-
-    ! Plot the results
-    call plt%initialize()
-    xAxis => plt%get_x_axis()
-    yAxis => plt%get_y_axis()
-    lgnd => plt%get_legend()
-
-    call xAxis%set_title("t")
-    call yAxis%set_title("x(t)")
-    call lgnd%set_is_visible(.true.)
-
-    call d1%define_data(t, x)
-    call d1%set_name("Original")
-    call plt%push(d1)
-
-    call d2%define_data(t, y)
-    call d2%set_name("Smoothed")
-    call plt%push(d2)
-
-    call plt%draw()
-end program
-```
-This example produces the following plots.
-
-![](images/gaussian_filter_example_2.png?raw=true)
+![](images/spectrogram_example_1.png?raw=true)
 
 ## References
 1. Welch, P.D. (1967). The Use of Fast Fourier Transform for the Estimation of Power Spectra: A Method Based on Time Averaging Over Short, Modified Periodograms. IEEE Transactions on Audio and Electroacoustics, AU-15 (2): 70-73.
