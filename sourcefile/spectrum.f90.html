@@ -96,7 +96,7 @@
           <li id="statements"><i class="fa fa-list-ol"></i>
             <a data-toggle="tooltip"
                data-placement="bottom" data-html="true"
-               title=" 3.1% of total for source files.">57 statements</a>
+               title=" 3.2% of total for source files.">61 statements</a>
           </li>
 
             <li id="source-file">
@@ -270,27 +270,31 @@
 <a id="ln-55" name="ln-55" href="#ln-55"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">filter</span><span class="w"></span>
 <a id="ln-56" name="ln-56" href="#ln-56"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">moving_average_filter</span><span class="w"></span>
 <a id="ln-57" name="ln-57" href="#ln-57"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">sinc_filter</span><span class="w"></span>
-<a id="ln-58" name="ln-58" href="#ln-58"></a>
-<a id="ln-59" name="ln-59" href="#ln-59"></a><span class="w">    </span><span class="c">! SPECTRUM_TF.F90</span>
-<a id="ln-60" name="ln-60" href="#ln-60"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">siso_transfer_function</span><span class="w"></span>
-<a id="ln-61" name="ln-61" href="#ln-61"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">SPCTRM_H1_ESTIMATOR</span><span class="w"></span>
-<a id="ln-62" name="ln-62" href="#ln-62"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">SPCTRM_H2_ESTIMATOR</span><span class="w"></span>
-<a id="ln-63" name="ln-63" href="#ln-63"></a>
-<a id="ln-64" name="ln-64" href="#ln-64"></a><span class="w">    </span><span class="c">! SPECTRUM_DIFF.F90</span>
-<a id="ln-65" name="ln-65" href="#ln-65"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">finite_difference</span><span class="w"></span>
-<a id="ln-66" name="ln-66" href="#ln-66"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">tvr_derivative</span><span class="w"></span>
-<a id="ln-67" name="ln-67" href="#ln-67"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">stencil_diff_5</span><span class="w"></span>
-<a id="ln-68" name="ln-68" href="#ln-68"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">stencil_second_diff_5</span><span class="w"></span>
-<a id="ln-69" name="ln-69" href="#ln-69"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">filter_diff</span><span class="w"></span>
-<a id="ln-70" name="ln-70" href="#ln-70"></a>
-<a id="ln-71" name="ln-71" href="#ln-71"></a><span class="w">    </span><span class="c">! SPECTRUM_INTEGRATE.F90</span>
-<a id="ln-72" name="ln-72" href="#ln-72"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">integrate</span><span class="w"></span>
-<a id="ln-73" name="ln-73" href="#ln-73"></a>
-<a id="ln-74" name="ln-74" href="#ln-74"></a><span class="w">    </span><span class="c">! SPECTRUM_RESAMPLE.F90</span>
-<a id="ln-75" name="ln-75" href="#ln-75"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">upsample</span><span class="w"></span>
-<a id="ln-76" name="ln-76" href="#ln-76"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">downsample</span><span class="w"></span>
-<a id="ln-77" name="ln-77" href="#ln-77"></a><span class="w"> </span>
-<a id="ln-78" name="ln-78" href="#ln-78"></a><span class="k">end module</span><span class="w"></span>
+<a id="ln-58" name="ln-58" href="#ln-58"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">LOW_PASS_FILTER</span><span class="w"></span>
+<a id="ln-59" name="ln-59" href="#ln-59"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">HIGH_PASS_FILTER</span><span class="w"></span>
+<a id="ln-60" name="ln-60" href="#ln-60"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">BAND_PASS_FILTER</span><span class="w"></span>
+<a id="ln-61" name="ln-61" href="#ln-61"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">BAND_STOP_FILTER</span><span class="w"></span>
+<a id="ln-62" name="ln-62" href="#ln-62"></a>
+<a id="ln-63" name="ln-63" href="#ln-63"></a><span class="w">    </span><span class="c">! SPECTRUM_TF.F90</span>
+<a id="ln-64" name="ln-64" href="#ln-64"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">siso_transfer_function</span><span class="w"></span>
+<a id="ln-65" name="ln-65" href="#ln-65"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">SPCTRM_H1_ESTIMATOR</span><span class="w"></span>
+<a id="ln-66" name="ln-66" href="#ln-66"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">SPCTRM_H2_ESTIMATOR</span><span class="w"></span>
+<a id="ln-67" name="ln-67" href="#ln-67"></a>
+<a id="ln-68" name="ln-68" href="#ln-68"></a><span class="w">    </span><span class="c">! SPECTRUM_DIFF.F90</span>
+<a id="ln-69" name="ln-69" href="#ln-69"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">finite_difference</span><span class="w"></span>
+<a id="ln-70" name="ln-70" href="#ln-70"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">tvr_derivative</span><span class="w"></span>
+<a id="ln-71" name="ln-71" href="#ln-71"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">stencil_diff_5</span><span class="w"></span>
+<a id="ln-72" name="ln-72" href="#ln-72"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">stencil_second_diff_5</span><span class="w"></span>
+<a id="ln-73" name="ln-73" href="#ln-73"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">filter_diff</span><span class="w"></span>
+<a id="ln-74" name="ln-74" href="#ln-74"></a>
+<a id="ln-75" name="ln-75" href="#ln-75"></a><span class="w">    </span><span class="c">! SPECTRUM_INTEGRATE.F90</span>
+<a id="ln-76" name="ln-76" href="#ln-76"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">integrate</span><span class="w"></span>
+<a id="ln-77" name="ln-77" href="#ln-77"></a>
+<a id="ln-78" name="ln-78" href="#ln-78"></a><span class="w">    </span><span class="c">! SPECTRUM_RESAMPLE.F90</span>
+<a id="ln-79" name="ln-79" href="#ln-79"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">upsample</span><span class="w"></span>
+<a id="ln-80" name="ln-80" href="#ln-80"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">downsample</span><span class="w"></span>
+<a id="ln-81" name="ln-81" href="#ln-81"></a><span class="w"> </span>
+<a id="ln-82" name="ln-82" href="#ln-82"></a><span class="k">end module</span><span class="w"></span>
 </pre></div>
 
     </section>
@@ -302,14 +306,14 @@
     <footer>
       <div class="container">
         <div class="row">
-          <div class="col-xs-6 col-md-6"><p>SPECTRUM was developed by Jason Christopherson<br>&copy; 2024 
+          <div class="col-xs-6 col-md-6"><p>SPECTRUM was developed by Jason Christopherson<br>&copy; 2025 
 </p>
           </div>
           <div class="col-xs-6 col-md-6">
             <p class="text-right">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2024-11-22 06:35              </p>
+ on 2025-01-07 15:38              </p>
           </div>
         </div>
         <br>
