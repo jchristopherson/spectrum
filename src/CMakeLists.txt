@@ -21,6 +21,7 @@ set(SPECTRUM_SOURCES
 include(FetchContent)
 find_package(ferror QUIET)
 find_package(linalg QUIET)
+find_package(fftpack QUIET)
 
 if (NOT ferror_FOUND)
     message(STATUS "FERROR could not be found.  A reference version will be employed.")
@@ -50,25 +51,29 @@ else()
     set(BUILD_LINALG FALSE)
 endif()
 
-FetchContent_Declare(
-    fftpack
-    GIT_REPOSITORY "https://github.com/fortran-lang/fftpack"
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(fftpack)
+if (NOT fftpack_FOUND)
+    message(STATUS "FFTPACK could not be found.  A reference version will be employed.")
+    FetchContent_Declare(
+        fftpack
+        GIT_REPOSITORY "https://github.com/fortran-lang/fftpack"
+        GIT_TAG main
+    )
+    FetchContent_MakeAvailable(fftpack)
+    set(FFTPACK_LIBRARIES fftpack)
+    set(BUILD_FFTPACK TRUE)
+else()
+    set(FFTPACK_LIBRARIES fftpack)
+    set(BUILD_FFTPACK FALSE)
+endif()
 
 # Build
 add_library(${PROJECT_NAME} ${SPECTRUM_SOURCES})
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC
+    PRIVATE
     ${FERROR_LIBRARIES}
     ${LINALG_LIBRARIES}
-)
-target_link_libraries(
-    ${PROJECT_NAME}
-    PRIVATE
-    $<BUILD_INTERFACE:fftpack>
+    ${FFTPACK_LIBRARIES}
 )
 
 set_target_properties(
@@ -109,4 +114,8 @@ endif()
 
 if (${BUILD_LINALG} AND ${BUILD_SHARED_LIBS})
     install(IMPORTED_RUNTIME_ARTIFACTS ${LINALG_LIBRARIES})
+endif()
+
+if (${BUILD_FFTPACK} AND ${BUILD_SHARED_LIBS})
+    install(IMPORTED_RUNTIME_ARTIFACTS ${FFTPACK_LIBRARIES})
 endif()
