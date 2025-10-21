@@ -2,6 +2,7 @@
 set(dir ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Define the source files
+add_subdirectory(fftpack)
 set(SPECTRUM_SOURCES
     ${dir}/spectrum.f90
     ${dir}/spectrum_windows.f90
@@ -15,13 +16,23 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_errors.f90
     ${dir}/spectrum_integrate.f90
     ${dir}/spectrum_resample.f90
+    ${dir}/fftpack/fftpack.f90
+    ${dir}/fftpack/dfftb.f90
+    ${dir}/fftpack/dfftf.f90
+    ${dir}/fftpack/dffti.f90
+    ${dir}/fftpack/rfftb1.f90
+    ${dir}/fftpack/rfftf1.f90
+    ${dir}/fftpack/rffti1.f90
+    ${dir}/fftpack/zfftb.f90
+    ${dir}/fftpack/zffti.f90
+    ${dir}/fftpack/zfftf.f90
+    ${FFTPACK_SOURCES}
 )
 
 # Dependencies
 include(FetchContent)
 find_package(ferror QUIET)
 find_package(linalg QUIET)
-find_package(fftpack QUIET)
 
 if (NOT ferror_FOUND)
     message(STATUS "FERROR could not be found.  A reference version will be employed.")
@@ -51,21 +62,6 @@ else()
     set(BUILD_LINALG FALSE)
 endif()
 
-if (NOT fftpack_FOUND)
-    message(STATUS "FFTPACK could not be found.  A reference version will be employed.")
-    FetchContent_Declare(
-        fftpack
-        GIT_REPOSITORY "https://github.com/fortran-lang/fftpack"
-        GIT_TAG main
-    )
-    FetchContent_MakeAvailable(fftpack)
-    set(FFTPACK_LIBRARIES fftpack)
-    set(BUILD_FFTPACK TRUE)
-else()
-    set(FFTPACK_LIBRARIES fftpack)
-    set(BUILD_FFTPACK FALSE)
-endif()
-
 # Build
 add_library(${PROJECT_NAME} ${SPECTRUM_SOURCES})
 target_link_libraries(
@@ -73,7 +69,6 @@ target_link_libraries(
     PRIVATE
     ${FERROR_LIBRARIES}
     ${LINALG_LIBRARIES}
-    ${FFTPACK_LIBRARIES}
 )
 
 set_target_properties(
@@ -114,8 +109,4 @@ endif()
 
 if (${BUILD_LINALG} AND ${BUILD_SHARED_LIBS})
     install(IMPORTED_RUNTIME_ARTIFACTS ${LINALG_LIBRARIES})
-endif()
-
-if (${BUILD_FFTPACK} AND ${BUILD_SHARED_LIBS})
-    install(IMPORTED_RUNTIME_ARTIFACTS ${FFTPACK_LIBRARIES})
 endif()
