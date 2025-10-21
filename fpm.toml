@@ -20,6 +20,11 @@ fortran_test_helper = { git = "https://github.com/jchristopherson/fortran_test_h
 [install]
 library = true
 
+[fortran]
+implicit-typing=true
+implicit-external=true
+source-form="default"
+
 [build]
 auto-executables = false
 auto-examples = false
