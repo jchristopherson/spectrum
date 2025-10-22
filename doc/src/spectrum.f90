@@ -9,6 +9,7 @@ module spectrum
     use spectrum_diff
     use spectrum_integrate
     use spectrum_resample
+    use fftpack
     implicit none
     private
 
@@ -42,6 +43,7 @@ module spectrum
     public :: cross_periodogram
 
     ! SPECTRUM_FFT.F90
+    public :: rfft
     public :: stft
 
     ! SPECTRUM_CONVOLVE.F90
@@ -79,4 +81,7 @@ module spectrum
     public :: upsample
     public :: downsample
  
+    ! FFTPACK.F90
+    public :: fft
+    public :: ifft
 end module

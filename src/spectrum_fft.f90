@@ -1,6 +1,6 @@
 module spectrum_fft
     use iso_fortran_env
-    use fftpack
+    use fftpack, only : dffti, dfftf, dfftb
     use spectrum_windows
     use spectrum_routines
     use ferror
@@ -8,10 +8,107 @@ module spectrum_fft
     implicit none
     private
     public :: stft
+    public :: rfft
+    public :: irfft
+    public :: stft_result
+
+    type stft_result
+        !! A container for STFT output.
+        complex(real64), allocatable, dimension(:,:) :: stft
+            !! An M-by-N matrix containing the M-element complex-valued 
+            !! transforms for each of the N time points studied.  M is the 
+            !! size of the positive half of the transform, and N is the total 
+            !! number of transformed segments.
+        integer(int32), allocatable, dimension(:) :: offsets
+            !! The starting indices of each window segment.
+    end type
 
 contains
 ! ------------------------------------------------------------------------------
-function stft(win, x, offsets, err) result(rst)
+pure function rfft(x, n) result(rst)
+    !! Computes the Fourier transform of a real-valued data set.  Only the 
+    !! positive half of the transform is returned.
+    real(real64), intent(in), dimension(:) :: x
+        !! The real-valued array to transform.
+    integer(int32), intent(in), optional :: n
+        !! An optional input that can be used to specify the length of the 
+        !! transform.  If less than the length of x, x is truncated; however, 
+        !! if greater than the length of x, x is padded with zeros.
+    complex(real64), allocatable, dimension(:) :: rst
+        !! The complex-valued result of the transform.
+
+    ! Local Variables
+    integer(int32) :: i, m, nx, nxfrm, lensav
+    real(real64), allocatable, dimension(:) :: wsave, rrst
+
+    ! Initialization
+    nx = size(x)
+    if (present(n)) then
+        nxfrm = n
+        if (nxfrm <= nx) then
+            rrst = x(1:nxfrm)
+        else
+            rrst = [x, (0.0d0, i = 1, nxfrm - nx)]
+        end if
+    else
+        nxfrm = nx
+        rrst = x
+    end if
+    lensav = 2 * nxfrm + 15
+    allocate(wsave(lensav))
+    call dffti(nxfrm, wsave)
+
+    ! Process
+    call dfftf(nxfrm, rrst, wsave)
+    m = compute_transform_length(nxfrm)
+    allocate(rst(m))
+    call unpack_real_transform(rrst, rst)
+end function
+
+! ------------------------------------------------------------------------------
+pure function irfft(x, n) result(rst)
+    !! Computes the inverse Fourier transform for a real-valued data set.
+    complex(real64), intent(in), dimension(:) :: x
+        !! The positive half of the transform.
+    integer(int32), intent(in), optional :: n
+        !! An optional input that can be used to specify the length of the 
+        !! transform.  If less than the length of x, x is truncated; however, 
+        !! if greater than the length of x, x is padded with zeros.
+    real(real64), allocatable, dimension(:) :: rst
+        !! The real-valued result of the inverse transform.
+
+    ! Local Variables
+    integer(int32) :: i, m, nx, nxfrm, lensav, mn
+    real(real64), allocatable, dimension(:) :: wsave
+
+    ! Initialization
+    nx = size(x)
+    if (mod(nx, 2) == 0) then
+        m = 2 * nx - 1
+    else
+        m = 2 * (nx - 1)
+    end if
+    allocate(rst(m), source = 0.0d0)
+    if (present(n)) then
+        nxfrm = n
+    else
+        nxfrm = nx
+    end if
+    mn = min((m + 1) / 2, nx)
+    rst(1) = real(x(1), real64)
+    do i = 2, mn
+        rst(2*i-2) = real(x(i), real64)
+        rst(2*i-1) = aimag(x(i))
+    end do
+    lensav = 2 * nxfrm + 15
+    allocate(wsave(lensav))
+
+    ! Process
+    call dfftb(nxfrm, rst, wsave)
+end function
+
+! ------------------------------------------------------------------------------
+pure function stft(win, x) result(rst)
     !! Computes the short time Fourier transform of a signal.
     !!
     !! See Also
@@ -22,40 +119,15 @@ function stft(win, x, offsets, err) result(rst)
     real(real64), intent(in) :: x(:)
         !! The signal to analyze.  The signal must be longer than the size of 
         !! the window.
-    integer(int32), intent(out), optional, allocatable :: offsets(:)
-        !! An optional allocatable array that, if supplied, will be filled with 
-        !! the starting indices of each window segment.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if the signal in x is too short
-        !!      relative to the window size in win.
-    complex(real64), allocatable :: rst(:,:)
-        !! An M-by-N matrix containing the M-element complex-valued 
-        !! transforms for each of the N time points studied.  M is the size of 
-        !! the positive half of the transform, and N is the total number of 
-        !! transformed segments.
+    type(stft_result) :: rst
+        !! A container filled with the transform results.
 
     ! Local Variables
-    integer(int32) :: i, j, k, m, nx, nxfrm, nk, lwork, flag, i1, nend
+    integer(int32) :: i, j, k, m, nx, nxfrm, nk, lwork, i1, nend
     real(real64) :: del, sumw, w, fac, scale
     real(real64), allocatable, dimension(:) :: work, buffer
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
-    character(len = :), allocatable :: errmsg
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     nx = size(x)
     m = win%size          ! # of rows in the output matrix (transform length)
     nxfrm = compute_transform_length(m)
@@ -75,18 +147,14 @@ function stft(win, x, offsets, err) result(rst)
     end if
 
     ! Input Checking
-    if (m > nx) go to 20
+    if (m > nx) return
 
     ! Memory Allocation
-    allocate(rst(nxfrm, nk), stat = flag)
-    if (flag == 0) allocate(work(lwork), stat = flag)
-    if (flag == 0) allocate(buffer(m), stat = flag)
-    if (present(offsets)) then
-        if (flag == 0) allocate(offsets(nk), stat = flag, source = 0)
-    end if
-    if (flag /= 0) go to 10
+    allocate(work(lwork), buffer(m))
+    allocate(rst%stft(nxfrm, nk))
+    allocate(rst%offsets(nk), source = 0)
 
-    ! Initialize the trig terms for the transforms.  As all transforms are the 
+    ! Initialize the the transform.  As all transforms are the 
     ! same length, this array can be shared.
     call dffti(m, work)
 
@@ -94,7 +162,8 @@ function stft(win, x, offsets, err) result(rst)
     do i = 1, nk
         ! Compute the offset
         i1 = int((i - 1) * del + 0.5d0, int32)
-        if (present(offsets)) offsets(i) = i1 + 1
+        ! if (present(offsets)) offsets(i) = i1 + 1
+        rst%offsets(i) = i1 + 1
 
         ! Apply the window
         sumw = 0.0d0
@@ -111,37 +180,14 @@ function stft(win, x, offsets, err) result(rst)
         call dfftf(m, buffer, work)
 
         ! Scale the transform
-        rst(1,i) = fac * scale * cmplx(buffer(1), 0.0d0, real64)
+        rst%stft(1,i) = fac * scale * cmplx(buffer(1), 0.0d0, real64)
         do k = 2, nend
-            rst(k,i) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
+            rst%stft(k,i) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
         end do
         if (nend /= nxfrm) then
-            rst(nxfrm,i) = fac * scale * cmplx(buffer(m), 0.0d0, real64)
+            rst%stft(nxfrm,i) = fac * scale * cmplx(buffer(m), 0.0d0, real64)
         end if
     end do
-
-    ! End
-    return
-
-    ! Memory Error Handling
-10  continue
-    allocate(character(len = 256) :: errmsg)
-    write(errmsg, 100) "Memory allocation error flag ", flag, "."
-    call errmgr%report_error("stft", trim(errmsg), &
-        SPCTRM_MEMORY_ERROR)
-    return
-
-    ! Window size exceeds signal length
-20  continue
-    allocate(character(len = 256) :: errmsg)
-    write(errmsg, 101) "Window size (", m, ") exceeds the signal length (", &
-        nx, ")."
-    call errmgr%report_error("stft", trim(errmsg), SPCTRM_INVALID_INPUT_ERROR)
-    return
-
-    ! Formatting
-100 format(A, I0, A)
-101 format(A, I0, A, I0, A)
 end function
 
 ! ------------------------------------------------------------------------------
