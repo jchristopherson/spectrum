@@ -3,8 +3,6 @@ module spectrum_fft
     use fftpack, only : dffti, dfftf, dfftb
     use spectrum_windows
     use spectrum_routines
-    use ferror
-    use spectrum_errors
     implicit none
     private
     public :: stft
@@ -62,7 +60,7 @@ pure function rfft(x, n) result(rst)
     call dfftf(nxfrm, rrst, wsave)
     m = compute_transform_length(nxfrm)
     allocate(rst(m))
-    call unpack_real_transform(rrst, rst)
+    rst = unpack_real_transform(rrst)
 end function
 
 ! ------------------------------------------------------------------------------

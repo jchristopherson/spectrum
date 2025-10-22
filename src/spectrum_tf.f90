@@ -2,8 +2,6 @@ module spectrum_tf
     use iso_fortran_env
     use spectrum_periodogram
     use spectrum_windows
-    use spectrum_errors
-    use ferror
     implicit none
     private
     public :: siso_transfer_function
@@ -29,7 +27,7 @@ contains
 ! - https://github.com/giuliovv/tfest/blob/main/tfest/tfest.py
 ! - https://dsp.stackexchange.com/questions/71811/understanding-the-h1-and-h2-estimators
 ! - https://github.com/epezent/etfe/blob/main/include/ETFE.hpp
-function siso_transfer_function(win, x, y, etype, nfft, err) result(rst)
+function siso_transfer_function(win, x, y, etype, nfft) result(rst)
     !! Estimates the transfer function for a single-input/single-output
     !! (SISO) system.
     class(window), intent(in) :: win
@@ -54,17 +52,6 @@ function siso_transfer_function(win, x, y, etype, nfft, err) result(rst)
         !! individual DFT operation by padding any remaining space with zeros.
         !! If not supplied, the window size is used to determine the size of
         !! the DFT.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !!  - SPCTRM_INVALID_INPUT_ERROR: Occurs if win is not sized 
-        !!      appropriately.
     complex(real64), allocatable :: rst(:)
         !! Returns the complex-valued transfer function estimate.
 
@@ -72,15 +59,8 @@ function siso_transfer_function(win, x, y, etype, nfft, err) result(rst)
     integer(int32) :: est
     complex(real64), allocatable, dimension(:) :: pcross
     real(real64), allocatable, dimension(:) :: pwr
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     if (present(etype)) then
         est = etype
     else
@@ -93,16 +73,12 @@ function siso_transfer_function(win, x, y, etype, nfft, err) result(rst)
     ! Process
     select case (est)
     case (SPCTRM_H1_ESTIMATOR)
-        pcross = csd(win, y, x, nfft = nfft, err = errmgr)
-        if (errmgr%has_error_occurred()) return
-        pwr = psd(win, x, nfft = nfft, err = errmgr)
-        if (errmgr%has_error_occurred()) return
+        pcross = csd(win, y, x, nfft = nfft)
+        pwr = psd(win, x, nfft = nfft)
         rst = pcross / pwr
     case (SPCTRM_H2_ESTIMATOR)
-        pcross = csd(win, x, y, nfft = nfft, err = errmgr)
-        if (errmgr%has_error_occurred()) return
-        pwr = psd(win, y, err = errmgr)
-        if (errmgr%has_error_occurred()) return
+        pcross = csd(win, x, y, nfft = nfft)
+        pwr = psd(win, y)
         rst = pwr / pcross
     end select
 end function
