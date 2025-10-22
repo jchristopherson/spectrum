@@ -2,7 +2,6 @@ program example
     use iso_fortran_env
     use ieee_arithmetic
     use spectrum
-    use fftpack
     use fplot_core
     implicit none
 

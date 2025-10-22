@@ -8,14 +8,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fplot)
 set(fplot_LIBRARY fplot)
 
-FetchContent_Declare(
-    fftpack
-    GIT_REPOSITORY "https://github.com/fortran-lang/fftpack"
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(fftpack)
-set(fftpack_LIBRARY fftpack)
-
 # Spectrogram Example
 add_executable(spectrogram_example spectrogram_example.f90)
 target_link_libraries(spectrogram_example spectrum ${fplot_LIBRARY})
@@ -29,7 +21,7 @@ target_link_libraries(gaussian_filter_example_2 spectrum ${fplot_LIBRARY})
 
 # Overlap Example
 add_executable(overlap_example overlap_example.f90)
-target_link_libraries(overlap_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(overlap_example spectrum ${fplot_LIBRARY})
 
 # PSD Example
 add_executable(psd_example psd_example.f90)
@@ -41,31 +33,31 @@ target_link_libraries(csd_example spectrum ${fplot_LIBRARY})
 
 # Window Example
 add_executable(window_example window_example.f90)
-target_link_libraries(window_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(window_example spectrum ${fplot_LIBRARY})
 
 # Hann Window Example
 add_executable(hann_example hann_example.f90)
-target_link_libraries(hann_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(hann_example spectrum ${fplot_LIBRARY})
 
 # Hamming Window Example
 add_executable(hamming_example hamming_example.f90)
-target_link_libraries(hamming_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(hamming_example spectrum ${fplot_LIBRARY})
 
 # Welch Window Example
 add_executable(welch_example welch_example.f90)
-target_link_libraries(welch_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(welch_example spectrum ${fplot_LIBRARY})
 
 # Blackman-Harris Window Example
 add_executable(blackman_example blackman_example.f90)
-target_link_libraries(blackman_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(blackman_example spectrum ${fplot_LIBRARY})
 
 # Flat-Top Window Example
 add_executable(flat_top_example flat_top_example.f90)
-target_link_libraries(flat_top_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(flat_top_example spectrum ${fplot_LIBRARY})
 
 # Rectangular Window Example
 add_executable(rectangular_example rectangular_example.f90)
-target_link_libraries(rectangular_example spectrum ${fplot_LIBRARY} ${fftpack_LIBRARY})
+target_link_libraries(rectangular_example spectrum ${fplot_LIBRARY})
 
 # Filter Example
 add_executable(filter_example filter_example.f90)
