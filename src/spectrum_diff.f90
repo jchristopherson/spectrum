@@ -6,8 +6,6 @@ module spectrum_diff
     use iso_fortran_env
     use blas
     use linalg
-    use ferror
-    use spectrum_errors
     implicit none
     private
     public :: finite_difference
@@ -357,8 +355,6 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter) result(rst)
     ! Local Variables
     integer(int32) :: mi, n, ni
     real(real64) :: gtol
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
     if (present(maxiter)) then
