@@ -1,14 +1,12 @@
 module spectrum_integrate
     use iso_fortran_env
-    use ferror
-    use spectrum_errors
     implicit none
     private
     public :: integrate
 
 contains
 ! ------------------------------------------------------------------------------
-function integrate(dt, x, iv, err) result(rst)
+pure function integrate(dt, x, iv) result(rst)
     !! Integrates a data set.
     real(real64), intent(in) :: dt
         !! The sample interval.
@@ -16,41 +14,21 @@ function integrate(dt, x, iv, err) result(rst)
         !! The data set to integrate.
     real(real64), intent(in), optional :: iv
         !! The initial value.  The default value is zero.
-    class(errors), intent(in), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
         !! The integrated data set.
 
     ! Local Variables
     integer(int32) :: i, n, flag
     real(real64) :: init_val
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     if (present(iv)) then
         init_val = iv
     else
         init_val = 0.0d0
     end if
     n = size(x)
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("integrate", "Memory allocation error.", &
-            SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
 
     ! Process
     !

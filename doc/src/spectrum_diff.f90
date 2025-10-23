@@ -6,8 +6,6 @@ module spectrum_diff
     use iso_fortran_env
     use blas
     use linalg
-    use ferror
-    use spectrum_errors
     implicit none
     private
     public :: finite_difference
@@ -108,7 +106,7 @@ pure subroutine finite_difference_driver_2(t, x, dxdt)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-function finite_difference_1(dt, x, err) result(rst)
+pure function finite_difference_1(dt, x) result(rst)
     !! Estimates the derivative of a data set by means of a naive 
     !! implementation of a finite difference scheme based upon central 
     !! differences.
@@ -117,42 +115,22 @@ function finite_difference_1(dt, x, err) result(rst)
     real(real64), intent(in), dimension(:) :: x
         !! An N-element array containing the data whose derivative is to be 
         !! estimated.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the derivative estimate.
 
     ! Local Variables
-    integer(int32) :: n, flag
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
+    integer(int32) :: n
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(x)
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("finite_difference_1", &
-            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
     
     ! Process
     call finite_difference_driver(dt, x, rst)
 end function
 
 ! ------------------------------------------------------------------------------
-function finite_difference_2(t, x, err) result(rst)
+pure function finite_difference_2(t, x) result(rst)
     !! Computes an estimate to the derivative of an evenly-sampled data
     !! set using total variation regularization.
     real(real64), intent(in), dimension(:) :: t
@@ -160,47 +138,20 @@ function finite_difference_2(t, x, err) result(rst)
     real(real64), intent(in), dimension(:) :: x
         !! An N-element array containing the data whose derivative is to be 
         !! estimated.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !!  - SPCTRM_ARRAY_SIZE_MISMATCH_ERROR: Occurs if t and x are not the
-        !!      same size.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the derivative estimate.
 
     ! Local Variables
-    integer(int32) :: n, flag
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
+    integer(int32) :: n
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(t)
 
     ! Input Checking
-    if (size(x) /= n) then
-        call errmgr%report_error("finite_difference_2", &
-            "The input arrays must be the same size.", SPCTRM_ARRAY_SIZE_ERROR)
-        return
-    end if
+    if (size(x) /= n) return
 
     ! Memory Allocation
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("finite_difference_2", &
-            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
 
     ! Process
     call finite_difference_driver(t, x, rst)
@@ -217,7 +168,7 @@ end function
 !          | -1     1         |
 ! D = 1/dx |  0     -1      1 |
 !          |  0     0      -1 |
-subroutine make_d_full(dx, d)
+pure subroutine make_d_full(dx, d)
     ! Arguments
     real(real64), intent(in) :: dx
     real(real64), intent(out), dimension(:,:) :: d
@@ -238,7 +189,7 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 ! Constructs the N-by-N+1 A matrix.
-subroutine make_a_full(dx, a)
+pure subroutine make_a_full(dx, a)
     ! Arguments
     real(real64), intent(in) :: dx
     real(real64), intent(out), dimension(:,:) :: a
@@ -284,7 +235,7 @@ subroutine make_e(d, u, e)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
+subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
     real(real64), intent(in) :: alpha ! variational parameter
     real(real64), intent(in) :: dt  ! time step
     real(real64), intent(in), dimension(:) :: x ! data array to differentiate
@@ -292,7 +243,6 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
     real(real64), intent(out), dimension(:) :: dxdt ! derivative dx/dt
     real(real64), intent(in) :: tol ! tolerance on change in gradient
     integer(int32), intent(out) :: niter ! # of iterations taken
-    class(errors), intent(inout) :: err
 
     ! Local Variables
     integer(int32) :: i, n, n1, flag
@@ -320,9 +270,8 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
         lu(n1), &
         g(n1), &
         h(n1, n1), &
-        ipiv(n1), &
-        stat = flag)
-    if (flag /= 0) go to 10
+        ipiv(n1) &
+    )
 
     ! Construct matrices
     call make_d_full(dt, d)
@@ -353,7 +302,7 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
 
         ! Solve H * s = g, for s - stored in g
         call dgesv(n1, 1, h, n1, ipiv, g, n1, flag)
-        if (flag /= 0) go to 20
+        if (flag /= 0) return
 
         ! Check the solution
         nrm = norm2(g)
@@ -367,26 +316,10 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter, err)
 
     ! Extract the computed derivative
     dxdt = u(1:n)
-
-    ! End
-    return
-
-    ! Memory Error
-10  continue
-    call err%report_error("tvr_diff_small", "Memory allocation error.", &
-        SPCTRM_MEMORY_ERROR)
-    return
-
-    ! Solution Error - Singular matrix
-20  continue
-    call err%report_error("tvr_diff_small", "A singular Hessian matrix " // &
-        "was encountered.  Check to ensure the problem is properly defined.", &
-        SPCTRM_SINGULAR_MATRIX_ERROR)
-    return
 end subroutine
 
 ! ------------------------------------------------------------------------------
-function tvr_derivative(dt, x, alpha, maxiter, tol, niter, err) result(rst)
+function tvr_derivative(dt, x, alpha, maxiter, tol, niter) result(rst)
     !! Computes an estimate to the derivative of an evenly-sampled data
     !! set using total variation regularization.
     !!
@@ -416,32 +349,14 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter, err) result(rst)
         !! is 1e-3.
     integer(int32), intent(out), optional :: niter
         !! The number of iterations actually performed.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !!  - SPCTRM_SINGULAR_MATRIX_ERROR: Occurs if the internal Hessian 
-        !!      estimate becomes singular.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the estimate of the derivative.
 
     ! Local Variables
-    integer(int32) :: mi, n, flag, ni
+    integer(int32) :: mi, n, ni
     real(real64) :: gtol
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     if (present(maxiter)) then
         mi = maxiter
     else
@@ -453,22 +368,17 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter, err) result(rst)
         gtol = 1.0d-3
     end if
     n = size(x)
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("tvr_derivative", "Memory allocation error.", &
-            SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
 
     ! Process
-    call tvr_diff_small(alpha, dt, x, mi, rst, gtol, ni, errmgr)
+    call tvr_diff_small(alpha, dt, x, mi, rst, gtol, ni)
     if (present(niter)) niter = ni
 end function
 
 ! ******************************************************************************
 ! V1.1.2 ADDITIONS
 ! ------------------------------------------------------------------------------
-function stencil_diff_5(dt, x, err) result(rst)
+pure function stencil_diff_5(dt, x) result(rst)
     !! Utilizes a 5-point stencil to estimate the derivative of a data set.
     !!
     !! See Also
@@ -479,35 +389,15 @@ function stencil_diff_5(dt, x, err) result(rst)
     real(real64), intent(in), dimension(:) :: x
         !! An N-element array containing the data whose derivative is to be 
         !! estimated.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the derivative estimate.
 
     ! Local Variables
-    integer(int32) :: i, n, flag
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
+    integer(int32) :: i, n
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(x)
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("stencil_diff_5", &
-            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
 
     ! Process
     ! Step in and out of the problem via finite differences; else, use
@@ -527,7 +417,7 @@ function stencil_diff_5(dt, x, err) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-function stencil_second_diff_5(dt, x, err) result(rst)
+pure function stencil_second_diff_5(dt, x) result(rst)
     !! Utilizes a 5-point stencil to estimate the second derivative of a data
     !! set.
     !!
@@ -539,36 +429,16 @@ function stencil_second_diff_5(dt, x, err) result(rst)
     real(real64), intent(in), dimension(:) :: x
         !! An N-element array containing the data whose derivative is to be 
         !! estimated.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the derivative estimate.
 
     ! Local Variables
-    integer(int32) :: i, n, flag
+    integer(int32) :: i, n
     real(real64) :: h2
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(x)
-    allocate(rst(n), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("stencil_second_diff_5", &
-            "Memory allocation error.", SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n))
 
     ! Process
     ! Step in and out of the problem via finite differences; else, use
@@ -591,7 +461,7 @@ end function
 ! ******************************************************************************
 ! V1.1.3 ADDITIONS
 ! ------------------------------------------------------------------------------
-function filter_diff(dt, x, fc, err) result(rst)
+pure function filter_diff(dt, x, fc) result(rst)
     !! Estimates the derivative of a signal by utilization of a second-order
     !! system as a filter.
     real(real64), intent(in) :: dt
@@ -601,18 +471,6 @@ function filter_diff(dt, x, fc, err) result(rst)
         !! estimated.
     real(real64), intent(in) :: fc
         !! The filter cutoff frequency, in Hz.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
-        !!
-        !! - SPCTRM_INVALID_INPUT_ERROR: Occurs if fc is greater than or equal 
-        !!      to half the sampling frequency, or if fc is less than or equal
-        !!      to zero.
     real(real64), allocatable, dimension(:,:) :: rst
         !! An N-element array containing the filtered signal in the first column
         !! and the derivative estimate in the second.
@@ -622,37 +480,19 @@ function filter_diff(dt, x, fc, err) result(rst)
     real(real64), parameter :: zeta = 0.5d0 * sqrt(2.0d0)
 
     ! Local Variables
-    integer(int32) :: i, n, flag
+    integer(int32) :: i, n
     real(real64) :: fs, wn
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(x)
     fs = 1.0d0 / dt
     wn = 2.0d0 * pi * fc
 
     ! Input Checking
-    if (fc >= 0.5d0 * fs .or. fc <= 0.0d0) then
-        call errmgr%report_error("filter_diff", &
-            "The cutoff frequency must not exceed half the " // &
-            "sampling frequency and must be nonzero and positive-valued.", &
-            SPCTRM_INVALID_INPUT_ERROR)
-        return
-    end if
+    if (fc >= 0.5d0 * fs .or. fc <= 0.0d0) return
 
     ! Memory Allocations
-    allocate(rst(n,2), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("filter_diff", "Memory allocation error.", &
-            SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n,2))
 
     ! Define the initial conditions
     rst(1,1) = x(1)    ! output initial value is equivalent to the original value
