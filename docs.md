@@ -5,6 +5,7 @@ project_github: https://github.com/jchristopherson/spectrum
 author: Jason Christopherson
 author_email: jchristopherson@hotmail.com
 src_dir: ./src
+exclude_dir: ./src/fftpack
 output_dir: ./doc
 display: public
 source: true

@@ -275,6 +275,7 @@ function test_spectrogram() result(rst)
     ! Local Variables
     integer(int32) :: i, npts
     real(real64) :: k, check, dt
+    type(stft_result) :: srst
     complex(real64), allocatable, dimension(:,:) :: r
     real(real64), allocatable, dimension(:) :: t, x
     real(real64), allocatable, dimension(:,:) :: mag
@@ -295,7 +296,8 @@ function test_spectrogram() result(rst)
     win%size = window_size
 
     ! Compute the spectrogram of x
-    r = stft(win, x)
+    srst = stft(win, x)
+    r = srst%stft
 
     ! Compute the magnitude
     mag = abs(r)

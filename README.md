@@ -37,13 +37,13 @@ spectrum = { git = "https://github.com/jchristopherson/spectrum" }
 ```
 
 ## External Libraries
-The FPLOT library depends upon the following libraries.
+The SPECTRUM library depends upon the following libraries.
 - [FERROR](https://github.com/jchristopherson/ferror)
-- [FFTPACK](https://github.com/fortran-lang/fftpack)
 - [BLAS](http://www.netlib.org/blas/)
 - [LAPACK](http://www.netlib.org/lapack/)
 - [LINALG](https://github.com/jchristopherson/linalg)
 
+## Examples
 Spectrum contains a large selection of signal processing routines.  The following examples illustrate some of the spectral capabilities in addition to some of the filtering options available.
 
 ## Filtering & PSD Example
@@ -297,6 +297,7 @@ program example
     real(real64), allocatable, dimension(:,:) :: mag
     real(real64), allocatable, dimension(:,:,:) :: xy
     type(hann_window) :: win
+    type(stft_result) :: z
 
     ! Plot Variables
     type(surface_plot) :: plt
@@ -317,7 +318,9 @@ program example
     win%size = window_size
 
     ! Compute the spectrogram of x
-    rst = stft(win, x, offsets)
+    z = stft(win, x)
+    rst = z%stft
+    offsets = z%offsets
 
     ! Compute the magnitude, along with each frequency and time point
     mag = abs(rst)

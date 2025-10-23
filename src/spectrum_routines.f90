@@ -1,8 +1,6 @@
 module spectrum_routines
     use iso_fortran_env
     use fftpack
-    use ferror
-    use spectrum_errors
     implicit none
     private
     public :: compute_transform_length
@@ -97,17 +95,16 @@ pure elemental function next_power_of_two(n) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-pure subroutine unpack_real_transform(x, cx, fac)
+pure function unpack_real_transform(x, fac) result(rst)
     !! Unpacks a real-valued transform into its complex-valued format.
     real(real64), intent(in) :: x(:)
         !! The complex-valued signal stored in a real-valued array.  This array
         !! is assumed to be of length N.
-    complex(real64), intent(out) :: cx(:)
-        !! The M-element array where the complex form of x is written.  M is
-        !! determined by calling compute_transform_length(N).
     real(real64), intent(in), optional :: fac
         !! An optional scaling input.  The default is 1 such that no scaling
         !! is performed.
+    complex(real64), allocatable, dimension(:) :: rst
+        !! The unpacked complex-valued form of the input array.
 
     ! Local Variables
     integer(int32) :: i, nx, nxfrm
@@ -123,40 +120,38 @@ pure subroutine unpack_real_transform(x, cx, fac)
     else
         f = 1.0d0
     end if
+    allocate(rst(nxfrm), source = (0.0d0, 0.0d0))
 
     ! Quick Return
-    if (f == 0.0d0) then
-        cx = (0.0d0, 0.0d0)
-        return
-    end if
+    if (f == 0.0d0) return
 
     ! Process
     if (f == 1.0d0) then
-        cx(1) = cmplx(x(1), 0.0d0, real64)  ! the DC term is always real
+        rst(1) = cmplx(x(1), 0.0d0, real64)  ! the DC term is always real
         if (is_even) then
             do i = 2, nxfrm - 1
-                cx(i) = cmplx(x(2*i-2), x(2*i-1), real64)
+                rst(i) = cmplx(x(2*i-2), x(2*i-1), real64)
             end do
-            cx(nxfrm) = cmplx(x(nx), 0.0d0, real64) ! always real for even-lengths
+            rst(nxfrm) = cmplx(x(nx), 0.0d0, real64) ! always real for even-lengths
         else
             do i = 2, nxfrm
-                cx(i) = cmplx(x(2*i-2), x(2*i-1), real64)
+                rst(i) = cmplx(x(2*i-2), x(2*i-1), real64)
             end do
         end if
     else
-        cx(1) = f * cmplx(x(1), 0.0d0, real64)  ! the DC term is always real
+        rst(1) = f * cmplx(x(1), 0.0d0, real64)  ! the DC term is always real
         if (is_even) then
             do i = 2, nxfrm - 1
-                cx(i) = f * cmplx(x(2*i-2), x(2*i-1), real64)
+                rst(i) = f * cmplx(x(2*i-2), x(2*i-1), real64)
             end do
-            cx(nxfrm) = f * cmplx(x(nx), 0.0d0, real64) ! always real for even-lengths
+            rst(nxfrm) = f * cmplx(x(nx), 0.0d0, real64) ! always real for even-lengths
         else
             do i = 2, nxfrm
-                cx(i) = f * cmplx(x(2*i-2), x(2*i-1), real64)
+                rst(i) = f * cmplx(x(2*i-2), x(2*i-1), real64)
             end do
         end if
     end if
-end subroutine
+end function
 
 ! ------------------------------------------------------------------------------
 ! Rounds a number to the required precision (p), but rounds 0.5 down to the
@@ -332,42 +327,22 @@ end subroutine
 ! ******************************************************************************
 ! V1.1.3 ADDITIONS
 ! ------------------------------------------------------------------------------
-function remove_mean(x, err) result(rst)
+pure function remove_mean(x) result(rst)
     !! Removes the mean offset from the specified data set.
     real(real64), intent(in), dimension(:) :: x
         !! The array on which to operate.
-    class(errors), intent(inout), optional, target :: err
-        !! An optional errors-based object that if provided can
-        !! be used to retrieve information relating to any errors encountered 
-        !! during execution.  If not provided, a default implementation of the 
-        !! errors class is used internally to provide error handling.  Possible 
-        !! errors and warning messages that may be encountered are as follows.
-        !!
-        !!  - SPCTRM_MEMORY_ERROR: Occurs if a memory allocation error occurs.
     real(real64), allocatable, dimension(:) :: rst
         !! The data set with its mean removed.
 
     ! Local Variables
-    integer(int32) :: n, nw, flag
+    integer(int32) :: n, nw
     real(real64), allocatable, dimension(:) :: wsave
-    class(errors), pointer :: errmgr
-    type(errors), target :: deferr
     
     ! Initialization
-    if (present(err)) then
-        errmgr => err
-    else
-        errmgr => deferr
-    end if
     n = size(x)
     nw = 2 * n + 15
-    allocate(rst(n), stat = flag, source = x)
-    if (flag == 0) allocate(wsave(nw), stat = flag)
-    if (flag /= 0) then
-        call errmgr%report_error("remove_mean", "Memory allocation error.", &
-            SPCTRM_MEMORY_ERROR)
-        return
-    end if
+    allocate(rst(n), source = x)
+    allocate(wsave(nw))
 
     ! Initialize and compute the Fourier transform
     call dffti(n, wsave)

@@ -21,6 +21,7 @@ program example
     real(real64), allocatable, dimension(:,:) :: mag
     real(real64), allocatable, dimension(:,:,:) :: xy
     type(hann_window) :: win
+    type(stft_result) :: z
 
     ! Plot Variables
     type(surface_plot) :: plt
@@ -41,7 +42,9 @@ program example
     win%size = window_size
 
     ! Compute the spectrogram of x
-    rst = stft(win, x, offsets)
+    z = stft(win, x)
+    rst = z%stft
+    offsets = z%offsets
 
     ! Compute the magnitude, along with each frequency and time point
     mag = abs(rst)
