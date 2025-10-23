@@ -270,7 +270,7 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
         lu(n1), &
         g(n1), &
         h(n1, n1), &
-        ipiv(n1), &
+        ipiv(n1) &
     )
 
     ! Construct matrices
