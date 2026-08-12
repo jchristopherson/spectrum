@@ -30,22 +30,7 @@ set(SPECTRUM_SOURCES
 
 # Dependencies
 include(FetchContent)
-find_package(ferror QUIET)
-find_package(linalg QUIET)
-
-if (NOT ferror_FOUND)
-    message(STATUS "FERROR could not be found.  A reference version will be employed.")
-    FetchContent_Declare(
-        ferror
-        GIT_REPOSITORY "https://github.com/jchristopherson/ferror"
-    )
-    FetchContent_MakeAvailable(ferror)
-    set(FERROR_LIBRARIES ferror)
-    set(BUILD_FERROR TRUE)
-else()
-    set(FERROR_LIBRARIES ferror::ferror)
-    set(BUILD_FERROR FALSE)
-endif()
+find_package(linalg 2.0.0 QUIET)
 
 if (NOT linalg_FOUND)
     message(STATUS "LINALG could not be found.  A reference version will be employed.")
@@ -66,7 +51,6 @@ add_library(${PROJECT_NAME} ${SPECTRUM_SOURCES})
 target_link_libraries(
     ${PROJECT_NAME}
     PRIVATE
-    ${FERROR_LIBRARIES}
     ${LINALG_LIBRARIES}
 )
 
@@ -101,10 +85,6 @@ install(
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 install(DIRECTORY ${SPECTRUM_MOD_DIR} DESTINATION ${CMAKE_INSTALL_MODULEDIR})
-
-if (${BUILD_FERROR} AND ${BUILD_SHARED_LIBS})
-    install(IMPORTED_RUNTIME_ARTIFACTS ${FERROR_LIBRARIES})
-endif()
 
 if (${BUILD_LINALG} AND ${BUILD_SHARED_LIBS})
     install(IMPORTED_RUNTIME_ARTIFACTS ${LINALG_LIBRARIES})
