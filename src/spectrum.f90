@@ -67,6 +67,7 @@ module spectrum
 
     ! SPECTRUM_TF.F90
     public :: siso_transfer_function
+    public :: mimo_transfer_function
     public :: SPCTRM_H1_ESTIMATOR
     public :: SPCTRM_H2_ESTIMATOR
 
