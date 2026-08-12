@@ -72,6 +72,10 @@ add_executable(siso_tf_example siso_tf_example.f90)
 target_link_libraries(siso_tf_example spectrum ${fplot_LIBRARY} ${fortran-csv-module_LIBRARY})
 target_include_directories(siso_tf_example PUBLIC ${fortran-csv-module_INCLUDE_DIR})
 
+# MIMO Transfer Function Example
+add_executable(mimo_tf_example mimo_tf_example.f90)
+target_link_libraries(mimo_tf_example spectrum ${fplot_LIBRARY})
+
 # TVR Differentiation Example
 add_executable(tvr_diff_example tvr_diff_example.f90)
 target_link_libraries(tvr_diff_example spectrum ${fplot_LIBRARY})
@@ -95,3 +99,15 @@ target_link_libraries(filtered_derivative_example spectrum ${fplot_LIBRARY})
 # Filter Comparison Example
 add_executable(filter_comparison_example filter_comparison_example.f90)
 target_link_libraries(filter_comparison_example spectrum ${fplot_LIBRARY})
+
+#
+if (${BUILD_SHARED_LIBS} AND WIN32)
+    add_custom_command(
+        TARGET spectrogram_example
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy 
+        $<TARGET_RUNTIME_DLLS:spectrogram_example> 
+        $<TARGET_FILE_DIR:spectrogram_example>
+        COMMAND_EXPAND_LISTS
+    )
+endif()
