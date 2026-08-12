@@ -27,7 +27,7 @@ contains
 ! - https://github.com/giuliovv/tfest/blob/main/tfest/tfest.py
 ! - https://dsp.stackexchange.com/questions/71811/understanding-the-h1-and-h2-estimators
 ! - https://github.com/epezent/etfe/blob/main/include/ETFE.hpp
-function siso_transfer_function(win, x, y, etype, nfft) result(rst)
+pure function siso_transfer_function(win, x, y, etype, nfft) result(rst)
     !! Estimates the transfer function for a single-input/single-output
     !! (SISO) system.
     class(window), intent(in) :: win
