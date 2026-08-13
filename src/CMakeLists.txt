@@ -10,6 +10,7 @@ set(SPECTRUM_SOURCES
     ${dir}/spectrum_fft.f90
     ${dir}/spectrum_convolve.f90
     ${dir}/spectrum_filter.f90
+    ${dir}/spectrum_filter_design.f90
     ${dir}/spectrum_tf.f90
     ${dir}/spectrum_periodogram.f90
     ${dir}/spectrum_diff.f90

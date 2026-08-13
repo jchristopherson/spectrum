@@ -100,6 +100,10 @@ target_link_libraries(filtered_derivative_example spectrum ${fplot_LIBRARY})
 add_executable(filter_comparison_example filter_comparison_example.f90)
 target_link_libraries(filter_comparison_example spectrum ${fplot_LIBRARY})
 
+# Filter Design Example
+add_executable(filter_design_example filter_design_example.f90)
+target_link_libraries(filter_design_example spectrum ${fplot_LIBRARY})
+
 #
 if (${BUILD_SHARED_LIBS} AND WIN32)
     add_custom_command(
