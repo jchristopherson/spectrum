@@ -5,6 +5,7 @@ module spectrum
     use spectrum_fft
     use spectrum_convolve
     use spectrum_filter
+    use spectrum_filter_design
     use spectrum_tf
     use spectrum_diff
     use spectrum_integrate
@@ -64,6 +65,9 @@ module spectrum
     public :: HIGH_PASS_FILTER
     public :: BAND_PASS_FILTER
     public :: BAND_STOP_FILTER
+
+    ! SPECTRUM_FILTER_DESIGN.F90
+    public :: design_fir_filter
 
     ! SPECTRUM_TF.F90
     public :: siso_transfer_function
