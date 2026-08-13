@@ -74,7 +74,7 @@
             <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
               <a data-bs-toggle="tooltip"
                  data-bs-placement="bottom" data-html="true"
-                 title=" 2.9% of total for modules and submodules.">42 statements</a>
+                 title=" 6.9% of total for modules and submodules.">109 statements</a>
             </li>
 
             <li class="list-inline-item" id="source-file">
@@ -135,6 +135,7 @@
       </a>
       <div id="funcs-0" class="collapse">
         <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../module/spectrum_tf.html#proc-mimo_transfer_function">mimo_transfer_function</a>
             <a class="list-group-item" href="../module/spectrum_tf.html#proc-siso_transfer_function">siso_transfer_function</a>
         </div>
       </div>
@@ -162,9 +163,10 @@
         <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <ul class="list-inline">
-                  <li class="list-inline-item"><a href='spectrum_windows.html'>spectrum_windows</a></li>
-                  <li class="list-inline-item"><a href='spectrum_periodogram.html'>spectrum_periodogram</a></li>
                   <li class="list-inline-item"><a href='http://fortranwiki.org/fortran/show/iso_fortran_env'>iso_fortran_env</a></li>
+                  <li class="list-inline-item"><a href='spectrum_periodogram.html'>spectrum_periodogram</a></li>
+                  <li class="list-inline-item"><a href='spectrum_routines.html'>spectrum_routines</a></li>
+                  <li class="list-inline-item"><a href='spectrum_windows.html'>spectrum_windows</a></li>
               </ul>
             </li>
         </ul>
@@ -242,7 +244,115 @@ and results in a transfer function estimate of the form</p>
         <section>
           <h2>Functions</h2>
               <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-siso_transfer_function"></span> <h3>public  function <a href='..\proc\siso_transfer_function.html'>siso_transfer_function</a>(win, x, y, etype, nfft) result(rst)  
+    <div class="card-header codesum"><span class="anchor" id="proc-mimo_transfer_function"></span> <h3>public pure function <a href='..\proc\mimo_transfer_function.html'>mimo_transfer_function</a>(win, x, y, etype, nfft) result(rst)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Estimates the transfer function matrix for a multiple-input/
+multiple-output (MIMO) system.</p><a href="../proc/mimo_transfer_function.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-win~8"></span>
+              class(<a href='..\type\window.html'>window</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>win</strong></td>
+            <td>
+<p>The window object.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-x~14"></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong>(:,:)</td>
+            <td>
+<p>An N-by-NIN array containing the input signals.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-y~5"></span>
+              real(kind=real64),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>y</strong>(:,:)</td>
+            <td>
+<p>An N-by-NOUT array containing the output signals.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-etype~2"></span>
+              integer(kind=int32),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>etype</strong></td>
+            <td>
+<p>An optional input that, if supplied, denotes the estimator to use.
+Supported values are the same as for SISO transfer estimates.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-nfft~8"></span>
+              integer(kind=int32),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nfft</strong></td>
+            <td>
+<p>An optional input that can be used to force the length of each
+individual DFT operation by padding any remaining space with zeros.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>complex(kind=real64), allocatable, (:,:,:)</small>
+    </h4>
+    <p>Returns the complex-valued transfer function estimate matrix.</p>
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-siso_transfer_function"></span> <h3>public pure function <a href='..\proc\siso_transfer_function.html'>siso_transfer_function</a>(win, x, y, etype, nfft) result(rst)  
 </h3></div>
     <div class="card-body">
           
@@ -262,7 +372,7 @@ and results in a transfer function estimate of the form</p>
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-win"></span>
+              <span class="anchor" id="variable-win~7"></span>
               class(<a href='..\type\window.html'>window</a>),
             </td>
 <td>intent(in)</td>
@@ -277,7 +387,7 @@ and results in a transfer function estimate of the form</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x"></span>
+              <span class="anchor" id="variable-x~13"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -292,7 +402,7 @@ and results in a transfer function estimate of the form</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-y"></span>
+              <span class="anchor" id="variable-y~4"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -324,7 +434,7 @@ The following options are supported.</p><a href="../proc/siso_transfer_function.
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-nfft"></span>
+              <span class="anchor" id="variable-nfft~7"></span>
               integer(kind=int32),
             </td>
 <td>intent(in),</td>
@@ -366,14 +476,14 @@ the DFT.</p>
     <footer>
       <div class="container">
         <div class="row justify-content-between">
-          <div class="col"><p>SPECTRUM was developed by Jason Christopherson<br>&copy; 2025 
+          <div class="col"><p>SPECTRUM was developed by Jason Christopherson<br>&copy; 2026 
 </p>
           </div>
           <div class="col">
             <p class="text-end">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2025-10-23 05:50              </p>
+ on 2026-08-13 09:21              </p>
           </div>
         </div>
         <br>

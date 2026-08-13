@@ -4,6 +4,7 @@ program test
     use spectrum_diff_tests
     use spectrum_integrate_tests
     use spectrum_filter_tests
+    use spectrum_tf_tests
     implicit none
 
     ! Local Variables
@@ -43,6 +44,12 @@ program test
 
     local = test_sinc_filter()
     if (.not.local) flag = 10
+
+    local = test_siso_transfer_function()
+    if (.not.local) flag = 11
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 12
 
     ! Output
     stop flag

@@ -5,6 +5,7 @@ set(spectrum_test_sources
     spectrum_diff_tests.f90
     spectrum_integrate_tests.f90
     spectrum_filter_tests.f90
+    spectrum_tf_tests.f90
 )
 
 find_package(fortran_test_helper QUIET)

@@ -10,7 +10,7 @@
     <meta name="author" content="Jason Christopherson" >
     <link rel="icon" href="../favicon.png">
 
-    <title>integrate &ndash; SPECTRUM</title>
+    <title>mimo_transfer_function &ndash; SPECTRUM</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
@@ -62,7 +62,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>integrate
+    <h1>mimo_transfer_function
       <small>Function</small>
       
     </h1>
@@ -74,21 +74,21 @@
             <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
               <a data-bs-toggle="tooltip"
                  data-bs-placement="bottom" data-html="true"
-                 title=" 2.8% of total for procedures.">25 statements</a>
+                 title=" 6.4% of total for procedures.">57 statements</a>
             </li>
 
             <li class="list-inline-item" id="source-file">
               <i class="fa fa-code"></i>
-              <a href="../src/spectrum_integrate.f90"> Source File</a>
+              <a href="../src/spectrum_tf.f90"> Source File</a>
             </li>
         </ul>
       </div>
       <div class="col">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb justify-content-end mb-0">
-                <li class="breadcrumb-item"><a href='..\sourcefile\spectrum_integrate.f90.html'>spectrum_integrate.f90</a></li>
-                <li class="breadcrumb-item"><a href='..\module\spectrum_integrate.html'>spectrum_integrate</a></li>
-            <li class="breadcrumb-item active" aria-current="page">integrate</li>
+                <li class="breadcrumb-item"><a href='..\sourcefile\spectrum_tf.f90.html'>spectrum_tf.f90</a></li>
+                <li class="breadcrumb-item"><a href='..\module\spectrum_tf.html'>spectrum_tf</a></li>
+            <li class="breadcrumb-item active" aria-current="page">mimo_transfer_function</li>
           </ol>
         </nav>
       </div>
@@ -133,11 +133,17 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function integrate(dt, x, iv) result(rst)  
+    <h2>public pure function mimo_transfer_function(win, x, y, etype, nfft) result(rst)  
 </h2>
     
 
-    <p>Integrates a data set.</p>
+    <p>Estimates the transfer function matrix for a multiple-input/
+multiple-output (MIMO) system.</p>
+<p>The input signal matrix is expected to have dimensions (n, nin) where
+the second index denotes the input channel.  The output signal matrix is
+expected to have dimensions (n, nout) where the second index denotes the
+output channel.  The returned transfer matrix has dimensions
+(nout, nin, m) where m is the transform length.</p>
 
 
     <h3>Arguments</h3>
@@ -153,7 +159,22 @@
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-dt"></span>
+              <span class="anchor" id="variable-win~8"></span>
+              class(<a href='..\type\window.html'>window</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>win</strong></td>
+            <td>
+                <p>The window object.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-x~14"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -161,39 +182,56 @@
               
             </td>
             <td>::</td>
-            <td><strong>dt</strong></td>
+            <td><strong>x</strong>(:,:)</td>
             <td>
-                <p>The sample interval.</p>
+                <p>An N-by-NIN array containing the input signals.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x"></span>
+              <span class="anchor" id="variable-y~5"></span>
               real(kind=real64),
             </td>
-<td>intent(in),</td>
+<td>intent(in)</td>
               <td></td>            <td>
-              dimension(:)
+              
             </td>
             <td>::</td>
-            <td><strong>x</strong></td>
+            <td><strong>y</strong>(:,:)</td>
             <td>
-                <p>The data set to integrate.</p>
+                <p>An N-by-NOUT array containing the output signals.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-iv"></span>
-              real(kind=real64),
+              <span class="anchor" id="variable-etype~2"></span>
+              integer(kind=int32),
             </td>
 <td>intent(in),</td>
               <td>optional</td>            <td>
               
             </td>
             <td>::</td>
-            <td><strong>iv</strong></td>
+            <td><strong>etype</strong></td>
             <td>
-                <p>The initial value.  The default value is zero.</p>
+                <p>An optional input that, if supplied, denotes the estimator to use.
+Supported values are the same as for SISO transfer estimates.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-nfft~8"></span>
+              integer(kind=int32),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nfft</strong></td>
+            <td>
+                <p>An optional input that can be used to force the length of each
+individual DFT operation by padding any remaining space with zeros.</p>
             </td>
         </tr>
     </tbody>
@@ -201,11 +239,11 @@
 
       <h3>Return Value
         <small>
-          <span class="anchor" id="variable-rst"></span>
-          real(kind=real64), allocatable, dimension(:)
+          <span class="anchor" id="variable-rst~19"></span>
+          complex(kind=real64), allocatable, (:,:,:)
         </small>
       </h3>
-      <p>The integrated data set.</p>
+      <p>Returns the complex-valued transfer function estimate matrix.</p>
     <br>
 
 

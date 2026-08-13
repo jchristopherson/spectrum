@@ -10,7 +10,7 @@
     <meta name="author" content="Jason Christopherson" >
     <link rel="icon" href="../favicon.png">
 
-    <title>integrate &ndash; SPECTRUM</title>
+    <title>design_fir_filter &ndash; SPECTRUM</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
@@ -62,8 +62,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>integrate
-      <small>Function</small>
+    <h1>design_fir_filter
+      <small>Subroutine</small>
       
     </h1>
       <div class="container p-2 mb-4 bg-light border rounded-3">
@@ -74,21 +74,21 @@
             <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
               <a data-bs-toggle="tooltip"
                  data-bs-placement="bottom" data-html="true"
-                 title=" 2.8% of total for procedures.">25 statements</a>
+                 title=" 5.4% of total for procedures.">48 statements</a>
             </li>
 
             <li class="list-inline-item" id="source-file">
               <i class="fa fa-code"></i>
-              <a href="../src/spectrum_integrate.f90"> Source File</a>
+              <a href="../src/spectrum_filter_design.f90"> Source File</a>
             </li>
         </ul>
       </div>
       <div class="col">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb justify-content-end mb-0">
-                <li class="breadcrumb-item"><a href='..\sourcefile\spectrum_integrate.f90.html'>spectrum_integrate.f90</a></li>
-                <li class="breadcrumb-item"><a href='..\module\spectrum_integrate.html'>spectrum_integrate</a></li>
-            <li class="breadcrumb-item active" aria-current="page">integrate</li>
+                <li class="breadcrumb-item"><a href='..\sourcefile\spectrum_filter_design.f90.html'>spectrum_filter_design.f90</a></li>
+                <li class="breadcrumb-item"><a href='..\module\spectrum_filter_design.html'>spectrum_filter_design</a></li>
+            <li class="breadcrumb-item active" aria-current="page">design_fir_filter</li>
           </ol>
         </nav>
       </div>
@@ -133,11 +133,13 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function integrate(dt, x, iv) result(rst)  
+    <h2>public pure subroutine design_fir_filter(n, fc, fs, b, a, fc2, ftype)  
 </h2>
     
 
-    <p>Integrates a data set.</p>
+    <p>Designs a Hamming-windowed, linear-phase FIR filter.</p>
+<p>The returned coefficients use the same convention as filter: b contains
+the numerator coefficients in increasing delay order and a is [1.0].</p>
 
 
     <h3>Arguments</h3>
@@ -153,7 +155,22 @@
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-dt"></span>
+              <span class="anchor" id="variable-n~21"></span>
+              integer(kind=int32),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>n</strong></td>
+            <td>
+                <p>The requested number of taps. Even values are increased by one.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-fc~2"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -161,29 +178,59 @@
               
             </td>
             <td>::</td>
-            <td><strong>dt</strong></td>
+            <td><strong>fc</strong></td>
             <td>
-                <p>The sample interval.</p>
+                <p>The first cutoff frequency, in Hz.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x"></span>
+              <span class="anchor" id="variable-fs~11"></span>
               real(kind=real64),
             </td>
-<td>intent(in),</td>
+<td>intent(in)</td>
               <td></td>            <td>
-              dimension(:)
+              
             </td>
             <td>::</td>
-            <td><strong>x</strong></td>
+            <td><strong>fs</strong></td>
             <td>
-                <p>The data set to integrate.</p>
+                <p>The sampling frequency, in Hz.</p>
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-iv"></span>
+              <span class="anchor" id="variable-b~3"></span>
+              real(kind=real64),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>b</strong>(:)</td>
+            <td>
+                <p>The numerator coefficients of the designed filter.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-a~3"></span>
+              real(kind=real64),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>a</strong>(:)</td>
+            <td>
+                <p>The denominator coefficients. This is always [1.0].</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-fc2~2"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -191,21 +238,29 @@
               
             </td>
             <td>::</td>
-            <td><strong>iv</strong></td>
+            <td><strong>fc2</strong></td>
             <td>
-                <p>The initial value.  The default value is zero.</p>
+                <p>The second cutoff frequency for band-pass and band-stop filters.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-ftype~2"></span>
+              integer(kind=int32),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>ftype</strong></td>
+            <td>
+                <p>The filter type. The default is LOW_PASS_FILTER.</p>
             </td>
         </tr>
     </tbody>
   </table>
 
-      <h3>Return Value
-        <small>
-          <span class="anchor" id="variable-rst"></span>
-          real(kind=real64), allocatable, dimension(:)
-        </small>
-      </h3>
-      <p>The integrated data set.</p>
     <br>
 
 
