@@ -90,7 +90,7 @@ contains
         call y2%set_title("{/Symbol f} (deg)")
 
         call y1%set_autoscale(.false.)
-        call y1%set_limits(-100.0d0, 10.0d0)
+        call y1%set_limits(-200.0d0, 10.0d0)
 
         amp = 2.0d1 * log10(abs(rsp))
         phase = 1.8d2 * atan2(aimag(rsp), real(rsp)) / pi

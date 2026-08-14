@@ -39,7 +39,7 @@ program example
     ! Determine the sample rate
     dt = t(2) - t(1)
     fs = 1.0d0 / dt
-    print 100, "Sample Rate: ", fs, " Hz"
+    print "(A, F6.1, A)", "Sample Rate: ", fs, " Hz"
 
     ! Compute the transfer function
     win%size = winsize
@@ -116,7 +116,4 @@ program example
     call mplt%set(1, 1, plt1)
     call mplt%set(2, 1, plt2)
     call mplt%draw()
-
-    ! Formatting
-100 format(A, F6.1, A)
 end program
