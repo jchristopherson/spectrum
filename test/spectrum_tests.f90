@@ -51,11 +51,14 @@ program test
     local = test_filter_frequency_response()
     if (.not.local) flag = 11
 
-    local = test_siso_transfer_function()
+    local = test_design_iir_filter()
     if (.not.local) flag = 12
 
-    local = test_mimo_transfer_function()
+    local = test_siso_transfer_function()
     if (.not.local) flag = 13
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 14
 
     ! Output
     stop flag

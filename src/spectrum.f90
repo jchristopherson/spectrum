@@ -68,6 +68,7 @@ module spectrum
 
     ! SPECTRUM_FILTER_DESIGN.F90
     public :: design_fir_filter
+    public :: design_iir_filter
     public :: filter_frequency_response
 
     ! SPECTRUM_TF.F90
