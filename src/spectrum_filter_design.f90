@@ -150,9 +150,9 @@ end subroutine
 pure function filter_frequency_response(b, a, f, fs) result(rst)
     !! Computes the complex frequency response of a rational filter.
     !!
-    !! The coefficient ordering is the same as filter: b(i) and a(i) multiply
-    !! z**(-(i - 1)), where z = exp(2*pi*i*f/fs). The returned values are
-    !! therefore H(f) = B(z) / A(z) at each requested frequency.
+    !! The coefficient ordering is the same as [[filter]]: \(b(i)\) and \(a(i)\) 
+    !! where \(z = \exp{\frac{2 \pi i f}{f_s}}\). The returned values are 
+    !! therefore \(H(f) = \frac{B(z)}{A(z)}\) at each requested frequency.
     real(real64), intent(in) :: b(:)
         !! The numerator coefficients of the rational transfer function.
     real(real64), intent(in) :: a(:)

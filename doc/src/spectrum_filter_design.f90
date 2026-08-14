@@ -5,6 +5,8 @@ module spectrum_filter_design
     implicit none
     private
     public :: design_fir_filter
+    public :: design_iir_filter
+    public :: filter_frequency_response
 
 contains
 ! ------------------------------------------------------------------------------
@@ -75,6 +77,118 @@ pure subroutine design_fir_filter(n, fc, fs, b, a, fc2, ftype)
         if (abs(sum_b) > epsilon(1.0d0)) b = b / sum_b
     end if
 end subroutine
+
+! ------------------------------------------------------------------------------
+pure subroutine design_iir_filter(n, fc, fs, b, a, ftype)
+    !! Designs an nth-order Butterworth IIR low-pass or high-pass filter.
+    !!
+    !! The returned coefficients are normalized such that a(1) is one and use
+    !! the increasing-delay convention required by filter.
+    integer(int32), intent(in) :: n
+        !! The Butterworth filter order.
+    real(real64), intent(in) :: fc
+        !! The cutoff frequency, in Hz.
+    real(real64), intent(in) :: fs
+        !! The sampling frequency, in Hz.
+    real(real64), allocatable, intent(out) :: b(:)
+        !! The numerator coefficients of the designed filter.
+    real(real64), allocatable, intent(out) :: a(:)
+        !! The denominator coefficients of the designed filter.
+    integer(int32), intent(in), optional :: ftype
+        !! LOW_PASS_FILTER (default) or HIGH_PASS_FILTER.
+
+    integer(int32) :: i, j, filter_type
+    real(real64) :: analog_cutoff, gain, pi, phase, numerator, denominator_sum
+    complex(real64) :: pole, root
+    complex(real64), allocatable :: denominator(:)
+
+    filter_type = LOW_PASS_FILTER
+    if (present(ftype)) filter_type = ftype
+    if (n < 1 .or. fs <= 0.0d0 .or. fc <= 0.0d0 .or. &
+        fc >= 0.5d0 * fs) return
+    if (filter_type /= LOW_PASS_FILTER .and. &
+        filter_type /= HIGH_PASS_FILTER) return
+
+    pi = acos(-1.0d0)
+    analog_cutoff = 2.0d0 * fs * tan(pi * fc / fs)
+    allocate(b(n + 1), a(n + 1), denominator(n + 1))
+    b = 0.0d0
+    denominator = (0.0d0, 0.0d0)
+    b(1) = 1.0d0
+    denominator(1) = (1.0d0, 0.0d0)
+
+    do i = 1, n
+        phase = pi * real(2 * i + n - 1, real64) / real(2 * n, real64)
+        pole = analog_cutoff * exp(cmplx(0.0d0, phase, real64))
+        root = (2.0d0 * fs + pole) / (2.0d0 * fs - pole)
+        do j = i + 1, 2, -1
+            denominator(j) = denominator(j) - root * denominator(j - 1)
+            if (filter_type == LOW_PASS_FILTER) then
+                b(j) = b(j) + b(j - 1)
+            else
+                b(j) = b(j) - b(j - 1)
+            end if
+        end do
+    end do
+    a = real(denominator, real64)
+
+    if (filter_type == LOW_PASS_FILTER) then
+        gain = sum(a) / sum(b)
+    else
+        numerator = 0.0d0
+        denominator_sum = 0.0d0
+        do i = 1, n + 1
+            numerator = numerator + (-1.0d0) ** (i - 1) * a(i)
+            denominator_sum = denominator_sum + (-1.0d0) ** (i - 1) * b(i)
+        end do
+        gain = numerator / denominator_sum
+    end if
+    b = gain * b
+end subroutine
+
+! ------------------------------------------------------------------------------
+pure function filter_frequency_response(b, a, f, fs) result(rst)
+    !! Computes the complex frequency response of a rational filter.
+    !!
+    !! The coefficient ordering is the same as [[filter]]: \(b(i)\) and \(a(i)\) 
+    !! where \(z = \exp{\frac{2 \pi i f}{f_s}}\). The returned values are 
+    !! therefore \(H(f) = \frac{B(z)}{A(z)}\) at each requested frequency.
+    real(real64), intent(in) :: b(:)
+        !! The numerator coefficients of the rational transfer function.
+    real(real64), intent(in) :: a(:)
+        !! The denominator coefficients of the rational transfer function.
+    real(real64), intent(in) :: f(:)
+        !! The frequencies at which to evaluate the response, in Hz.
+    real(real64), intent(in) :: fs
+        !! The sampling frequency, in Hz.
+    complex(real64), allocatable :: rst(:)
+        !! The complex frequency response at each frequency in f.
+
+    integer(int32) :: i, j, n
+    real(real64) :: pi, phase
+    complex(real64) :: z, numerator, denominator
+
+    n = size(f)
+    if (size(a) < 1 .or. fs <= 0.0d0) return
+    allocate(rst(n), source = (0.0d0, 0.0d0))
+    pi = acos(-1.0d0)
+
+    do i = 1, n
+        phase = 2.0d0 * pi * f(i) / fs
+        z = exp(cmplx(0.0d0, -phase, real64))
+        numerator = (0.0d0, 0.0d0)
+        denominator = (0.0d0, 0.0d0)
+        do j = size(b), 1, -1
+            numerator = numerator * z + b(j)
+        end do
+        do j = size(a), 1, -1
+            denominator = denominator * z + a(j)
+        end do
+        if (abs(denominator) > tiny(1.0d0)) then
+            rst(i) = numerator / denominator
+        end if
+    end do
+end function
 
 ! ------------------------------------------------------------------------------
 pure function lowpass_kernel(fc, fs, offset) result(value)
