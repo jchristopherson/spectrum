@@ -104,6 +104,10 @@ target_link_libraries(filter_comparison_example spectrum ${fplot_LIBRARY})
 add_executable(filter_design_example filter_design_example.f90)
 target_link_libraries(filter_design_example spectrum ${fplot_LIBRARY})
 
+# IIR Filter Design Example
+add_executable(iir_filter_design_example iir_filter_design_example.f90)
+target_link_libraries(iir_filter_design_example spectrum ${fplot_LIBRARY})
+
 #
 if (${BUILD_SHARED_LIBS} AND WIN32)
     add_custom_command(

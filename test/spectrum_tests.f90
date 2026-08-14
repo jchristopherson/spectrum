@@ -39,17 +39,26 @@ program test
     local = test_stencil_diff_2()
     if (.not.local) flag = 8
 
-    local = test_integrate()
+    local = test_tvr_derivative_sparse()
     if (.not.local) flag = 9
 
-    local = test_sinc_filter()
+    local = test_integrate()
     if (.not.local) flag = 10
 
-    local = test_siso_transfer_function()
+    local = test_sinc_filter()
     if (.not.local) flag = 11
 
-    local = test_mimo_transfer_function()
+    local = test_filter_frequency_response()
+    if (.not.local) flag = 11
+
+    local = test_design_iir_filter()
     if (.not.local) flag = 12
+
+    local = test_siso_transfer_function()
+    if (.not.local) flag = 13
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 14
 
     ! Output
     stop flag

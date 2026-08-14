@@ -89,6 +89,9 @@ contains
         call x2%set_title("f")
         call y2%set_title("{/Symbol f} (deg)")
 
+        call y1%set_autoscale(.false.)
+        call y1%set_limits(-200.0d0, 10.0d0)
+
         amp = 2.0d1 * log10(abs(rsp))
         phase = 1.8d2 * atan2(aimag(rsp), real(rsp)) / pi
 
@@ -114,7 +117,7 @@ program example
 
     ! Parameters
     integer(int32), parameter :: npts = 1000
-    integer(int32), parameter :: ntaps = 30
+    integer(int32), parameter :: order = 5
     real(real64), parameter :: cutoff_hz = 5.0d1
     real(real64), parameter :: sample_hz = 1.024d3
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
@@ -130,7 +133,7 @@ program example
     type(hamming_window) :: win
 
     ! Design the filter
-    call design_fir_filter(ntaps, cutoff_hz, sample_hz, blp, alp, ftype = LOW_PASS_FILTER)
+    call design_iir_filter(order, cutoff_hz, sample_hz, blp, alp, ftype = LOW_PASS_FILTER)
 
     ! Display the coefficients
     print "(A)", "FILTER COEFFICIENTS:"
@@ -140,7 +143,7 @@ program example
     end do
     print "(A)", "A = "
     do i = 1, size(alp)
-        print "(A, A, I0, A, F8.3)", achar(9), "a(", i, ") = ", alp(i)
+        print "(A, A, I0, A, F8.5)", achar(9), "a(", i, ") = ", alp(i)
     end do
 
     ! Define the signal

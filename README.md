@@ -16,7 +16,7 @@ Spectrum is a library containing signal analysis routines with a focus towards s
     - Total Variation
     - Gaussian
     - Moving Average
-- FIR Filter Design
+- FIR and Butterworth IIR Filter Design
 - Upsampling & Downsampling
 - Transfer Function Estimation
 - Differentiation & Integration

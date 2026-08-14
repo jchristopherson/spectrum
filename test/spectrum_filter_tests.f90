@@ -51,4 +51,44 @@ contains
     end function
 
 ! ------------------------------------------------------------------------------
+function test_filter_frequency_response() result(rst)
+    logical :: rst
+
+    real(real64), parameter :: b(2) = [1.0d0, -1.0d0]
+    real(real64), parameter :: a(1) = [1.0d0]
+    real(real64), parameter :: f(2) = [0.0d0, 0.5d0]
+    complex(real64), allocatable :: response(:)
+
+    response = filter_frequency_response(b, a, f, 1.0d0)
+    rst = abs(response(1)) < 1.0d-12 .and. &
+        abs(abs(response(2)) - 2.0d0) < 1.0d-12
+    if (.not.rst) print "(A)", "TEST FAILED: test_filter_frequency_response -1"
+end function
+
+! ------------------------------------------------------------------------------
+function test_design_iir_filter() result(rst)
+    logical :: rst
+
+    real(real64), parameter :: fs = 1.0d3
+    real(real64), parameter :: fc = 1.0d2
+    real(real64), parameter :: f(3) = [0.0d0, fc, 0.45d0 * fs]
+    real(real64), allocatable :: b(:), a(:)
+    complex(real64), allocatable :: response(:)
+
+    call design_iir_filter(4_int32, fc, fs, b, a)
+    response = filter_frequency_response(b, a, f, fs)
+    rst = size(a) == 5 .and. abs(a(1) - 1.0d0) < 1.0d-12 .and. &
+        abs(abs(response(1)) - 1.0d0) < 1.0d-12 .and. &
+        abs(abs(response(2)) - 1.0d0 / sqrt(2.0d0)) < 1.0d-10 .and. &
+        abs(response(3)) < 1.0d-3
+
+    call design_iir_filter(4_int32, fc, fs, b, a, HIGH_PASS_FILTER)
+    response = filter_frequency_response(b, a, f, fs)
+    rst = rst .and. abs(response(1)) < 1.0d-12 .and. &
+        abs(abs(response(2)) - 1.0d0 / sqrt(2.0d0)) < 1.0d-10 .and. &
+        abs(abs(response(3)) - 1.0d0) < 1.0d-3
+    if (.not.rst) print "(A)", "TEST FAILED: test_design_iir_filter -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module
