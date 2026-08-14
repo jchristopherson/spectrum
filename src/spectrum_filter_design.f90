@@ -5,6 +5,7 @@ module spectrum_filter_design
     implicit none
     private
     public :: design_fir_filter
+    public :: filter_frequency_response
 
 contains
 ! ------------------------------------------------------------------------------
@@ -75,6 +76,50 @@ pure subroutine design_fir_filter(n, fc, fs, b, a, fc2, ftype)
         if (abs(sum_b) > epsilon(1.0d0)) b = b / sum_b
     end if
 end subroutine
+
+! ------------------------------------------------------------------------------
+pure function filter_frequency_response(b, a, f, fs) result(rst)
+    !! Computes the complex frequency response of a rational filter.
+    !!
+    !! The coefficient ordering is the same as filter: b(i) and a(i) multiply
+    !! z**(-(i - 1)), where z = exp(2*pi*i*f/fs). The returned values are
+    !! therefore H(f) = B(z) / A(z) at each requested frequency.
+    real(real64), intent(in) :: b(:)
+        !! The numerator coefficients of the rational transfer function.
+    real(real64), intent(in) :: a(:)
+        !! The denominator coefficients of the rational transfer function.
+    real(real64), intent(in) :: f(:)
+        !! The frequencies at which to evaluate the response, in Hz.
+    real(real64), intent(in) :: fs
+        !! The sampling frequency, in Hz.
+    complex(real64), allocatable :: rst(:)
+        !! The complex frequency response at each frequency in f.
+
+    integer(int32) :: i, j, n
+    real(real64) :: pi, phase
+    complex(real64) :: z, numerator, denominator
+
+    n = size(f)
+    if (size(a) < 1 .or. fs <= 0.0d0) return
+    allocate(rst(n), source = (0.0d0, 0.0d0))
+    pi = acos(-1.0d0)
+
+    do i = 1, n
+        phase = 2.0d0 * pi * f(i) / fs
+        z = exp(cmplx(0.0d0, -phase, real64))
+        numerator = (0.0d0, 0.0d0)
+        denominator = (0.0d0, 0.0d0)
+        do j = size(b), 1, -1
+            numerator = numerator * z + b(j)
+        end do
+        do j = size(a), 1, -1
+            denominator = denominator * z + a(j)
+        end do
+        if (abs(denominator) > tiny(1.0d0)) then
+            rst(i) = numerator / denominator
+        end if
+    end do
+end function
 
 ! ------------------------------------------------------------------------------
 pure function lowpass_kernel(fc, fs, offset) result(value)

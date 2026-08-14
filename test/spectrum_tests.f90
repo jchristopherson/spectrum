@@ -48,6 +48,9 @@ program test
     local = test_sinc_filter()
     if (.not.local) flag = 11
 
+    local = test_filter_frequency_response()
+    if (.not.local) flag = 11
+
     local = test_siso_transfer_function()
     if (.not.local) flag = 12
 

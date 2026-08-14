@@ -64,6 +64,46 @@ contains
 
         call plt%draw()
     end subroutine
+
+    subroutine plot_filter_frf(f, rsp)
+        real(real64), intent(in), dimension(:) :: f
+        complex(real64), intent(in), dimension(size(f)) :: rsp
+
+        real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
+        real(real64), allocatable, dimension(:) :: amp, phase
+        type(multiplot) :: plt
+        type(plot_2d) :: p1, p2
+        type(plot_data_2d) :: pd1, pd2
+        class(plot_axis), pointer :: x1, x2, y1, y2
+
+        call plt%initialize(2, 1)
+        call p1%initialize()
+        call p2%initialize()
+        x1 => p1%get_x_axis()
+        y1 => p1%get_y_axis()
+        x2 => p2%get_x_axis()
+        y2 => p2%get_y_axis()
+
+        call x1%set_title("f")
+        call y1%set_title("|X| (dB)")
+        call x2%set_title("f")
+        call y2%set_title("{/Symbol f} (deg)")
+
+        amp = 2.0d1 * log10(abs(rsp))
+        phase = 1.8d2 * atan2(aimag(rsp), real(rsp)) / pi
+
+        call pd1%define_data(f, amp)
+        call pd1%set_line_width(2.0)
+        call p1%push(pd1)
+        call plt%set(1, 1, p1)
+
+        call pd2%define_data(f, phase)
+        call pd2%set_line_width(2.0)
+        call p2%push(pd2)
+        call plt%set(2, 1, p2)
+
+        call plt%draw()
+    end subroutine
 end module
 
 program example
@@ -74,7 +114,7 @@ program example
 
     ! Parameters
     integer(int32), parameter :: npts = 1000
-    integer(int32), parameter :: ntaps = 10
+    integer(int32), parameter :: ntaps = 30
     real(real64), parameter :: cutoff_hz = 5.0d1
     real(real64), parameter :: sample_hz = 1.024d3
     real(real64), parameter :: pi = 2.0d0 * acos(0.0d0)
@@ -86,6 +126,7 @@ program example
     real(real64) :: dt, t0, df, t(npts), x(npts), xf(npts)
     real(real64), allocatable, dimension(:) :: alp, blp
     real(real64), allocatable, dimension(:) :: f, p1, p1f
+    complex(real64), allocatable, dimension(:) :: rsp
     type(hamming_window) :: win
 
     ! Design the filter
@@ -95,7 +136,7 @@ program example
     print "(A)", "FILTER COEFFICIENTS:"
     print "(A)", "B = "
     do i = 1, size(blp)
-        print "(A, A, I0, A, F8.3)", achar(9), "b(", i, ") = ", blp(i)
+        print "(A, A, I0, A, F8.5)", achar(9), "b(", i, ") = ", blp(i)
     end do
     print "(A)", "A = "
     do i = 1, size(alp)
@@ -127,4 +168,8 @@ program example
     df = frequency_bin_width(sample_hz, win%size)
     f = (/ (i * df, i = 0, size(p1) - 1) /)
     call plot_spectral_response(f, p1, p1f)
+
+    ! Plot the filter response
+    rsp = filter_frequency_response(blp, alp, f, sample_hz)
+    call plot_filter_frf(f, rsp)
 end program

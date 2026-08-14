@@ -51,4 +51,19 @@ contains
     end function
 
 ! ------------------------------------------------------------------------------
+function test_filter_frequency_response() result(rst)
+    logical :: rst
+
+    real(real64), parameter :: b(2) = [1.0d0, -1.0d0]
+    real(real64), parameter :: a(1) = [1.0d0]
+    real(real64), parameter :: f(2) = [0.0d0, 0.5d0]
+    complex(real64), allocatable :: response(:)
+
+    response = filter_frequency_response(b, a, f, 1.0d0)
+    rst = abs(response(1)) < 1.0d-12 .and. &
+        abs(abs(response(2)) - 2.0d0) < 1.0d-12
+    if (.not.rst) print "(A)", "TEST FAILED: test_filter_frequency_response -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module
