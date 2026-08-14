@@ -6,6 +6,7 @@ module spectrum_diff
     use iso_fortran_env
     use blas
     use linalg
+    use lapack, only : dgesv
     implicit none
     private
     public :: finite_difference
@@ -22,40 +23,6 @@ module spectrum_diff
     interface finite_difference_driver
         module procedure :: finite_difference_driver_1
         module procedure :: finite_difference_driver_2
-    end interface
-
-    ! BLAS Routines:
-    interface
-        ! subroutine dgbmv(trans, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy)
-        !     use iso_fortran_env, only : int32, real64
-        !     character, intent(in) :: trans
-        !     integer(int32), intent(in) :: m, n, kl, ku, lda, incx, incy
-        !     real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
-        !     real(real64), intent(inout) :: y(*)
-        ! end subroutine
-
-        ! subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-        !     use iso_fortran_env, only : int32, real64
-        !     character, intent(in) :: transa, transb
-        !     integer(int32), intent(in) :: m, n, k, lda, ldb, ldc
-        !     real(real64), intent(in) :: alpha, beta, a(lda,*), b(ldb,*)
-        !     real(real64), intent(inout) :: c(ldc,*)
-        ! end subroutine
-
-        ! subroutine dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy)
-        !     use iso_fortran_env, only : int32, real64
-        !     character, intent(in) :: trans
-        !     integer(int32), intent(in) :: m, n, lda, incx, incy
-        !     real(real64), intent(in) :: alpha, beta, a(lda,*), x(*)
-        !     real(real64), intent(inout) :: y(*)
-        ! end subroutine
-
-        subroutine dgesv(n, nrhs, a, lda, ipiv, b, ldb, info)
-            use iso_fortran_env, only : int32, real64
-            integer(int32), intent(in) :: n, nrhs, lda, ldb
-            real(real64), intent(inout) :: a(lda,*), b(ldb,*)
-            integer(int32), intent(out) :: ipiv(*), info
-        end subroutine
     end interface
 contains
 ! ------------------------------------------------------------------------------
@@ -235,14 +202,14 @@ subroutine make_e(d, u, e)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
+function tvr_diff_small(alpha, dt, x, maxiter, tol, niter) result(dxdt)
     real(real64), intent(in) :: alpha ! variational parameter
     real(real64), intent(in) :: dt  ! time step
     real(real64), intent(in), dimension(:) :: x ! data array to differentiate
     integer(int32), intent(in) :: maxiter  ! max # of iterations
-    real(real64), intent(out), dimension(:) :: dxdt ! derivative dx/dt
     real(real64), intent(in) :: tol ! tolerance on change in gradient
     integer(int32), intent(out) :: niter ! # of iterations taken
+    real(real64), allocatable, dimension(:) :: dxdt ! derivative dx/dt
 
     ! Local Variables
     integer(int32) :: i, n, n1, flag
@@ -254,6 +221,7 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
     ! Initialization
     n = size(x)
     n1 = n + 1
+    offset = x(1)
     nrmold = huge(nrmold)
     
     ! Memory Allocations
@@ -270,7 +238,8 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
         lu(n1), &
         g(n1), &
         h(n1, n1), &
-        ipiv(n1) &
+        ipiv(n1), &
+        dxdt(n) &
     )
 
     ! Construct matrices
@@ -316,21 +285,30 @@ subroutine tvr_diff_small(alpha, dt, x, maxiter, dxdt, tol, niter)
 
     ! Extract the computed derivative
     dxdt = u(1:n)
-end subroutine
+end function
 
 ! ------------------------------------------------------------------------------
-function tvr_derivative(dt, x, alpha, maxiter, tol, niter) result(rst)
+function tvr_derivative(dt, x, alpha, maxiter, tol, use_sparse, niter) result(rst)
     !! Computes an estimate to the derivative of an evenly-sampled data
     !! set using total variation regularization.
+    !!
+    !! This implementation solves the augmented dense formulation using an
+    !! integration matrix and a first-difference regularization operator. The
+    !! dense formulation uses the physical time step in its difference matrix
+    !! and allocates dense matrices whose storage grows quadratically with the
+    !! number of samples.
+    !!
+    !! When use_sparse is true, this routine dispatches to
+    !! tvr_derivative_sparse. That solver uses a different data-fitting term,
+    !! a second-difference operator, physical curvature scaling, and normalized
+    !! IRLS weights. Consequently, alpha values are solver-specific and should
+    !! not be compared directly.
     !!
     !! See Also
     !!
     !! - van Breugel, Floris & Brunton, Bingni & Kutz, J.. (2020). Numerical 
     !!   differentiation of noisy data: A unifying multi-objective optimization 
     !!   framework. 
-    !!
-    !! - Oliver K. Ernst, Ph. D. (2021, February 16). How to differentiate 
-    !!   noisy signals. Medium. https://oliver-k-ernst.medium.com/how-to-differentiate-noisy-signals-2baf71b8bb65 
     real(real64), intent(in) :: dt
         !! The time step between data points.
     real(real64), intent(in), dimension(:) :: x
@@ -343,17 +321,22 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter) result(rst)
         !! iterations.
     real(real64), intent(in), optional :: tol
         !! The convergence tolerance to use.  The tolerance is 
-        !! applied to the difference in Euclidean norms of the derivative update
-        !! vector.  Once the norm of the update vector is changing less than 
-        !! this tolerance, the iteration process will terminate.  The default
-        !! is 1e-3.
+        !! applied to the change in the update measure. The dense solver uses
+        !! an absolute Euclidean norm, while the sparse solver uses a relative
+        !! Euclidean norm. The default is 1e-3.
+    logical, intent(in), optional :: use_sparse
+        !! True if the sparse solver should be used vs. the dense solver.  This 
+        !! is highly recommended when N is larger than ~1000.  The default is 
+        !! true such that the sparse solver is used. The sparse solver has
+        !! linear storage growth and is preferred for large data sets.
     integer(int32), intent(out), optional :: niter
         !! The number of iterations actually performed.
     real(real64), allocatable, dimension(:) :: rst
         !! An N-element array containing the estimate of the derivative.
 
     ! Local Variables
-    integer(int32) :: mi, n, ni
+    logical :: sparse
+    integer(int32) :: mi, ni
     real(real64) :: gtol
     
     ! Initialization
@@ -367,12 +350,186 @@ function tvr_derivative(dt, x, alpha, maxiter, tol, niter) result(rst)
     else
         gtol = 1.0d-3
     end if
-    n = size(x)
-    allocate(rst(n))
+    if (present(use_sparse)) then
+        sparse = use_sparse
+    else
+        sparse = .true.
+    end if
 
     ! Process
-    call tvr_diff_small(alpha, dt, x, mi, rst, gtol, ni)
+    if (sparse) then
+        rst = tvr_derivative_sparse(dt, x, alpha, maxiter = mi, tol = gtol, &
+            niter = ni)
+    else
+        rst =  tvr_diff_small(alpha, dt, x, mi, gtol, ni)
+    end if
     if (present(niter)) niter = ni
+end function
+
+! ------------------------------------------------------------------------------
+function tvr_derivative_sparse(dt, x, alpha, maxiter, tol, niter) result(rst)
+    !! Computes a total-variation-regularized derivative using sparse matrices.
+    !!
+    !! This routine regularizes the finite-difference derivative with a sparse
+    !! second-difference operator and uses the derivative itself as the data
+    !! fit. The second difference is scaled by dt**2 to represent physical
+    !! curvature, then normalized before the IRLS weights are formed to keep
+    !! the sparse systems well conditioned. The resulting iteratively
+    !! reweighted systems contain at most five non-zero diagonals, so memory
+    !! use grows linearly with the number of samples.
+    !!
+    !! This is a scalable alternative to tvr_derivative, not an algebraically
+    !! equivalent sparse implementation of it. The two routines use different
+    !! data-fitting and regularization formulations. The sparse alpha is a
+    !! normalized regularization parameter and should not be compared directly
+    !! with the dense alpha.
+    real(real64), intent(in) :: dt
+        !! The time step between data points.
+    real(real64), intent(in), dimension(:) :: x
+        !! An N-element array containing the data whose derivative is
+        !! to be estimated.
+    real(real64), intent(in) :: alpha
+        !! The normalized regularization parameter. Larger values produce a
+        !! smoother derivative estimate. Its value is not directly comparable
+        !! with the alpha parameter used by the dense formulation.
+    integer(int32), intent(in), optional :: maxiter
+        !! The maximum number of reweighting iterations. The default is 20.
+    real(real64), intent(in), optional :: tol
+        !! The relative convergence tolerance applied to the derivative update
+        !! norm. The default is 1e-3.
+    integer(int32), intent(out), optional :: niter
+        !! The number of iterations actually performed.
+    real(real64), allocatable, dimension(:) :: rst
+        !! An N-element array containing the estimate of the derivative.
+
+    integer(int32) :: i, j, k, n, nrows, max_iterations, iterations
+    real(real64) :: convergence_tol, change, curvature_scale, system_scale
+    real(real64) :: data_coefficient, regularization_coefficient, dt2
+    real(real64), allocatable :: estimate(:), candidate(:), weights(:), &
+        second_difference(:), rhs(:)
+    type(csr_matrix) :: d, h
+
+    n = size(x)
+    allocate(rst(n))
+    if (n == 0) return
+    if (n < 3 .or. dt == 0.0d0 .or. alpha < 0.0d0) then
+        rst = finite_difference(dt, x)
+        if (present(niter)) niter = 0
+        return
+    end if
+
+    if (present(maxiter)) then
+        max_iterations = maxiter
+    else
+        max_iterations = 20
+    end if
+    if (present(tol)) then
+        convergence_tol = tol
+    else
+        convergence_tol = 1.0d-3
+    end if
+    if (max_iterations < 1) then
+        rst = finite_difference(dt, x)
+        if (present(niter)) niter = 0
+        return
+    end if
+
+    nrows = n - 2
+    allocate(estimate(n), candidate(n), rhs(n), weights(nrows), &
+        second_difference(nrows))
+    estimate = finite_difference(dt, x)
+    rhs = estimate
+
+    d = create_empty_csr_matrix(nrows, n, 3 * nrows)
+    d%row_indices(1) = 1
+    do i = 1, nrows
+        k = 3 * (i - 1) + 1
+        d%column_indices(k:k+2) = [i, i + 1, i + 2]
+        d%values(k:k+2) = [1.0d0, -2.0d0, 1.0d0]
+        d%row_indices(i + 1) = k + 3
+    end do
+
+    iterations = 0
+    dt2 = dt**2
+    do i = 1, max_iterations
+        second_difference = matmul(d, estimate) / dt2
+        curvature_scale = max(1.0d0, maxval(abs(second_difference)))
+        weights = 1.0d0 / sqrt((second_difference / curvature_scale)**2 + &
+            sqrt(epsilon(1.0d0)))
+
+        ! Curvature is normalized before IRLS weighting. This preserves the
+        ! relative weighting while avoiding large coefficients for flat data.
+        system_scale = max(1.0d0, alpha * maxval(weights))
+        data_coefficient = 1.0d0 / system_scale
+        regularization_coefficient = alpha / system_scale
+
+        h = create_empty_csr_matrix(n, n, 5 * n - 6)
+        h%row_indices(1) = 1
+        k = 1
+        do j = 1, n
+            do while (k <= h%row_indices(1) - 1)
+                k = k + 1
+            end do
+            call fill_sparse_system_row(j, weights, data_coefficient, &
+                regularization_coefficient, h, k)
+            h%row_indices(j + 1) = k
+        end do
+
+        candidate = sparse_direct_solve(h, data_coefficient * rhs)
+        change = norm2(candidate - estimate) / max(norm2(estimate), 1.0d0)
+        estimate = candidate
+        iterations = i
+        if (change < convergence_tol) exit
+    end do
+
+    rst = estimate
+    if (present(niter)) niter = iterations
+end function
+
+! ------------------------------------------------------------------------------
+pure subroutine fill_sparse_system_row(row, weights, data_coefficient, &
+    regularization_coefficient, h, offset)
+    integer(int32), intent(in) :: row
+    real(real64), intent(in) :: weights(:), data_coefficient, &
+        regularization_coefficient
+    type(csr_matrix), intent(inout) :: h
+    integer(int32), intent(inout) :: offset
+
+    integer(int32) :: col, first_row, last_row, difference_row
+    real(real64) :: value
+
+    first_row = max(1, row - 2)
+    last_row = min(size(weights), row)
+    do col = first_row, last_row + 2
+        value = 0.0d0
+        do difference_row = first_row, last_row
+            value = value + second_difference_coefficient(difference_row, col) * &
+                second_difference_coefficient(difference_row, row) * &
+                weights(difference_row)
+        end do
+        value = value * regularization_coefficient
+        if (col == row) value = value + data_coefficient
+        h%column_indices(offset) = col
+        h%values(offset) = value
+        offset = offset + 1
+    end do
+end subroutine
+
+! ------------------------------------------------------------------------------
+pure function second_difference_coefficient(row, col) result(value)
+    integer(int32), intent(in) :: row, col
+    real(real64) :: value
+
+    select case (col - row)
+    case (0)
+        value = 1.0d0
+    case (1)
+        value = -2.0d0
+    case (2)
+        value = 1.0d0
+    case default
+        value = 0.0d0
+    end select
 end function
 
 ! ******************************************************************************

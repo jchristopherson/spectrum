@@ -74,7 +74,7 @@
             <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
               <a data-bs-toggle="tooltip"
                  data-bs-placement="bottom" data-html="true"
-                 title="15.9% of total for modules and submodules.">252 statements</a>
+                 title="20.5% of total for modules and submodules.">366 statements</a>
             </li>
 
             <li class="list-inline-item" id="source-file">
@@ -164,9 +164,10 @@
         <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <ul class="list-inline">
+                  <li class="list-inline-item">lapack</li>
                   <li class="list-inline-item"><a href='http://fortranwiki.org/fortran/show/iso_fortran_env'>iso_fortran_env</a></li>
-                  <li class="list-inline-item">blas</li>
                   <li class="list-inline-item">linalg</li>
+                  <li class="list-inline-item">blas</li>
               </ul>
             </li>
         </ul>
@@ -225,7 +226,7 @@ differences.</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~32"></span>
+              <span class="anchor" id="variable-x~29"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -285,7 +286,7 @@ set using total variation regularization.</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~33"></span>
+              <span class="anchor" id="variable-x~30"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -340,7 +341,7 @@ system as a filter.</p>
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-dt~8"></span>
+              <span class="anchor" id="variable-dt~9"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -355,7 +356,7 @@ system as a filter.</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~38"></span>
+              <span class="anchor" id="variable-x~36"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -371,7 +372,7 @@ estimated.</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-fc~5"></span>
+              <span class="anchor" id="variable-fc~6"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -417,7 +418,7 @@ and the derivative estimate in the second.</p>
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-dt~6"></span>
+              <span class="anchor" id="variable-dt~7"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -432,7 +433,7 @@ and the derivative estimate in the second.</p>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~36"></span>
+              <span class="anchor" id="variable-x~34"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -479,7 +480,7 @@ set.</p><a href="../proc/stencil_second_diff_5.html" class="pull-right"><emph>Re
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-dt~7"></span>
+              <span class="anchor" id="variable-dt~8"></span>
               real(kind=real64),
             </td>
 <td>intent(in)</td>
@@ -494,7 +495,7 @@ set.</p><a href="../proc/stencil_second_diff_5.html" class="pull-right"><emph>Re
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~37"></span>
+              <span class="anchor" id="variable-x~35"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -521,7 +522,7 @@ estimated.</p>
   </div>
 
               <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-tvr_derivative"></span> <h3>public  function <a href='..\proc\tvr_derivative.html'>tvr_derivative</a>(dt, x, alpha, maxiter, tol, niter) result(rst)  
+    <div class="card-header codesum"><span class="anchor" id="proc-tvr_derivative"></span> <h3>public  function <a href='..\proc\tvr_derivative.html'>tvr_derivative</a>(dt, x, alpha, maxiter, tol, use_sparse, niter) result(rst)  
 </h3></div>
     <div class="card-body">
           
@@ -556,7 +557,7 @@ set using total variation regularization.</p><a href="../proc/tvr_derivative.htm
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-x~35"></span>
+              <span class="anchor" id="variable-x~32"></span>
               real(kind=real64),
             </td>
 <td>intent(in),</td>
@@ -614,10 +615,27 @@ iterations.</p>
             <td><strong>tol</strong></td>
             <td>
 <p>The convergence tolerance to use.  The tolerance is 
-applied to the difference in Euclidean norms of the derivative update
-vector.  Once the norm of the update vector is changing less than 
-this tolerance, the iteration process will terminate.  The default
-is 1e-3.</p>
+applied to the change in the update measure. The dense solver uses
+an absolute Euclidean norm, while the sparse solver uses a relative
+Euclidean norm. The default is 1e-3.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-use_sparse"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>use_sparse</strong></td>
+            <td>
+<p>True if the sparse solver should be used vs. the dense solver.  This 
+is highly recommended when N is larger than ~1000.  The default is 
+true such that the sparse solver is used. The sparse solver has
+linear storage growth and is preferred for large data sets.</p>
             </td>
         </tr>
         <tr>
@@ -668,7 +686,7 @@ is 1e-3.</p>
             <p class="text-end">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
- on 2026-08-13 09:21              </p>
+ on 2026-08-14 07:25              </p>
           </div>
         </div>
         <br>
