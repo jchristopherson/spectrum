@@ -5,12 +5,12 @@ program example
     implicit none
 
     ! Variables
-    integer(int32), parameter :: npts = 100
+    integer(int32), parameter :: npts = 1000
     integer(int32), parameter :: hn = npts / 2
     real(real64), parameter :: slope = 1.0d0
     real(real64), parameter :: intercept = 1.0d0
     real(real64), parameter :: maxt = 1.0d0
-    real(real64), parameter :: alpha = 1.0d-2
+    real(real64), parameter :: alpha = 3.0d2
     integer(int32) :: niter
     real(real64) :: dt, t(npts), x(npts), noise(npts), fd(npts), tvr(npts)
 
@@ -31,7 +31,7 @@ program example
 
     ! Compute the derivative using TVR
     tvr = tvr_derivative(dt, x, alpha, niter = niter)
-    print "(AI0)", "Iterations: ", niter
+    print "(A, I0)", "Iterations: ", niter
 
     ! For comparison, compute the derivative via a 5-point stencil
     fd = stencil_diff_5(dt, x)

@@ -108,4 +108,24 @@ function test_stencil_diff_2() result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+function test_tvr_derivative_sparse() result(rst)
+    logical :: rst
+
+    integer(int32), parameter :: n = 1000
+    real(real64), parameter :: dt = 1.0d-3
+    real(real64), parameter :: alpha = 1.0d0
+    real(real64), parameter :: tol = 1.0d-5
+    real(real64) :: x(n), dxdt(n)
+    integer(int32) :: i, niter
+
+    do i = 1, n
+        x(i) = 2.0d0 * real(i - 1, real64) * dt + 3.0d0
+    end do
+
+    dxdt = tvr_derivative(dt, x, alpha, use_sparse = .true., niter = niter)
+    rst = niter > 0 .and. all(abs(dxdt - 2.0d0) < tol)
+    if (.not.rst) print "(A)", "TEST FAILED: test_tvr_derivative_sparse -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module
