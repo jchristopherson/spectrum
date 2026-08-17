@@ -120,4 +120,32 @@ function test_design_fir_filter() result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+function test_filter_boundaries() result(rst)
+    logical :: rst
+
+    integer(int32), parameter :: n = 16
+    real(real64), parameter :: fs = 16.0d0
+    real(real64), parameter :: tol = 1.0d-10
+    real(real64) :: x(n), y(n), delays(1)
+    real(real64), allocatable :: z(:), high(:), avg(:), one(:)
+    real(real64), parameter :: b(1) = [2.0d0]
+    real(real64), parameter :: a(1) = [2.0d0]
+
+    x = 1.0d0
+    z = gaussian_filter(x, 1.0d0, 1_int32)
+    high = sinc_filter(4.0d0, fs, x, ftype = HIGH_PASS_FILTER)
+    avg = moving_average_filter(3_int32, x)
+    one = filter(b, a, x)
+    delays = 0.0d0
+    one = filter([1.0d0, 1.0d0], [1.0d0], x, delays)
+    y = tv_filter(x, 0.5d0)
+    rst = allocated(z) .and. allocated(high) .and. allocated(avg) .and. &
+        allocated(one) .and. maxval(abs(z - x)) < tol .and. &
+        maxval(abs(high)) < tol .and. maxval(abs(avg(4:n) - x(4:n))) < tol .and. &
+        maxval(abs(one(3:n) - 2.0d0 * x(3:n))) < tol .and. &
+        maxval(abs(delays - 1.0d0)) < tol .and. maxval(abs(y - x)) < tol
+    if (.not.rst) print '(A)', "TEST FAILED: test_filter_boundaries -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module

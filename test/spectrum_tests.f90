@@ -70,11 +70,14 @@ program test
     local = test_design_fir_filter()
     if (.not.local) flag = 18
 
-    local = test_siso_transfer_function()
+    local = test_filter_boundaries()
     if (.not.local) flag = 19
 
-    local = test_mimo_transfer_function()
+    local = test_siso_transfer_function()
     if (.not.local) flag = 20
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 21
 
     ! Output
     stop flag
