@@ -54,11 +54,17 @@ program test
     local = test_design_iir_filter()
     if (.not.local) flag = 12
 
-    local = test_siso_transfer_function()
+    local = test_butterworth_filter_order()
     if (.not.local) flag = 13
 
-    local = test_mimo_transfer_function()
+    local = test_design_fir_filter()
     if (.not.local) flag = 14
+
+    local = test_siso_transfer_function()
+    if (.not.local) flag = 15
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 16
 
     ! Output
     stop flag

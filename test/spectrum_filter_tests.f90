@@ -91,4 +91,33 @@ function test_design_iir_filter() result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+function test_butterworth_filter_order() result(rst)
+    logical :: rst
+
+    integer(int32) :: lowpass_order, highpass_order, invalid_order
+
+    lowpass_order = butterworth_filter_order(100.0d0, 1000.0d0, 200.0d0, &
+        1.0d0, 40.0d0)
+    highpass_order = butterworth_filter_order(200.0d0, 1000.0d0, 100.0d0, &
+        1.0d0, 40.0d0, HIGH_PASS_FILTER)
+    invalid_order = butterworth_filter_order(200.0d0, 1000.0d0, 100.0d0, &
+        1.0d0, 40.0d0)
+    rst = lowpass_order == 7 .and. highpass_order == 7 .and. invalid_order == 0
+    if (.not.rst) print "(A)", "TEST FAILED: test_butterworth_filter_order -1"
+end function
+
+! ------------------------------------------------------------------------------
+function test_design_fir_filter() result(rst)
+    logical :: rst
+
+    real(real64), allocatable :: b(:), a(:)
+    type(rectangular_window) :: win
+
+    call design_fir_filter(5_int32, 100.0d0, 1000.0d0, b, a, win = win)
+    rst = size(b) == 5 .and. size(a) == 1 .and. win%size == 5 .and. &
+        abs(sum(b) - 1.0d0) < 1.0d-12 .and. abs(b(1) - b(5)) < 1.0d-12
+    if (.not.rst) print "(A)", "TEST FAILED: test_design_fir_filter -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module
