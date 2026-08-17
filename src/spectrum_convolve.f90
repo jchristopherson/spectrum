@@ -4,6 +4,7 @@ module spectrum_convolve
     implicit none
     private
     public :: convolve
+    public :: deconvolve
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
 
@@ -57,6 +58,7 @@ pure function convolve(x, y, method) result(rst)
     end if
 
     ! Prepare the signals
+    if (size(x) < 1 .or. size(y) < 1) return
     call prepare_conv(x, y, xmod, ymod, n1, n2)
 
     ! Compute the convolution
@@ -65,6 +67,44 @@ pure function convolve(x, y, method) result(rst)
         rst = temp(n1:n2)
     else
         call convolve_driver(xmod, ymod, 1, rst)
+    end if
+end function
+
+! ------------------------------------------------------------------------------
+pure function deconvolve(x, y, method) result(rst)
+    !! Computes the frequency-domain deconvolution of a signal and kernel.
+    !!
+    !! The result uses the same output selection as [[convolve]]. Full
+    !! deconvolution returns N + M - 1 samples; central deconvolution returns
+    !! the central portion with the length of the longer input.
+    real(real64), intent(in) :: x(:)
+        !! The signal to deconvolve.
+    real(real64), intent(in) :: y(:)
+        !! The kernel to remove from the signal.
+    integer(int32), intent(in), optional :: method
+        !! SPCTRM_FULL_CONVOLUTION (default) or SPCTRM_CENTRAL_CONVOLUTION.
+    real(real64), allocatable :: rst(:)
+        !! The deconvolved result.
+
+    integer(int32) :: mth, n1, n2
+    real(real64), allocatable :: temp(:)
+    complex(real64), allocatable :: xmod(:), ymod(:)
+
+    if (present(method)) then
+        mth = method
+    else
+        mth = SPCTRM_FULL_CONVOLUTION
+    end if
+    if (mth /= SPCTRM_FULL_CONVOLUTION .and. &
+        mth /= SPCTRM_CENTRAL_CONVOLUTION) mth = SPCTRM_FULL_CONVOLUTION
+    if (size(x) < 1 .or. size(y) < 1) return
+
+    call prepare_conv(x, y, xmod, ymod, n1, n2)
+    if (mth == SPCTRM_CENTRAL_CONVOLUTION) then
+        call convolve_driver(xmod, ymod, -1, temp)
+        rst = temp(n1:n2)
+    else
+        call convolve_driver(xmod, ymod, -1, rst)
     end if
 end function
 
@@ -88,8 +128,6 @@ pure subroutine prepare_conv(x, y, xmod, ymod, n1, n2)
     ! Local Variables
     integer(int32) :: nx, ny, n, nbig, dn, m
     logical :: evenY
-    character(len = :), allocatable :: errmsg
-
     ! Initialization
     nx = size(x)
     ny = size(y)
@@ -138,13 +176,12 @@ pure subroutine convolve_driver(x, y, method, rst)
     real(real64) :: fac
     real(real64), allocatable, dimension(:) :: work
     complex(real64), allocatable, dimension(:) :: cxy
-    character(len = :), allocatable :: errmsg
-
     ! Generate the workspace array for the transforms & allocate memory
     n = size(x)
     lwork = 4 * n + 15
     allocate(work(lwork))
     allocate(rst(n))
+    allocate(cxy(n))
 
     ! Compute the FFT's of both signals
     call zffti(n, work)
@@ -160,16 +197,15 @@ pure subroutine convolve_driver(x, y, method, rst)
         cxy = x * y
     else
         ! Divide the FFT's to deconvolve
-        cxy = x / y
+        cxy = (0.0d0, 0.0d0)
+        do i = 1, n
+            if (abs(y(i)) > tiny(1.0d0)) cxy(i) = x(i) / y(i)
+        end do
     end if
 
     ! Compute the inverse transform
     call zfftb(n, cxy, work)
-    if (method == 1) then
-        rst = real(fac * cxy)
-    else
-        rst = real(cxy)
-    end if
+    rst = real(fac * cxy)
 end subroutine
 
 ! ------------------------------------------------------------------------------

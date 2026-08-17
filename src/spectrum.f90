@@ -52,6 +52,7 @@ module spectrum
 
     ! SPECTRUM_CONVOLVE.F90
     public :: convolve
+    public :: deconvolve
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
 
