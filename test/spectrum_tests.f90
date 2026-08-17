@@ -4,6 +4,7 @@ program test
     use spectrum_diff_tests
     use spectrum_integrate_tests
     use spectrum_filter_tests
+    use spectrum_resample_tests
     use spectrum_tf_tests
     implicit none
 
@@ -54,23 +55,26 @@ program test
     local = test_sinc_filter()
     if (.not.local) flag = 13
 
-    local = test_filter_frequency_response()
-    if (.not.local) flag = 13
-
-    local = test_design_iir_filter()
+    local = test_resample()
     if (.not.local) flag = 14
 
-    local = test_butterworth_filter_order()
+    local = test_filter_frequency_response()
     if (.not.local) flag = 15
 
-    local = test_design_fir_filter()
+    local = test_design_iir_filter()
     if (.not.local) flag = 16
 
-    local = test_siso_transfer_function()
+    local = test_butterworth_filter_order()
     if (.not.local) flag = 17
 
-    local = test_mimo_transfer_function()
+    local = test_design_fir_filter()
     if (.not.local) flag = 18
+
+    local = test_siso_transfer_function()
+    if (.not.local) flag = 19
+
+    local = test_mimo_transfer_function()
+    if (.not.local) flag = 20
 
     ! Output
     stop flag
