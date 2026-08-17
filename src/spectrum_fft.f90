@@ -128,6 +128,7 @@ pure function stft(win, x) result(rst)
     ! Initialization
     nx = size(x)
     m = win%size          ! # of rows in the output matrix (transform length)
+    if (m < 1 .or. nx < m) return
     nxfrm = compute_transform_length(m)
     lwork = 2 * m + 15
     nk = compute_overlap_segment_count(nx, m)
@@ -144,10 +145,6 @@ pure function stft(win, x) result(rst)
         scale = 2.0d0 / (m - 1.0d0)
     end if
 
-    ! Input Checking
-    if (m > nx) return
-
-    ! Memory Allocation
     allocate(work(lwork), buffer(m))
     allocate(rst%stft(nxfrm, nk))
     allocate(rst%offsets(nk), source = 0)
@@ -172,18 +169,25 @@ pure function stft(win, x) result(rst)
             sumw = sumw + w
             buffer(k) = w * x(k + i1)
         end do
+        if (abs(sumw) <= tiny(1.0d0)) return
         fac = m / sumw
 
         ! Compute the transform
         call dfftf(m, buffer, work)
 
         ! Scale the transform
-        rst%stft(1,i) = fac * scale * cmplx(buffer(1), 0.0d0, real64)
+        if (m == 1) then
+            rst%stft(1,i) = fac * cmplx(buffer(1), 0.0d0, real64)
+        else
+            rst%stft(1,i) = 0.5d0 * fac * scale * &
+                cmplx(buffer(1), 0.0d0, real64)
+        end if
         do k = 2, nend
             rst%stft(k,i) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
         end do
         if (nend /= nxfrm) then
-            rst%stft(nxfrm,i) = fac * scale * cmplx(buffer(m), 0.0d0, real64)
+            rst%stft(nxfrm,i) = 0.5d0 * fac * scale * &
+                cmplx(buffer(m), 0.0d0, real64)
         end if
     end do
 end function

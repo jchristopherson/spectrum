@@ -312,4 +312,24 @@ function test_spectrogram() result(rst)
     end do
 end function
 
+    function test_stft_scaling() result(rst)
+        logical :: rst
+
+        integer(int32), parameter :: window_size = 4
+        integer(int32), parameter :: signal_length = 10
+        real(real64), parameter :: tol = 1.0d-12
+        real(real64) :: x(signal_length)
+        type(rectangular_window) :: win
+        type(stft_result) :: result
+
+        x = 1.0d0
+        win%size = window_size
+        result = stft(win, x)
+        rst = size(result%stft, 1) == 3 .and. size(result%stft, 2) == 3 .and. &
+            all(result%offsets == [1, 4, 7]) .and. &
+            maxval(abs(result%stft(1,:) - (1.0d0, 0.0d0))) < tol .and. &
+            maxval(abs(result%stft(2:,:))) < tol
+        if (.not.rst) print '(A)', "TEST FAILED: test_stft_scaling -1"
+    end function
+
 end module
