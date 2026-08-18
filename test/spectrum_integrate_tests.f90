@@ -34,4 +34,27 @@ function test_integrate() result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
+function test_integrate_boundaries() result(rst)
+    logical :: rst
+
+    real(real64), parameter :: dt = 0.5d0
+    real(real64), parameter :: tol = 1.0d-12
+    real(real64), parameter :: x1(1) = [2.0d0]
+    real(real64), parameter :: x2(2) = [2.0d0, 2.0d0]
+    real(real64), parameter :: x3(3) = [2.0d0, 2.0d0, 2.0d0]
+    real(real64), parameter :: expected2(2) = [1.0d0, 2.0d0]
+    real(real64), parameter :: expected3(3) = [1.0d0, 2.0d0, 3.0d0]
+    real(real64), allocatable :: y1(:), y2(:), y3(:), y6(:)
+
+    y1 = integrate(dt, x1, 1.0d0)
+    y2 = integrate(dt, x2, 1.0d0)
+    y3 = integrate(dt, x3, 1.0d0)
+    y6 = integrate(dt, [x3, x3])
+    rst = assert(y1, [1.0d0], tol) .and. assert(y2, expected2, tol) .and. &
+        assert(y3, expected3, tol) .and. maxval(abs(y6 - &
+        [0.0d0, 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0])) < tol
+    if (.not.rst) print "(A)", "TEST FAILED: test_integrate_boundaries -1"
+end function
+
+! ------------------------------------------------------------------------------
 end module
