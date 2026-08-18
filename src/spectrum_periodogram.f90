@@ -23,7 +23,7 @@ pure function psd(win, x, fs, nfft) result(rst)
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
     !!
-    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !! - <a href="https://en.wikipedia.org/wiki/Welch%27s_method" target="_blank">Wikipedia - Welch's Method</a>
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
         !! positive-valued.
@@ -99,9 +99,10 @@ pure function csd(win, x, y, fs, nfft) result(rst)
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
     !!
-    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !! - <a href="https://en.wikipedia.org/wiki/Welch%27s_method" target="_blank">Wikipedia - Welch's Method</a>
     !!
-    !! - [Wikipedia - Cross Power Spectral Density](https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density)
+    !! - <a href="https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density" 
+    !! target="_blank">Wikipedia - Cross Power Spectral Density</a>
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
         !! positive-valued.

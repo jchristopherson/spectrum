@@ -111,7 +111,8 @@ pure function stft(win, x) result(rst)
     !!
     !! See Also
     !!
-    !! - [Wikipedia - Short Time Fourier Transform](https://en.wikipedia.org/wiki/Short-time_Fourier_transform)
+    !! - <a href="https://en.wikipedia.org/wiki/Short-time_Fourier_transform" 
+    !! target="_blank">Wikipedia - Short Time Fourier Transform</a>
     class(window), intent(in) :: win
         !! The window to apply.
     real(real64), intent(in) :: x(:)

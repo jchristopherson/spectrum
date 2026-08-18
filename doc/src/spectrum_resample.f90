@@ -25,10 +25,10 @@ pure function upsample(n, fs, x) result(rst)
     
     ! Initialization
     npts = size(x)
-    nnew = n * npts
 
     ! Input Checking
-    if (n < 1) return
+    if (n < 1 .or. fs <= 0.0d0 .or. npts < 1) return
+    nnew = n * npts
 
     ! Memory Allocations
     allocate(rst(nnew), source = 0.0d0)
@@ -67,10 +67,11 @@ pure function downsample(n, fs, x) result(rst)
     
     ! Initialization
     npts = size(x)
-    nnew = npts / n
 
     ! Input Checking
-    if (n < 1) return
+    if (n < 1 .or. fs <= 0.0d0 .or. npts < 1) return
+    nnew = npts / n
+    if (nnew < 1) return
 
     ! Memory Allocations
     allocate(rst(nnew), source = 0.0d0)

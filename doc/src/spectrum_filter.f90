@@ -58,8 +58,13 @@ pure function gaussian_filter(x, alpha, k) result(rst)
     sumg = 0.0d0
 
     ! Input Checking
-    if (nk > size(x) .or. k < 1) return
+    if (nk > size(x) .or. k < 1 .or. size(x) < 1) return
     if (alpha <= 0.0d0) return
+
+    if (nk == 1) then
+        rst = x
+        return
+    end if
 
     ! Memory Allocation
     allocate(g(nk))
@@ -119,7 +124,12 @@ pure function tv_filter(x, lambda, niter) result(rst)
     n = size(x)
 
     ! Input Checking
-    if (nit < 1) return
+    if (nit < 1 .or. n < 1) return
+
+    if (n == 1) then
+        rst = x
+        return
+    end if
 
     ! Memory Allocations
     allocate(rst(n))
@@ -144,7 +154,7 @@ pure function tv_filter(x, lambda, niter) result(rst)
 end function
 
 ! ------------------------------------------------------------------------------
-pure function filter(b, a, x, delays) result(rst)
+function filter(b, a, x, delays) result(rst)
     !! Applies the specified filter to a signal.
     !!
     !! The description of the filter in the Z-transform domain is a rational
@@ -164,7 +174,7 @@ pure function filter(b, a, x, delays) result(rst)
         !! a(1) must be non-zero.
     real(real64), intent(in) :: x(:)
         !! An N-element array containing the signal to filter.
-    real(real64), intent(in), optional, target :: delays(:)
+    real(real64), intent(inout), optional, target :: delays(:)
         !! An optional array of length MAX(size(a), size(b)) - 1 that provides 
         !! the initial conditions for filter delays, and on ouput, the final 
         !! conditions for filter delays.
@@ -189,8 +199,17 @@ pure function filter(b, a, x, delays) result(rst)
     end if
 
     ! Input Checking
-    if (na < 1) return
+    if (na < 1 .or. nb < 1 .or. nx < 1) return
     if (abs(a(1)) < tol) return
+    if (present(delays)) then
+        if (size(delays) /= n - 1) return
+    end if
+
+    if (n == 1) then
+        allocate(rst(nx))
+        rst = (b(1) / a(1)) * x
+        return
+    end if
 
     ! Memory Allocations
     if (present(delays)) then
@@ -229,13 +248,14 @@ pure function filter(b, a, x, delays) result(rst)
             do i = 2, n - 1
                 z(i-1) = bb(i) * x(m) + z(i)
             end do
-            ! Omit z(n), which is always zero
+            z(n-1) = bb(n) * x(m)
         end do
     end if
+    if (present(delays)) delays = z
 end function
 
 ! ------------------------------------------------------------------------------
-pure function moving_average_filter(navg, x) result(rst)
+function moving_average_filter(navg, x) result(rst)
     !! Applies a moving average filter to a signal.
     integer(int32), intent(in) :: navg
         !! The size of the averaging window.  This parameter must be positive
@@ -300,7 +320,7 @@ pure function sinc_filter(fc, fs, x, fc2, ftype) result(rst)
     nw = 2 * n + 15
 
     ! Input Checking
-    if (fs <= 0.0d0) then
+    if (n < 1 .or. fs <= 0.0d0) then
         return
     end if
     if (fc <= 0.0d0) then
@@ -320,6 +340,9 @@ pure function sinc_filter(fc, fs, x, fc2, ftype) result(rst)
             return
         end if
         if (fc2 >= 0.5d0 * fs) then
+            return
+        end if
+        if (fc2 <= fc) then
             return
         end if
     end if
@@ -343,17 +366,23 @@ pure function sinc_filter(fc, fs, x, fc2, ftype) result(rst)
     select case (filterType)
     case (LOW_PASS_FILTER)
         ! Zero out anything above the cutoff frequency
+        start = min(n, max(2, start + 2))
         rst(start:n) = 0.0d0
     case (HIGH_PASS_FILTER)
         ! Zero out anything below the cutoff frequency
+        start = min(n, max(1, start))
         rst(1:start) = 0.0d0
     case (BAND_PASS_FILTER)
         ! Zero out anything below the first cutoff frequency
+        start = min(n, max(1, start))
         rst(1:start) = 0.0d0
         ! Zero out anything above the second cutoff frequency
+        finish = min(n, max(1, finish + 2))
         rst(finish:n) = 0.0d0
     case (BAND_STOP_FILTER)
         ! Zero out anything between the two cutoff frequencies
+        start = min(n, max(1, start))
+        finish = min(n, max(1, finish + 2))
         rst(start:finish) = 0.0d0
     end select
 
