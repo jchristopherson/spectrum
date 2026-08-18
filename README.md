@@ -39,7 +39,6 @@ spectrum = { git = "https://github.com/jchristopherson/spectrum" }
 
 ## External Libraries
 The SPECTRUM library depends upon the following libraries.
-- [FERROR](https://github.com/jchristopherson/ferror)
 - [BLAS](http://www.netlib.org/blas/)
 - [LAPACK](http://www.netlib.org/lapack/)
 - [LINALG](https://github.com/jchristopherson/linalg)

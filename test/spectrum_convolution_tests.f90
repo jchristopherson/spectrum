@@ -12,7 +12,7 @@ function test_convolution() result(rst)
     ! Local Variables
     real(real64) :: u1(3), v1(2), u2(7), v2(4), u3(3), v3(7), &
         ans1(4), ans2(7), ans3(9)
-    real(real64), allocatable, dimension(:) :: w1, w2, w3
+    real(real64), allocatable, dimension(:) :: w1, w2, w3, w4
 
     ! Initialization
     rst = .true.
@@ -47,6 +47,12 @@ function test_convolution() result(rst)
     if (.not.assert(ans3, w3)) then
         rst = .false.
         print '(A)', "TEST FAILED: test_convolution 1-3"
+    end if
+
+    w4 = deconvolve(ans1, v1)
+    if (.not.assert([1.0d0, 0.0d0, 1.0d0, 0.0d0, 0.0d0], w4, 1.0d-10)) then
+        rst = .false.
+        print '(A)', "TEST FAILED: test_convolution 1-4"
     end if
 end function
 

@@ -540,7 +540,7 @@ pure function stencil_diff_5(dt, x) result(rst)
     !!
     !! See Also
     !!
-    !! - [Wikipedia](https://en.wikipedia.org/wiki/Five-point_stencil)
+    !! - <a href="https://en.wikipedia.org/wiki/Five-point_stencil" target="_blank">Wikipedia</a>
     real(real64), intent(in) :: dt
         !! The time step between data points.
     real(real64), intent(in), dimension(:) :: x
@@ -580,7 +580,7 @@ pure function stencil_second_diff_5(dt, x) result(rst)
     !!
     !! See Also
     !!
-    !! - [Wikipedia](https://en.wikipedia.org/wiki/Five-point_stencil)
+    !! - <a href="https://en.wikipedia.org/wiki/Five-point_stencil" target="_blank">Wikipedia</a>
     real(real64), intent(in) :: dt
         !! The time step between data points.
     real(real64), intent(in), dimension(:) :: x

@@ -52,6 +52,7 @@ module spectrum
 
     ! SPECTRUM_CONVOLVE.F90
     public :: convolve
+    public :: deconvolve
     public :: SPCTRM_FULL_CONVOLUTION
     public :: SPCTRM_CENTRAL_CONVOLUTION
 
@@ -67,6 +68,7 @@ module spectrum
     public :: BAND_STOP_FILTER
 
     ! SPECTRUM_FILTER_DESIGN.F90
+    public :: butterworth_filter_order
     public :: design_fir_filter
     public :: design_iir_filter
     public :: filter_frequency_response

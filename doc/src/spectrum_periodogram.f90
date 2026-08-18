@@ -23,7 +23,7 @@ pure function psd(win, x, fs, nfft) result(rst)
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
     !!
-    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !! - <a href="https://en.wikipedia.org/wiki/Welch%27s_method" target="_blank">Wikipedia - Welch's Method</a>
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
         !! positive-valued.
@@ -57,6 +57,7 @@ pure function psd(win, x, fs, nfft) result(rst)
     else
         nf = nw
     end if
+    if (nx < 1 .or. nw < 1 .or. nf < nw) return
     nxfrm = compute_transform_length(nf)
     nk = compute_overlap_segment_count(nx, nw)
     lwork = 3 * nf + 15
@@ -98,9 +99,10 @@ pure function csd(win, x, y, fs, nfft) result(rst)
     !!  Periodograms." IEEE Transactions on Audio and Electroacoustics, 
     !!  AU-15 (2): 70-73, 1967.
     !!
-    !! - [Wikipedia - Welch's Method](https://en.wikipedia.org/wiki/Welch%27s_method)
+    !! - <a href="https://en.wikipedia.org/wiki/Welch%27s_method" target="_blank">Wikipedia - Welch's Method</a>
     !!
-    !! - [Wikipedia - Cross Power Spectral Density](https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density)
+    !! - <a href="https://en.wikipedia.org/wiki/Spectral_density#Cross-spectral_density" 
+    !! target="_blank">Wikipedia - Cross Power Spectral Density</a>
     class(window), intent(in) :: win
         !! The window to apply.  The size of the window must be non-zero and 
         !! positive-valued.
@@ -137,6 +139,7 @@ pure function csd(win, x, y, fs, nfft) result(rst)
     else
         nf = nw
     end if
+    if (nx < 1 .or. ny < 1 .or. nw < 1 .or. nf < nw) return
     nxfrm = compute_transform_length(nf)
     nk = compute_overlap_segment_count(nx, nw)
     lwork = 4 * nf + 15
@@ -198,6 +201,7 @@ pure function periodogram(win, x, fs, nfft) result(rst)
     else
         nf = n
     end if
+    if (n < 1 .or. nf < 1) return
     nxfrm = compute_transform_length(nf)
 
     ! Memory Allocation
@@ -240,6 +244,7 @@ pure function cross_periodogram(win, x, y, fs, nfft) result(rst)
     else
         nf = nx
     end if
+    if (nx < 1 .or. size(y) < 1 .or. nf < 1) return
     nxfrm = compute_transform_length(nf)
 
     ! Memory Allocation
@@ -286,7 +291,9 @@ pure subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
     else
         init = .true.
     end if
-    if (mod(nx, 2) == 0) then
+    if (nx == 1) then
+        scale = 1.0d0
+    else if (mod(nx, 2) == 0) then
         scale = 2.0d0 / nx
     else
         scale = 2.0d0 / (nx - 1.0d0)
@@ -325,6 +332,7 @@ pure subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
         wsum = wsum + wval
         xw(i) = wval * x(i)
     end do
+    if (abs(wsum) <= tiny(1.0d0)) return
     fac = nx / wsum
 
     ! Pad with zeros
@@ -333,6 +341,11 @@ pure subroutine periodogram_driver(win, x, xfrm, fs, nfft, work, initxfrm, &
     ! Compute the transform
     call dfftf(nf, xw, w)
     cw = unpack_real_transform(xw, fac * scale)
+
+    if (nf > 1) then
+        cw(1) = 0.5d0 * cw(1)
+        if (mod(nf, 2) == 0) cw(nxfrm) = 0.5d0 * cw(nxfrm)
+    end if
 
     ! Compute the power from the windowed transform
     xfrm = real(cw * conjg(cw))
@@ -382,7 +395,9 @@ pure subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
     else
         init = .true.
     end if
-    if (mod(nx, 2) == 0) then
+    if (nx == 1) then
+        scale = 1.0d0
+    else if (mod(nx, 2) == 0) then
         scale = 2.0d0 / nx
     else
         scale = 2.0d0 / (nx - 1.0d0)
@@ -427,6 +442,7 @@ pure subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
         xw(i) = wval * x(i)
         yw(i) = wval * y(i)
     end do
+    if (abs(wsum) <= tiny(1.0d0)) return
     fac = nx / wsum
 
     ! Pad with zeros
@@ -440,6 +456,15 @@ pure subroutine cross_periodogram_driver(win, x, y, xfrm, fs, nfft, work, &
     call dfftf(nf, yw, w)
     cx = unpack_real_transform(xw, fac * scale)
     cy = unpack_real_transform(yw, fac * scale)
+
+    if (nf > 1) then
+        cx(1) = 0.5d0 * cx(1)
+        cy(1) = 0.5d0 * cy(1)
+        if (mod(nf, 2) == 0) then
+            cx(nxfrm) = 0.5d0 * cx(nxfrm)
+            cy(nxfrm) = 0.5d0 * cy(nxfrm)
+        end if
+    end if
 
     ! Compute the cross spectrum
     xfrm = cx * conjg(cy)

@@ -34,13 +34,13 @@ pure function integrate(dt, x, iv) result(rst)
     !
     ! Utilize the fixed step-size Adams-Bashforth methods.
     rst(1) = init_val
-    if (n > 2) rst(2) = rst(1) + dt * x(1)     ! Euler method
-    if (n > 3) rst(3) = rst(2) + 0.5d0 * dt * (3.0d0 * x(2) - x(1))
-    if (n > 4) rst(4) = rst(3) + (dt / 1.2d1) * (2.3d1 * x(3) - 1.6d1 * x(2) + &
+    if (n > 1) rst(2) = rst(1) + dt * x(1)     ! Euler method
+    if (n > 2) rst(3) = rst(2) + 0.5d0 * dt * (3.0d0 * x(2) - x(1))
+    if (n > 3) rst(4) = rst(3) + (dt / 1.2d1) * (2.3d1 * x(3) - 1.6d1 * x(2) + &
         5.0d0 * x(1))
-    if (n > 5) rst(5) = rst(4) + (dt / 2.4d1) * (5.5d1 * x(4) - 5.9d1 * x(3) + &
+    if (n > 4) rst(5) = rst(4) + (dt / 2.4d1) * (5.5d1 * x(4) - 5.9d1 * x(3) + &
         3.7d1 * x(2) - 9.0d0 * x(1))
-    if (n > 6) then
+    if (n > 5) then
         do i = 6, n
             rst(i) = rst(i - 1) + (dt / 7.2d2) * (1.901d3 * x(i - 1) - &
                 2.774d3 * x(i - 2) + 2.616d3 * x(i - 3) - 1.274d3 * x(i - 4) + &
@@ -48,8 +48,6 @@ pure function integrate(dt, x, iv) result(rst)
         end do
     end if
 end function
-
-! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
 end module

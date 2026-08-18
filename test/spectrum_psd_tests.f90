@@ -34,6 +34,8 @@ function test_psd() result(rst)
     dt = 1.0d0 / sample_rate_hz
     x(1) = 0.0d0
     do i = 2, npts
+
+
         t = t + dt
         x(i) = amp1 * sin(2.0d0 * pi * freq1 * t)
     end do
@@ -310,6 +312,54 @@ function test_spectrogram() result(rst)
             print '(A)', "TEST FAILED: test_spectrogram 1-2"
         end if
     end do
+end function
+
+    function test_stft_scaling() result(rst)
+        logical :: rst
+
+        integer(int32), parameter :: window_size = 4
+        integer(int32), parameter :: signal_length = 10
+        real(real64), parameter :: tol = 1.0d-12
+        real(real64) :: x(signal_length)
+        type(rectangular_window) :: win
+        type(stft_result) :: result
+
+        x = 1.0d0
+        win%size = window_size
+        result = stft(win, x)
+        rst = size(result%stft, 1) == 3 .and. size(result%stft, 2) == 3 .and. &
+            all(result%offsets == [1, 4, 7]) .and. &
+            maxval(abs(result%stft(1,:) - (1.0d0, 0.0d0))) < tol .and. &
+            maxval(abs(result%stft(2:,:))) < tol
+        if (.not.rst) print '(A)', "TEST FAILED: test_stft_scaling -1"
+    end function
+
+function test_spectral_endpoint_scaling() result(rst)
+    logical :: rst
+
+    integer(int32), parameter :: npts = 8
+    real(real64), parameter :: fs = 8.0d0
+    real(real64), parameter :: tol = 1.0d-12
+    real(real64) :: x(npts), y(npts), df
+    real(real64), allocatable :: p(:), pwelch(:)
+    complex(real64), allocatable :: c(:), cwelch(:)
+    type(rectangular_window) :: win
+
+    x = 1.0d0
+    y = 2.0d0 * x
+    win%size = npts
+    df = frequency_bin_width(fs, npts)
+    p = periodogram(win, x)
+    pwelch = psd(win, x, fs)
+    c = cross_periodogram(win, x, y)
+    cwelch = csd(win, x, y, fs)
+    rst = abs(p(1) - 1.0d0) < tol .and. maxval(abs(p(2:))) < tol .and. &
+        abs(pwelch(1) - 1.0d0 / df) < tol .and. &
+        maxval(abs(pwelch(2:))) < tol .and. &
+        abs(c(1) - (2.0d0, 0.0d0)) < tol .and. maxval(abs(c(2:))) < tol .and. &
+        abs(cwelch(1) - cmplx(2.0d0 / df, 0.0d0, real64)) < tol .and. &
+        maxval(abs(cwelch(2:))) < tol
+    if (.not.rst) print '(A)', "TEST FAILED: test_spectral_endpoint_scaling -1"
 end function
 
 end module
