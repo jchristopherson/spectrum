@@ -49,7 +49,7 @@ module spectrum_windows
         !!
         !! See Also
         !!
-        !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+        !! - <a href="https://en.wikipedia.org/wiki/Window_function" target="_blank">Wikipedia</a>
     contains
         procedure, public :: evaluate => hann_eval
     end type
@@ -61,7 +61,7 @@ module spectrum_windows
         !!
         !! See Also
         !!
-        !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+        !! - <a href="https://en.wikipedia.org/wiki/Window_function" target="_blank">Wikipedia</a>
     contains
         procedure, public :: evaluate => hamming_eval
     end type
@@ -73,7 +73,7 @@ module spectrum_windows
         !!
         !! See Also
         !!
-        !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+        !! - <a href="https://en.wikipedia.org/wiki/Window_function" target="_blank">Wikipedia</a>
     contains
         procedure, public :: evaluate => welch_eval
     end type
@@ -87,7 +87,7 @@ module spectrum_windows
         !!
         !! See Also
         !!
-        !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+        !! - <a href="https://en.wikipedia.org/wiki/Window_function" target="_blank">Wikipedia</a>
     contains
         procedure, public :: evaluate => bhw_eval
     end type
@@ -103,7 +103,7 @@ module spectrum_windows
         !!
         !! See Also
         !!
-        !! - [Wikipedia](https://en.wikipedia.org/wiki/Window_function)
+        !! - <a href="https://en.wikipedia.org/wiki/Window_function" target="_blank">Wikipedia</a>
     contains
         procedure, public :: evaluate => ftw_eval
     end type
