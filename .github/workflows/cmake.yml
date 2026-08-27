@@ -13,6 +13,9 @@ jobs:
   test:
     name: ${{ matrix.os }} / ${{ matrix.compiler }} / shared=${{ matrix.shared }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +52,14 @@ jobs:
             compiler: gcc
             version: '14'
             shared: true
+          - os: windows-latest
+            compiler: gcc
+            version: '14'
+            shared: false
+          - os: windows-latest
+            compiler: gcc
+            version: '14'
+            shared: true
 
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +71,7 @@ jobs:
           version: ${{ matrix.version }}
       
       - name: Show Fortran compiler version
-        run: ${{ env.FC }} --version
+        run: '"$FC" --version'
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
           CC: ${{ steps.setup-fortran.outputs.cc }}
@@ -75,12 +86,28 @@ jobs:
             brew install openblas
           fi
 
+      # The Visual Studio generators do not support Fortran, so Windows builds
+      # are driven by Ninja using the MinGW toolchain from setup-fortran.
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y --no-progress
+
+      - name: Select the CMake generator
+        id: generator
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            echo "flag=-GNinja" >> "$GITHUB_OUTPUT"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure CMake
         run: >-
           cmake -S . -B build
+          ${{ steps.generator.outputs.flag }}
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-          -DCMAKE_Fortran_COMPILER=${{ env.FC }}
-          -DCMAKE_C_COMPILER=${{ env.CC }}
+          -DCMAKE_Fortran_COMPILER="$FC"
+          -DCMAKE_C_COMPILER="$CC"
           -DBUILD_TESTING=TRUE
           -DBUILD_SHARED_LIBS=${{ matrix.shared && 'TRUE' || 'FALSE' }}
         env:
@@ -95,9 +122,11 @@ jobs:
         run: ctest --output-on-failure -C ${{ env.BUILD_TYPE }}
 
       - name: Install with CMake
-        run: cmake --install build --prefix ${{ github.workspace }}/install --config ${{ env.BUILD_TYPE }}
+        run: cmake --install build --prefix "${{ github.workspace }}/install" --config ${{ env.BUILD_TYPE }}
 
       - name: Verify install with CMake consumer
+        env:
+          FC: ${{ steps.setup-fortran.outputs.fc }}
         run: |
           mkdir -p consumer
           cat > consumer/CMakeLists.txt <<'EOF'
@@ -117,5 +146,5 @@ jobs:
           end program main
           EOF
 
-          cmake -S consumer -B consumer/build -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install
+          cmake -S consumer -B consumer/build ${{ steps.generator.outputs.flag }} -DCMAKE_Fortran_COMPILER="$FC" -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
           cmake --build consumer/build

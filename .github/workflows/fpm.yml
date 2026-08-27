@@ -95,3 +95,36 @@ jobs:
           else
             fpm test
           fi
+
+  # setup-fortran does not supply BLAS/LAPACK on Windows, so the MinGW-w64
+  # toolchain is sourced from MSYS2 instead.
+  build-and-test-windows:
+    name: windows-latest / gcc / msys2
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-lapack
+            mingw-w64-x86_64-fpm
+
+      - name: Show compiler version
+        run: gfortran --version
+
+      - name: Build
+        run: fpm build
+
+      - name: Run tests
+        run: fpm test
