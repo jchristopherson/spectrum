@@ -6,6 +6,7 @@ program test
     use spectrum_filter_tests
     use spectrum_resample_tests
     use spectrum_tf_tests
+    use spectrum_fft_tests
     implicit none
 
     ! Local Variables
@@ -81,6 +82,30 @@ program test
 
     local = test_mimo_transfer_function()
     if (.not.local) flag = 21
+
+    local = test_irfft_odd_input_size()
+    if (.not.local) flag = 22
+
+    local = test_irfft_even_input_size()
+    if (.not.local) flag = 23
+
+    local = test_rfft_even_length()
+    if (.not.local) flag = 24
+
+    local = test_rfft_odd_length()
+    if (.not.local) flag = 25
+
+    local = test_rfft_padded_length()
+    if (.not.local) flag = 26
+
+    local = test_stft_even_window()
+    if (.not.local) flag = 27
+
+    local = test_stft_odd_window()
+    if (.not.local) flag = 28
+
+    local = test_stft_odd_input_size_guard()
+    if (.not.local) flag = 29
 
     ! Output
     stop flag

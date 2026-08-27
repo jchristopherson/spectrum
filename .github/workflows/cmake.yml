@@ -13,6 +13,9 @@ jobs:
   test:
     name: ${{ matrix.os }} / ${{ matrix.compiler }} / shared=${{ matrix.shared }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +52,14 @@ jobs:
             compiler: gcc
             version: '14'
             shared: true
+          - os: windows-latest
+            compiler: gcc
+            version: '14'
+            shared: false
+          - os: windows-latest
+            compiler: gcc
+            version: '14'
+            shared: true
 
     steps:
       - uses: actions/checkout@v4
@@ -60,12 +71,13 @@ jobs:
           version: ${{ matrix.version }}
       
       - name: Show Fortran compiler version
-        run: ${{ env.FC }} --version
+        run: '"$FC" --version'
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
           CC: ${{ steps.setup-fortran.outputs.cc }}
 
       - name: Install BLAS/LAPACK dependencies
+        if: runner.os != 'Windows'
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get update
@@ -75,12 +87,50 @@ jobs:
             brew install openblas
           fi
 
+      # mingw-w64-x86_64-lapack pulls in mingw-w64-x86_64-blas, giving the
+      # -lblas / -llapack import libraries that find_package(BLAS|LAPACK) needs.
+      - name: Install BLAS/LAPACK dependencies (Windows)
+        if: runner.os == 'Windows'
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          release: false
+          update: false
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-blas
+            mingw-w64-x86_64-lapack
+
+      - name: Expose BLAS/LAPACK to CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          root='${{ steps.msys2.outputs.msys2-location }}\mingw64'
+          echo "CMAKE_PREFIX_PATH=${root}" >> "$GITHUB_ENV"
+          echo "${root}\bin" >> "$GITHUB_PATH"
+
+      # The Visual Studio generators do not support Fortran, so Windows builds
+      # are driven by Ninja using the MinGW toolchain from setup-fortran.
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y --no-progress
+
+      - name: Select the CMake generator
+        id: generator
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            echo "flag=-GNinja" >> "$GITHUB_OUTPUT"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure CMake
         run: >-
           cmake -S . -B build
+          ${{ steps.generator.outputs.flag }}
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-          -DCMAKE_Fortran_COMPILER=${{ env.FC }}
-          -DCMAKE_C_COMPILER=${{ env.CC }}
+          -DCMAKE_Fortran_COMPILER="$FC"
+          -DCMAKE_C_COMPILER="$CC"
           -DBUILD_TESTING=TRUE
           -DBUILD_SHARED_LIBS=${{ matrix.shared && 'TRUE' || 'FALSE' }}
         env:
@@ -95,9 +145,11 @@ jobs:
         run: ctest --output-on-failure -C ${{ env.BUILD_TYPE }}
 
       - name: Install with CMake
-        run: cmake --install build --prefix ${{ github.workspace }}/install --config ${{ env.BUILD_TYPE }}
+        run: cmake --install build --prefix "${{ github.workspace }}/install" --config ${{ env.BUILD_TYPE }}
 
       - name: Verify install with CMake consumer
+        env:
+          FC: ${{ steps.setup-fortran.outputs.fc }}
         run: |
           mkdir -p consumer
           cat > consumer/CMakeLists.txt <<'EOF'
@@ -117,5 +169,5 @@ jobs:
           end program main
           EOF
 
-          cmake -S consumer -B consumer/build -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install
+          cmake -S consumer -B consumer/build ${{ steps.generator.outputs.flag }} -DCMAKE_Fortran_COMPILER="$FC" -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
           cmake --build consumer/build
