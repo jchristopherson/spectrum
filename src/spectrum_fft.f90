@@ -78,31 +78,48 @@ pure function irfft(x, n) result(rst)
     ! Local Variables
     integer(int32) :: i, m, nx, nxfrm, lensav, mn
     real(real64), allocatable, dimension(:) :: wsave
+    complex(real64), allocatable, dimension(:) :: xc
 
     ! Initialization
     nx = size(x)
-    if (mod(nx, 2) == 0) then
-        m = 2 * nx - 1
-    else
-        m = 2 * (nx - 1)
-    end if
-    allocate(rst(m), source = 0.0d0)
     if (present(n)) then
         nxfrm = n
+        if (nxfrm <= nx) then
+            xc = x(1:nxfrm)
+        else
+            xc = [x, ((0.0d0, 0.0d0), i = 1, nxfrm - nx)]
+        end if
     else
         nxfrm = nx
+        xc = x
     end if
-    mn = min((m + 1) / 2, nx)
-    rst(1) = real(x(1), real64)
-    do i = 2, mn
-        rst(2*i-2) = real(x(i), real64)
-        rst(2*i-1) = aimag(x(i))
-    end do
-    lensav = 2 * nxfrm + 15
+    if (mod(nxfrm, 2) == 0) then
+        m = 2 * nxfrm - 1
+    else
+        m = 2 * (nxfrm - 1)
+    end if
+    allocate(rst(m), source = 0.0d0)
+    mn = min((m + 1) / 2, nxfrm)
+    rst(1) = real(xc(1), real64)
+    if (mod(m, 2) == 0) then
+        ! The Nyquist term is purely real and occupies the last slot
+        do i = 2, min(m / 2, nxfrm)
+            rst(2*i-2) = real(xc(i), real64)
+            rst(2*i-1) = aimag(xc(i))
+        end do
+        if (nxfrm >= m / 2 + 1) rst(m) = real(xc(m/2 + 1), real64)
+    else
+        do i = 2, mn
+            rst(2*i-2) = real(xc(i), real64)
+            rst(2*i-1) = aimag(xc(i))
+        end do
+    end if
+    lensav = 2 * m + 15
     allocate(wsave(lensav))
+    call dffti(m, wsave)
 
     ! Process
-    call dfftb(nxfrm, rst, wsave)
+    call dfftb(m, rst, wsave)
 end function
 
 ! ------------------------------------------------------------------------------
@@ -140,11 +157,10 @@ pure function stft(win, x) result(rst)
     end if
     if (mod(m, 2) == 0) then
         nend = nxfrm - 1
-        scale = 2.0d0 / m
     else
         nend = nxfrm
-        scale = 2.0d0 / (m - 1.0d0)
     end if
+    scale = 2.0d0 / m
 
     allocate(work(lwork), buffer(m))
     allocate(rst%stft(nxfrm, nk))
@@ -184,7 +200,8 @@ pure function stft(win, x) result(rst)
                 cmplx(buffer(1), 0.0d0, real64)
         end if
         do k = 2, nend
-            rst%stft(k,i) = fac * scale * cmplx(buffer(2*k-1), buffer(2*k), real64)
+            rst%stft(k,i) = fac * scale * &
+                cmplx(buffer(2*k-2), buffer(2*k-1), real64)
         end do
         if (nend /= nxfrm) then
             rst%stft(nxfrm,i) = 0.5d0 * fac * scale * &
