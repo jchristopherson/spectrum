@@ -31,7 +31,7 @@ set(SPECTRUM_SOURCES
 
 # Dependencies
 include(FetchContent)
-find_package(linalg 2.0.0 QUIET)
+find_package(linalg 2.3.0 QUIET)
 
 if (NOT linalg_FOUND)
     message(STATUS "LINALG could not be found.  A reference version will be employed.")
